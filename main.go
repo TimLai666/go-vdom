@@ -119,8 +119,16 @@ func main() {
 			),
 			Footer(Props{"class": "container bg-light p-4 mt-4"},
 				P(Props{"class": "text-center"},
-					"© 2025 Go VDOM 示範網站 | 使用 Go 和 VDOM 製作",
+					"© 2025 ", Span(Props{"style": "color:red;"}, "Go VDOM"), " 示範網站 | 使用 Go 和 VDOM 製作",
 				),
+			),
+			Script(Props{"type": "module"}, `
+				const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+				navLinks.forEach(link => {
+					link.addEventListener('click', function() {
+						alert('你點擊了 ' + this.innerText);
+					});
+				});`,
 			),
 		)
 
