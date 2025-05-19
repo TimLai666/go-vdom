@@ -7,7 +7,18 @@ import (
 	"net/http"
 
 	. "github.com/TimLai666/go-vdom/vdom" // 使用 dot import
+	// 注意：不要用 dot import 匯入 control，請用 control.xxx
+	control "github.com/TimLai666/go-vdom/control"
 )
+
+// 輔助函數：將 []VNode 轉為 []any
+func anySlice(nodes []VNode) []any {
+	result := make([]any, len(nodes))
+	for i, n := range nodes {
+		result[i] = n
+	}
+	return result
+}
 
 func main() {
 	// 定義一個卡片組件
@@ -18,6 +29,30 @@ func main() {
 			Div("{{children}}"),
 		),
 	)
+
+	// 測試 control: If/Then/Else/Repeat
+	show := true
+	items := []string{"蘋果", "香蕉", "橘子"}
+
+	// 測試 If/Then/Else
+	ifBlock := control.If(show,
+		control.Then(
+			Div(Props{"class": "alert alert-success"}, "這是 If 條件為真時顯示的內容"),
+		),
+		control.Else(
+			Div(Props{"class": "alert alert-warning"}, "這是 If 條件為假時顯示的內容"),
+		),
+	)
+
+	// 測試 Repeat
+	repeatBlock := control.Repeat(3, func(i int) VNode {
+		return Div(Props{"class": "border p-2 mb-2"}, fmt.Sprintf("Repeat 渲染第 %d 次", i+1))
+	})
+
+	// 測試 For
+	forBlock := control.For(items, func(item string, i int) VNode {
+		return Li(fmt.Sprintf("第%d個: %s", i+1, item))
+	})
 
 	// 處理HTTP請求的函數
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +113,13 @@ func main() {
 						P("這是右側的一些內容。"),
 						A(Props{"href": "https://github.com/TimLai666/go-vdom", "class": "btn btn-primary"}, "查看源碼"),
 					),
+				),
+				// 測試 control 區塊
+				Div(append([]any{Props{"class": "mt-4"}, H4("If/Then/Else 測試")}, anySlice(ifBlock)...)...),
+				Div(append([]any{Props{"class": "mt-4"}, H4("Repeat 測試")}, anySlice(repeatBlock)...)...),
+				Div(Props{"class": "mt-4"},
+					H4("For 測試"),
+					Ul(anySlice(forBlock)...),
 				),
 			),
 			Footer(
