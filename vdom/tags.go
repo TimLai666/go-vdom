@@ -22,6 +22,8 @@ func tag(name string, args ...any) VNode {
 			props = v
 		case VNode:
 			children = append(children, v)
+		case []VNode: // 自動展開
+			children = append(children, v...)
 		case string:
 			children = append(children, Text(v))
 		}
@@ -130,32 +132,32 @@ func Code(args ...any) VNode       { return tag("code", args...) }
 func Blockquote(args ...any) VNode { return tag("blockquote", args...) }
 
 // 表單元素
-func Form(args ...any) VNode       { return tag("form", args...) }
-func Input(args ...any) VNode      { return tag("input", args...) }
-func Label(args ...any) VNode      { return tag("label", args...) }
-func Button(args ...any) VNode     { return tag("button", args...) }
-func Select(args ...any) VNode     { return tag("select", args...) }
-func Datalist(args ...any) VNode   { return tag("datalist", args...) }
-func Optgroup(args ...any) VNode   { return tag("optgroup", args...) }
-func Option(args ...any) VNode     { return tag("option", args...) }
-func Textarea(args ...any) VNode   { return tag("textarea", args...) }
-func Output(args ...any) VNode     { return tag("output", args...) }
-func Progress(args ...any) VNode   { return tag("progress", args...) }
-func Meter(args ...any) VNode      { return tag("meter", args...) }
-func Fieldset(args ...any) VNode   { return tag("fieldset", args...) }
-func Legend(args ...any) VNode     { return tag("legend", args...) }
+func Form(args ...any) VNode     { return tag("form", args...) }
+func Input(args ...any) VNode    { return tag("input", args...) }
+func Label(args ...any) VNode    { return tag("label", args...) }
+func Button(args ...any) VNode   { return tag("button", args...) }
+func Select(args ...any) VNode   { return tag("select", args...) }
+func Datalist(args ...any) VNode { return tag("datalist", args...) }
+func Optgroup(args ...any) VNode { return tag("optgroup", args...) }
+func Option(args ...any) VNode   { return tag("option", args...) }
+func Textarea(args ...any) VNode { return tag("textarea", args...) }
+func Output(args ...any) VNode   { return tag("output", args...) }
+func Progress(args ...any) VNode { return tag("progress", args...) }
+func Meter(args ...any) VNode    { return tag("meter", args...) }
+func Fieldset(args ...any) VNode { return tag("fieldset", args...) }
+func Legend(args ...any) VNode   { return tag("legend", args...) }
 
 // 表格元素
-func Table(args ...any) VNode   { return tag("table", args...) }
-func Thead(args ...any) VNode   { return tag("thead", args...) }
-func Tbody(args ...any) VNode   { return tag("tbody", args...) }
-func Tfoot(args ...any) VNode   { return tag("tfoot", args...) }
-func Tr(args ...any) VNode      { return tag("tr", args...) }
-func Th(args ...any) VNode      { return tag("th", args...) }
-func Td(args ...any) VNode      { return tag("td", args...) }
-func Caption(args ...any) VNode { return tag("caption", args...) }
+func Table(args ...any) VNode    { return tag("table", args...) }
+func Thead(args ...any) VNode    { return tag("thead", args...) }
+func Tbody(args ...any) VNode    { return tag("tbody", args...) }
+func Tfoot(args ...any) VNode    { return tag("tfoot", args...) }
+func Tr(args ...any) VNode       { return tag("tr", args...) }
+func Th(args ...any) VNode       { return tag("th", args...) }
+func Td(args ...any) VNode       { return tag("td", args...) }
+func Caption(args ...any) VNode  { return tag("caption", args...) }
 func Colgroup(args ...any) VNode { return tag("colgroup", args...) }
-func Col(args ...any) VNode     { return tag("col", args...) }
+func Col(args ...any) VNode      { return tag("col", args...) }
 
 // 列表元素
 func Ul(args ...any) VNode { return tag("ul", args...) }
@@ -166,25 +168,25 @@ func Dt(args ...any) VNode { return tag("dt", args...) }
 func Dd(args ...any) VNode { return tag("dd", args...) }
 
 // 媒體元素
-func Img(args ...any) VNode      { return tag("img", args...) }
-func Audio(args ...any) VNode    { return tag("audio", args...) }
-func Video(args ...any) VNode    { return tag("video", args...) }
-func Source(args ...any) VNode   { return tag("source", args...) }
-func Track(args ...any) VNode    { return tag("track", args...) }
-func Map(args ...any) VNode      { return tag("map", args...) }
-func Area(args ...any) VNode     { return tag("area", args...) }
-func Canvas(args ...any) VNode   { return tag("canvas", args...) }
-func Figure(args ...any) VNode   { return tag("figure", args...) }
+func Img(args ...any) VNode        { return tag("img", args...) }
+func Audio(args ...any) VNode      { return tag("audio", args...) }
+func Video(args ...any) VNode      { return tag("video", args...) }
+func Source(args ...any) VNode     { return tag("source", args...) }
+func Track(args ...any) VNode      { return tag("track", args...) }
+func Map(args ...any) VNode        { return tag("map", args...) }
+func Area(args ...any) VNode       { return tag("area", args...) }
+func Canvas(args ...any) VNode     { return tag("canvas", args...) }
+func Figure(args ...any) VNode     { return tag("figure", args...) }
 func Figcaption(args ...any) VNode { return tag("figcaption", args...) }
-func Picture(args ...any) VNode  { return tag("picture", args...) }
-func Svg(args ...any) VNode      { return tag("svg", args...) }
+func Picture(args ...any) VNode    { return tag("picture", args...) }
+func Svg(args ...any) VNode        { return tag("svg", args...) }
 
 // 互動元素
-func A(args ...any) VNode         { return tag("a", args...) }
-func Details(args ...any) VNode   { return tag("details", args...) }
-func Summary(args ...any) VNode   { return tag("summary", args...) }
-func Dialog(args ...any) VNode    { return tag("dialog", args...) }
-func Menu(args ...any) VNode      { return tag("menu", args...) }
+func A(args ...any) VNode       { return tag("a", args...) }
+func Details(args ...any) VNode { return tag("details", args...) }
+func Summary(args ...any) VNode { return tag("summary", args...) }
+func Dialog(args ...any) VNode  { return tag("dialog", args...) }
+func Menu(args ...any) VNode    { return tag("menu", args...) }
 
 // 腳本元素
 func Script(args ...any) VNode   { return tag("script", args...) }
@@ -198,39 +200,39 @@ func Title(args ...any) VNode    { return tag("title", args...) }
 func Base(args ...any) VNode     { return tag("base", args...) }
 
 // 內聯文本元素
-func Abbr(args ...any) VNode        { return tag("abbr", args...) }
-func B(args ...any) VNode           { return tag("b", args...) }
-func Bdi(args ...any) VNode         { return tag("bdi", args...) }
-func Bdo(args ...any) VNode         { return tag("bdo", args...) }
-func Br(args ...any) VNode          { return tag("br", args...) }
-func Cite(args ...any) VNode        { return tag("cite", args...) }
-func Data(args ...any) VNode        { return tag("data", args...) }
-func Dfn(args ...any) VNode         { return tag("dfn", args...) }
-func Em(args ...any) VNode          { return tag("em", args...) }
-func I(args ...any) VNode           { return tag("i", args...) }
-func Kbd(args ...any) VNode         { return tag("kbd", args...) }
-func Mark(args ...any) VNode        { return tag("mark", args...) }
-func Q(args ...any) VNode           { return tag("q", args...) }
-func Rb(args ...any) VNode          { return tag("rb", args...) }
-func Rp(args ...any) VNode          { return tag("rp", args...) }
-func Rt(args ...any) VNode          { return tag("rt", args...) }
-func Rtc(args ...any) VNode         { return tag("rtc", args...) }
-func Ruby(args ...any) VNode        { return tag("ruby", args...) }
-func S(args ...any) VNode           { return tag("s", args...) }
-func Samp(args ...any) VNode        { return tag("samp", args...) }
-func Small(args ...any) VNode       { return tag("small", args...) }
-func Strong(args ...any) VNode      { return tag("strong", args...) }
-func Sub(args ...any) VNode         { return tag("sub", args...) }
-func Sup(args ...any) VNode         { return tag("sup", args...) }
-func Time(args ...any) VNode        { return tag("time", args...) }
-func U(args ...any) VNode           { return tag("u", args...) }
-func Var(args ...any) VNode         { return tag("var", args...) }
-func Wbr(args ...any) VNode         { return tag("wbr", args...) }
+func Abbr(args ...any) VNode   { return tag("abbr", args...) }
+func B(args ...any) VNode      { return tag("b", args...) }
+func Bdi(args ...any) VNode    { return tag("bdi", args...) }
+func Bdo(args ...any) VNode    { return tag("bdo", args...) }
+func Br(args ...any) VNode     { return tag("br", args...) }
+func Cite(args ...any) VNode   { return tag("cite", args...) }
+func Data(args ...any) VNode   { return tag("data", args...) }
+func Dfn(args ...any) VNode    { return tag("dfn", args...) }
+func Em(args ...any) VNode     { return tag("em", args...) }
+func I(args ...any) VNode      { return tag("i", args...) }
+func Kbd(args ...any) VNode    { return tag("kbd", args...) }
+func Mark(args ...any) VNode   { return tag("mark", args...) }
+func Q(args ...any) VNode      { return tag("q", args...) }
+func Rb(args ...any) VNode     { return tag("rb", args...) }
+func Rp(args ...any) VNode     { return tag("rp", args...) }
+func Rt(args ...any) VNode     { return tag("rt", args...) }
+func Rtc(args ...any) VNode    { return tag("rtc", args...) }
+func Ruby(args ...any) VNode   { return tag("ruby", args...) }
+func S(args ...any) VNode      { return tag("s", args...) }
+func Samp(args ...any) VNode   { return tag("samp", args...) }
+func Small(args ...any) VNode  { return tag("small", args...) }
+func Strong(args ...any) VNode { return tag("strong", args...) }
+func Sub(args ...any) VNode    { return tag("sub", args...) }
+func Sup(args ...any) VNode    { return tag("sup", args...) }
+func Time(args ...any) VNode   { return tag("time", args...) }
+func U(args ...any) VNode      { return tag("u", args...) }
+func Var(args ...any) VNode    { return tag("var", args...) }
+func Wbr(args ...any) VNode    { return tag("wbr", args...) }
 
 // 其他元素
-func Hr(args ...any) VNode          { return tag("hr", args...) }
-func Iframe(args ...any) VNode      { return tag("iframe", args...) }
-func Object(args ...any) VNode      { return tag("object", args...) }
-func Param(args ...any) VNode       { return tag("param", args...) }
-func Embed(args ...any) VNode       { return tag("embed", args...) }
-func Math(args ...any) VNode        { return tag("math", args...) }
+func Hr(args ...any) VNode     { return tag("hr", args...) }
+func Iframe(args ...any) VNode { return tag("iframe", args...) }
+func Object(args ...any) VNode { return tag("object", args...) }
+func Param(args ...any) VNode  { return tag("param", args...) }
+func Embed(args ...any) VNode  { return tag("embed", args...) }
+func Math(args ...any) VNode   { return tag("math", args...) }

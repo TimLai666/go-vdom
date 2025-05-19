@@ -31,28 +31,8 @@ func main() {
 	)
 
 	// 測試 control: If/Then/Else/Repeat
-	show := true
+	show := false
 	items := []string{"蘋果", "香蕉", "橘子"}
-
-	// 測試 If/Then/Else
-	ifBlock := control.If(show,
-		control.Then(
-			Div(Props{"class": "alert alert-success"}, "這是 If 條件為真時顯示的內容"),
-		),
-		control.Else(
-			Div(Props{"class": "alert alert-warning"}, "這是 If 條件為假時顯示的內容"),
-		),
-	)
-
-	// 測試 Repeat
-	repeatBlock := control.Repeat(3, func(i int) VNode {
-		return Div(Props{"class": "border p-2 mb-2"}, fmt.Sprintf("Repeat 渲染第 %d 次", i+1))
-	})
-
-	// 測試 For
-	forBlock := control.For(items, func(item string, i int) VNode {
-		return Li(fmt.Sprintf("第%d個: %s", i+1, item))
-	})
 
 	// 處理HTTP請求的函數
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -97,8 +77,7 @@ func main() {
 				),
 				Div(
 					Props{"class": "row mt-4"},
-					Div(
-						Props{"class": "col-md-6"},
+					Div(Props{"class": "col-md-6"},
 						H3("左側內容"),
 						P("這是左側的一些內容，展示了多欄排版的效果。"),
 						Ul(
@@ -107,24 +86,50 @@ func main() {
 							Li("項目3"),
 						),
 					),
-					Div(
-						Props{"class": "col-md-6"},
+					Div(Props{"class": "col-md-6"},
 						H3("右側內容"),
 						P("這是右側的一些內容。"),
-						A(Props{"href": "https://github.com/TimLai666/go-vdom", "class": "btn btn-primary"}, "查看源碼"),
+						A(Props{"href": "https://github.com/TimLai666/go-vdom", "class": "btn btn-primary"},
+							"查看源碼",
+						),
 					),
 				),
 				// 測試 control 區塊
-				Div(append([]any{Props{"class": "mt-4"}, H4("If/Then/Else 測試")}, anySlice(ifBlock)...)...),
-				Div(append([]any{Props{"class": "mt-4"}, H4("Repeat 測試")}, anySlice(repeatBlock)...)...),
-				Div(Props{"class": "mt-4"},
-					H4("For 測試"),
-					Ul(anySlice(forBlock)...),
+				Div(
+					Props{"class": "mt-4"},
+					H4("If/Then/Else 測試"),
+					control.If(show,
+						control.Then(
+							Div(Props{"class": "alert alert-success"},
+								"這是 If 條件為真時顯示的內容",
+							),
+						),
+						control.Else(
+							Div(Props{"class": "alert alert-warning"},
+								"這是 If 條件為假時顯示的內容",
+							),
+						),
+					),
+					Div(Props{"class": "mt-4"},
+						H4("Repeat 測試"),
+						control.Repeat(3, func(i int) VNode {
+							return Div(Props{"class": "border p-2 mb-2"},
+								fmt.Sprintf("Repeat 渲染第 %d 次", i+1),
+							)
+						}),
+					),
+					Div(Props{"class": "mt-4"},
+						H4("For 測試"),
+						Ul(control.For(items, func(item string, i int) VNode {
+							return Li(fmt.Sprintf("第%d個: %s", i+1, item))
+						})),
+					),
 				),
 			),
-			Footer(
-				Props{"class": "container bg-light p-4 mt-4"},
-				P(Props{"class": "text-center"}, "© 2025 Go VDOM 示範網站 | 使用 Go 和 VDOM 製作"),
+			Footer(Props{"class": "container bg-light p-4 mt-4"},
+				P(Props{"class": "text-center"},
+					"© 2025 Go VDOM 示範網站 | 使用 Go 和 VDOM 製作",
+				),
 			),
 		)
 
