@@ -11,15 +11,6 @@ import (
 	control "github.com/TimLai666/go-vdom/control"
 )
 
-// 輔助函數：將 []VNode 轉為 []any
-func anySlice(nodes []VNode) []any {
-	result := make([]any, len(nodes))
-	for i, n := range nodes {
-		result[i] = n
-	}
-	return result
-}
-
 func main() {
 	// 定義一個卡片組件
 	Card := Component(

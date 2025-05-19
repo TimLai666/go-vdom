@@ -7,7 +7,7 @@ import (
 )
 
 // Component 創建一個新的組件函數
-func Component(template VNode) func(Props, ...VNode) VNode {
+func Component(template VNode) func(props Props, children ...VNode) VNode {
 	return func(p Props, children ...VNode) VNode {
 		return interpolate(template, p, children)
 	}
