@@ -29,6 +29,7 @@ func main() {
 			H1("{{title}}"),
 			Div("{{children}}"),
 		),
+		Props{"title": ""}, // 預設 props
 	)
 
 	// 測試 control: If/Then/Else/Repeat

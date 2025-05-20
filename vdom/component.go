@@ -6,10 +6,19 @@ import (
 	"strings"
 )
 
-// Component 創建一個新的組件函數
-func Component(template VNode) func(props Props, children ...VNode) VNode {
+// Component 創建一個新的組件函數，支援預設 props
+func Component(template VNode, defaultProps ...Props) func(props Props, children ...VNode) VNode {
 	return func(p Props, children ...VNode) VNode {
-		return interpolate(template, p, children)
+		mergedProps := make(Props)
+		if len(defaultProps) > 0 {
+			for k, v := range defaultProps[0] {
+				mergedProps[k] = v
+			}
+		}
+		for k, v := range p {
+			mergedProps[k] = v
+		}
+		return interpolate(template, mergedProps, children)
 	}
 }
 
