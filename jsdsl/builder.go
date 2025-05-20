@@ -1,6 +1,10 @@
 package jsdsl
 
-import . "github.com/TimLai666/go-vdom/vdom"
+import (
+	"fmt"
+
+	. "github.com/TimLai666/go-vdom/vdom"
+)
 
 // JSActionBuilder 用於收集和處理 JSAction
 type JSActionBuilder struct {
@@ -72,4 +76,10 @@ func (b *JSActionBuilder) GetActions() []JSAction {
 // Build 生成最終的 DomReady JSAction
 func (b *JSActionBuilder) Build() JSAction {
 	return DomReady(b.actions...)
+}
+
+// CreateElementExpression 為 builder 創建一個元素表達式字符串
+// 這個函數用於在 StoreResult 和其他場景下創建元素字符串表達式
+func (b *JSActionBuilder) CreateElementExpression(tagName string, varName string) JSAction {
+	return Const(varName, fmt.Sprintf("document.createElement('%s')", tagName))
 }
