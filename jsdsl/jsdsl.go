@@ -1,4 +1,3 @@
-// jsdsl.go
 package jsdsl
 
 import (
@@ -7,6 +6,46 @@ import (
 
 	. "github.com/TimLai666/go-vdom/vdom"
 )
+
+// variable 代表一個 JS 變數，可以呼叫常用屬性與方法
+type variable struct {
+	Name string
+}
+
+// variable 建立一個 variable 物件
+func V(varName string) variable {
+	return variable{Name: varName}
+}
+
+// SetHTML 設定 innerHTML
+func (v variable) SetHTML(html string) JSAction {
+	return JSAction{Code: fmt.Sprintf("%s.innerHTML = %s", v.Name, html)}
+}
+
+// SetText 設定 innerText
+func (v variable) SetText(text string) JSAction {
+	return JSAction{Code: fmt.Sprintf("%s.innerText = %s", v.Name, text)}
+}
+
+// AddClass 新增 class
+func (v variable) AddClass(class string) JSAction {
+	return JSAction{Code: fmt.Sprintf("%s.classList.add(%s)", v.Name, class)}
+}
+
+// RemoveClass 移除 class
+func (v variable) RemoveClass(class string) JSAction {
+	return JSAction{Code: fmt.Sprintf("%s.classList.remove(%s)", v.Name, class)}
+}
+
+// CallMethod 呼叫任意方法
+func (v variable) CallMethod(method string, args ...string) JSAction {
+	return JSAction{Code: fmt.Sprintf("%s.%s(%s)", v.Name, method, strings.Join(args, ", "))}
+}
+
+// VRef 代表一個 JS 變數（Variable Reference）for 只取變數名
+func VRef(varName string) JSAction {
+	return JSAction{Code: varName}
+}
 
 type Elem struct {
 	Selector string
@@ -62,9 +101,40 @@ func Fn(params []string, actions ...JSAction) JSAction {
 }
 
 // Call 調用一個函數，傳入參數
-func Call(fnExpr string, args ...string) JSAction {
-	argsStr := strings.Join(args, ", ")
-	return JSAction{Code: fmt.Sprintf("%s(%s)", fnExpr, argsStr)}
+func Call(fnExpr any, args ...any) JSAction {
+	var processedArgs []string
+	var fnExprStr string
+
+	// 處理函數表達式
+	switch v := fnExpr.(type) {
+	case string:
+		fnExprStr = v
+	case JSAction:
+		fnExprStr = v.Code
+	default:
+		fnExprStr = fmt.Sprintf("%v", fnExpr)
+	}
+
+	// 處理參數
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case string:
+			processedArgs = append(processedArgs, v)
+		case JSAction:
+			processedArgs = append(processedArgs, v.Code)
+		default:
+			processedArgs = append(processedArgs, fmt.Sprintf("%v", v))
+		}
+	}
+
+	argsStr := strings.Join(processedArgs, ", ")
+	return JSAction{Code: fmt.Sprintf("%s(%s)", fnExprStr, argsStr)}
+}
+
+// Method 調用對象的方法，更符合直觀的呼叫方式
+// 用法：Method("object", "methodName", arg1, arg2, ...)
+func CallMethod(objExpr string, methodName string, args ...any) JSAction {
+	return Call(fmt.Sprintf("%s.%s", objExpr, methodName), args...)
 }
 
 func DomReady(actions ...JSAction) JSAction {
@@ -73,11 +143,11 @@ func DomReady(actions ...JSAction) JSAction {
 }
 
 func (el Elem) SetText(text string) JSAction {
-	return JSAction{Code: fmt.Sprintf(`%s.innerText = '%s'`, el.Ref(), escapeJS(text))}
+	return JSAction{Code: fmt.Sprintf(`%s.innerText = %s`, el.Ref(), text)}
 }
 
 func (el Elem) SetHTML(html string) JSAction {
-	return JSAction{Code: fmt.Sprintf(`%s.innerHTML = '%s'`, el.Ref(), escapeJS(html))}
+	return JSAction{Code: fmt.Sprintf(`%s.innerHTML = %s`, el.Ref(), html)}
 }
 
 func (el Elem) AddClass(class string) JSAction {
@@ -89,7 +159,7 @@ func (el Elem) RemoveClass(class string) JSAction {
 }
 
 func Log(msg string) JSAction {
-	return JSAction{Code: fmt.Sprintf(`console.log('%s')`, escapeJS(msg))}
+	return JSAction{Code: fmt.Sprintf(`console.log(%s)`, msg)}
 }
 
 func Redirect(url string) JSAction {
@@ -215,18 +285,84 @@ func FetchRequest(url string, options ...FetchOption) JSAction {
 }
 
 // WithThen 添加 then 處理器
-func WithThen(thenCode string) JSAction {
-	return JSAction{Code: fmt.Sprintf("then(data => {\n%s\n})", indent(thenCode, "  "))}
+func WithThen(thenCodes ...interface{}) JSAction {
+	var sb strings.Builder
+
+	for _, thenCode := range thenCodes {
+		var codeStr string
+		switch v := thenCode.(type) {
+		case string:
+			codeStr = v
+		case JSAction:
+			codeStr = v.Code
+		default:
+			codeStr = fmt.Sprintf("%v", thenCode)
+		}
+
+		// 添加代碼，確保每行都有適當的縮進
+		lines := strings.Split(codeStr, "\n")
+		for _, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				sb.WriteString("  " + line + "\n")
+			}
+		}
+	}
+
+	return JSAction{Code: fmt.Sprintf("then(data => {\n%s})", sb.String())}
 }
 
 // WithCatch 添加 catch 處理器
-func WithCatch(catchCode string) JSAction {
-	return JSAction{Code: fmt.Sprintf("catch(error => {\n%s\n})", indent(catchCode, "  "))}
+func WithCatch(catchCodes ...interface{}) JSAction {
+	var sb strings.Builder
+
+	for _, catchCode := range catchCodes {
+		var codeStr string
+		switch v := catchCode.(type) {
+		case string:
+			codeStr = v
+		case JSAction:
+			codeStr = v.Code
+		default:
+			codeStr = fmt.Sprintf("%v", catchCode)
+		}
+
+		// 添加代碼，確保每行都有適當的縮進
+		lines := strings.Split(codeStr, "\n")
+		for _, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				sb.WriteString("  " + line + "\n")
+			}
+		}
+	}
+
+	return JSAction{Code: fmt.Sprintf("catch(error => {\n%s})", sb.String())}
 }
 
 // WithFinally 添加 finally 處理器
-func WithFinally(finallyCode string) JSAction {
-	return JSAction{Code: fmt.Sprintf("finally(() => {\n%s\n})", indent(finallyCode, "  "))}
+func WithFinally(finallyCodes ...interface{}) JSAction {
+	var sb strings.Builder
+
+	for _, finallyCode := range finallyCodes {
+		var codeStr string
+		switch v := finallyCode.(type) {
+		case string:
+			codeStr = v
+		case JSAction:
+			codeStr = v.Code
+		default:
+			codeStr = fmt.Sprintf("%v", finallyCode)
+		}
+
+		// 添加代碼，確保每行都有適當的縮進
+		lines := strings.Split(codeStr, "\n")
+		for _, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				sb.WriteString("  " + line + "\n")
+			}
+		}
+	}
+
+	return JSAction{Code: fmt.Sprintf("finally(() => {\n%s})", sb.String())}
 }
 
 // WithResponseType 設定響應類型
@@ -234,8 +370,36 @@ func WithResponseType(responseType ResponseType) JSAction {
 	return JSAction{Code: fmt.Sprintf("response_type:%s", string(responseType))}
 }
 
+// 處理多種可能的代碼輸入類型
+func processCodeInput(code interface{}) string {
+	switch v := code.(type) {
+	case string:
+		return v
+	case JSAction:
+		return v.Code
+	default:
+		return fmt.Sprintf("%v", code)
+	}
+}
+
 // 構建完整的 fetch 請求
-func buildFetch(url string, responseType ResponseType, then, catch, finally string, options ...FetchOption) JSAction {
+func buildFetch(url string, responseType ResponseType, then interface{}, catch interface{}, finally interface{}, options ...FetchOption) JSAction {
+	// 處理輸入代碼
+	thenStr := ""
+	if then != nil {
+		thenStr = processCodeInput(then)
+	}
+
+	catchStr := ""
+	if catch != nil {
+		catchStr = processCodeInput(catch)
+	}
+
+	finallyStr := ""
+	if finally != nil {
+		finallyStr = processCodeInput(finally)
+	}
+
 	var optsBuilder strings.Builder
 	optsBuilder.WriteString("{\n")
 
@@ -284,21 +448,21 @@ func buildFetch(url string, responseType ResponseType, then, catch, finally stri
 	// 添加 then 處理器
 	if then != "" {
 		codeBuilder.WriteString("\n  .then(data => {\n")
-		codeBuilder.WriteString(indent(then, "    "))
+		codeBuilder.WriteString(indent(thenStr, "    "))
 		codeBuilder.WriteString("\n  })")
 	}
 
 	// 添加 catch 處理器
 	if catch != "" {
 		codeBuilder.WriteString("\n  .catch(error => {\n")
-		codeBuilder.WriteString(indent(catch, "    "))
+		codeBuilder.WriteString(indent(catchStr, "    "))
 		codeBuilder.WriteString("\n  })")
 	}
 
 	// 添加 finally 處理器
 	if finally != "" {
 		codeBuilder.WriteString("\n  .finally(() => {\n")
-		codeBuilder.WriteString(indent(finally, "    "))
+		codeBuilder.WriteString(indent(finallyStr, "    "))
 		codeBuilder.WriteString("\n  })")
 	}
 
@@ -314,27 +478,28 @@ func Try(baseAction JSAction, nextActions ...JSAction) JSAction {
 	responseType := JSONResponse
 
 	// 解析鏈接的操作
-	thenCode := ""
-	catchCode := ""
-	finallyCode := ""
+	var thenCode string
+	var catchCode string
+	var finallyCode string
 
 	for _, action := range nextActions {
 		code := action.Code
 
 		if strings.HasPrefix(code, "then") {
 			thenCode = strings.TrimPrefix(code, "then(data => {\n")
-			thenCode = strings.TrimSuffix(thenCode, "\n})")
+			thenCode = strings.TrimSuffix(thenCode, "})")
 		} else if strings.HasPrefix(code, "catch") {
 			catchCode = strings.TrimPrefix(code, "catch(error => {\n")
-			catchCode = strings.TrimSuffix(catchCode, "\n})")
+			catchCode = strings.TrimSuffix(catchCode, "})")
 		} else if strings.HasPrefix(code, "finally") {
 			finallyCode = strings.TrimPrefix(code, "finally(() => {\n")
-			finallyCode = strings.TrimSuffix(finallyCode, "\n})")
+			finallyCode = strings.TrimSuffix(finallyCode, "})")
 		} else if strings.HasPrefix(code, "response_type:") {
 			responseTypeStr := strings.TrimPrefix(code, "response_type:")
 			responseType = ResponseType(responseTypeStr)
 		}
 	}
+
 	// 從 baseCode 中提取 URL 和選項
 	urlStart := strings.Index(baseCode, "fetch('") + 7
 	urlEnd := strings.Index(baseCode[urlStart:], "'")
@@ -342,4 +507,29 @@ func Try(baseAction JSAction, nextActions ...JSAction) JSAction {
 
 	// 構建一個新的 fetch 請求
 	return buildFetch(url, responseType, thenCode, catchCode, finallyCode)
+}
+
+// StoreResult 將 fetch 的結果存儲到指定的變數中，並可以執行額外的動作
+// 用法：WithThen(StoreResult("resultVar", ...其他動作))
+func StoreResult(varName string, additionalActions ...interface{}) JSAction {
+	var actionCodes []string
+
+	// 首先將結果存儲到指定的變數中
+	actionCodes = append(actionCodes, fmt.Sprintf("const %s = data;", varName))
+
+	// 處理額外的動作
+	for _, action := range additionalActions {
+		var code string
+		switch v := action.(type) {
+		case string:
+			code = v
+		case JSAction:
+			code = v.Code
+		default:
+			code = fmt.Sprintf("%v", action)
+		}
+		actionCodes = append(actionCodes, code)
+	}
+
+	return JSAction{Code: strings.Join(actionCodes, "\n")}
 }
