@@ -117,3 +117,11 @@ func escapeJS(s string) string {
 	s = strings.ReplaceAll(s, "\n", "\\n")
 	return s
 }
+
+func Let(varName string, value string) JSAction {
+	return JSAction{Code: fmt.Sprintf("let %s = %s", varName, value)}
+}
+
+func Const(varName string, value string) JSAction {
+	return JSAction{Code: fmt.Sprintf("const %s = %s", varName, value)}
+}
