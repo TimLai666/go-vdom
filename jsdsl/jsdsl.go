@@ -36,22 +36,40 @@ func (e ElemList) Ref() string {
 	return fmt.Sprintf("document.querySelectorAll('%s')", e.Selector)
 }
 
-func Do(actions ...JSAction) JSAction {
+// Fn 創建一個函數，支援傳入參數
+// 如果不需要參數，可以傳入 nil 作為 params 參數
+func Fn(params []string, actions ...JSAction) JSAction {
 	var sb strings.Builder
+
+	// 創建一個匿名函數
+	paramsStr := ""
+	if params != nil {
+		paramsStr = strings.Join(params, ", ")
+	}
+	sb.WriteString(fmt.Sprintf("(%s) => {\n", paramsStr))
+
+	// 添加函數體
 	for _, a := range actions {
 		line := strings.TrimSpace(a.Code)
 		if !strings.HasSuffix(line, ";") {
 			line += ";"
 		}
-		sb.WriteString(line + "\n")
+		sb.WriteString("  " + line + "\n")
 	}
+
+	sb.WriteString("}")
 	return JSAction{Code: sb.String()}
 }
 
+// Call 調用一個函數，傳入參數
+func Call(fnExpr string, args ...string) JSAction {
+	argsStr := strings.Join(args, ", ")
+	return JSAction{Code: fmt.Sprintf("%s(%s)", fnExpr, argsStr)}
+}
+
 func DomReady(actions ...JSAction) JSAction {
-	return JSAction{Code: fmt.Sprintf(`document.addEventListener("DOMContentLoaded", function() {
-%s
-});`, indent(Do(actions...).Code, "  "))}
+	return JSAction{Code: fmt.Sprintf(`document.addEventListener("DOMContentLoaded",
+%s);`, indent(Fn(nil, actions...).Code, "  "))}
 }
 
 func (el Elem) SetText(text string) JSAction {
@@ -132,4 +150,196 @@ func Let(varName string, value string) JSAction {
 
 func Const(varName string, value string) JSAction {
 	return JSAction{Code: fmt.Sprintf("const %s = %s", varName, value)}
+}
+
+// FetchOption 代表一個 fetch 請求的選項
+type FetchOption struct {
+	Key   string
+	Value string
+}
+
+// WithMethod 設定 HTTP 方法
+func WithMethod(method string) FetchOption {
+	return FetchOption{Key: "method", Value: method}
+}
+
+// WithHeader 設定 HTTP 頭
+func WithHeader(name, value string) FetchOption {
+	return FetchOption{Key: "headers." + name, Value: value}
+}
+
+// WithBody 設定請求的主體
+func WithBody(body string) FetchOption {
+	return FetchOption{Key: "body", Value: body}
+}
+
+// WithContentType 設定 Content-Type 頭
+func WithContentType(contentType string) FetchOption {
+	return WithHeader("Content-Type", contentType)
+}
+
+// WithJSON 設定 Content-Type 為 application/json 並且將主體設定為 JSON 字符串
+func WithJSON(jsonObject string) []FetchOption {
+	return []FetchOption{
+		WithContentType("application/json"),
+		WithBody(jsonObject),
+	}
+}
+
+// WithFormData 設定 Content-Type 為 application/x-www-form-urlencoded
+func WithFormData(formData map[string]string) []FetchOption {
+	var values []string
+	for key, value := range formData {
+		values = append(values, fmt.Sprintf("%s=%s", key, value))
+	}
+	formBody := strings.Join(values, "&")
+
+	return []FetchOption{
+		WithContentType("application/x-www-form-urlencoded"),
+		WithBody(formBody),
+	}
+}
+
+// ResponseType 定義了 fetch 響應的解析方式
+type ResponseType string
+
+const (
+	JSONResponse ResponseType = "json"
+	TextResponse ResponseType = "text"
+	BlobResponse ResponseType = "blob"
+)
+
+// FetchRequest 創建一個通用的 fetch 請求
+func FetchRequest(url string, options ...FetchOption) JSAction {
+	return buildFetch(url, JSONResponse, "", "", "", options...)
+}
+
+// WithThen 添加 then 處理器
+func WithThen(thenCode string) JSAction {
+	return JSAction{Code: fmt.Sprintf("then(data => {\n%s\n})", indent(thenCode, "  "))}
+}
+
+// WithCatch 添加 catch 處理器
+func WithCatch(catchCode string) JSAction {
+	return JSAction{Code: fmt.Sprintf("catch(error => {\n%s\n})", indent(catchCode, "  "))}
+}
+
+// WithFinally 添加 finally 處理器
+func WithFinally(finallyCode string) JSAction {
+	return JSAction{Code: fmt.Sprintf("finally(() => {\n%s\n})", indent(finallyCode, "  "))}
+}
+
+// WithResponseType 設定響應類型
+func WithResponseType(responseType ResponseType) JSAction {
+	return JSAction{Code: fmt.Sprintf("response_type:%s", string(responseType))}
+}
+
+// 構建完整的 fetch 請求
+func buildFetch(url string, responseType ResponseType, then, catch, finally string, options ...FetchOption) JSAction {
+	var optsBuilder strings.Builder
+	optsBuilder.WriteString("{\n")
+
+	// 處理所有的選項
+	headers := false
+	for _, opt := range options {
+		if strings.HasPrefix(opt.Key, "headers.") {
+			if !headers {
+				optsBuilder.WriteString("  headers: {\n")
+				headers = true
+			}
+			headerName := strings.TrimPrefix(opt.Key, "headers.")
+			optsBuilder.WriteString(fmt.Sprintf("    '%s': '%s',\n", headerName, escapeJS(opt.Value)))
+		} else {
+			optsBuilder.WriteString(fmt.Sprintf("  %s: '%s',\n", opt.Key, escapeJS(opt.Value)))
+		}
+	}
+
+	if headers {
+		optsBuilder.WriteString("  },\n")
+	}
+
+	optsBuilder.WriteString("}")
+
+	// 構建 fetch 鏈
+	var codeBuilder strings.Builder
+
+	codeBuilder.WriteString(fmt.Sprintf("fetch('%s', %s)\n", url, optsBuilder.String()))
+	codeBuilder.WriteString("  .then(response => {\n")
+	codeBuilder.WriteString("    if (!response.ok) {\n")
+	codeBuilder.WriteString("      throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);\n")
+	codeBuilder.WriteString("    }\n")
+
+	// 根據響應類型返回不同格式的數據
+	switch responseType {
+	case TextResponse:
+		codeBuilder.WriteString("    return response.text();\n")
+	case BlobResponse:
+		codeBuilder.WriteString("    return response.blob();\n")
+	default:
+		codeBuilder.WriteString("    return response.json();\n")
+	}
+
+	codeBuilder.WriteString("  })")
+
+	// 添加 then 處理器
+	if then != "" {
+		codeBuilder.WriteString("\n  .then(data => {\n")
+		codeBuilder.WriteString(indent(then, "    "))
+		codeBuilder.WriteString("\n  })")
+	}
+
+	// 添加 catch 處理器
+	if catch != "" {
+		codeBuilder.WriteString("\n  .catch(error => {\n")
+		codeBuilder.WriteString(indent(catch, "    "))
+		codeBuilder.WriteString("\n  })")
+	}
+
+	// 添加 finally 處理器
+	if finally != "" {
+		codeBuilder.WriteString("\n  .finally(() => {\n")
+		codeBuilder.WriteString(indent(finally, "    "))
+		codeBuilder.WriteString("\n  })")
+	}
+
+	return JSAction{Code: codeBuilder.String()}
+}
+
+// Try 鏈接多個 JSAction，支持錯誤處理和後續操作
+func Try(baseAction JSAction, nextActions ...JSAction) JSAction {
+	// 解析基本 fetch 請求
+	baseCode := baseAction.Code
+
+	// 默認響應類型
+	responseType := JSONResponse
+
+	// 解析鏈接的操作
+	thenCode := ""
+	catchCode := ""
+	finallyCode := ""
+
+	for _, action := range nextActions {
+		code := action.Code
+
+		if strings.HasPrefix(code, "then") {
+			thenCode = strings.TrimPrefix(code, "then(data => {\n")
+			thenCode = strings.TrimSuffix(thenCode, "\n})")
+		} else if strings.HasPrefix(code, "catch") {
+			catchCode = strings.TrimPrefix(code, "catch(error => {\n")
+			catchCode = strings.TrimSuffix(catchCode, "\n})")
+		} else if strings.HasPrefix(code, "finally") {
+			finallyCode = strings.TrimPrefix(code, "finally(() => {\n")
+			finallyCode = strings.TrimSuffix(finallyCode, "\n})")
+		} else if strings.HasPrefix(code, "response_type:") {
+			responseTypeStr := strings.TrimPrefix(code, "response_type:")
+			responseType = ResponseType(responseTypeStr)
+		}
+	}
+	// 從 baseCode 中提取 URL 和選項
+	urlStart := strings.Index(baseCode, "fetch('") + 7
+	urlEnd := strings.Index(baseCode[urlStart:], "'")
+	url := baseCode[urlStart : urlStart+urlEnd]
+
+	// 構建一個新的 fetch 請求
+	return buildFetch(url, responseType, thenCode, catchCode, finallyCode)
 }
