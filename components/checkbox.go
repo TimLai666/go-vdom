@@ -61,65 +61,50 @@ var Checkbox = Component(
 						opacity: 0;
 						height: 0;
 						width: 0;
-						
-						& + span {
-							display: inline-flex;
-							align-items: center;
-							justify-content: center;
-							width: {{checkboxSize}};
-							height: {{checkboxSize}};
-							border-radius: {{borderRadius}};
-							border: 2px solid #d1d5db;
-							margin-right: 0.5rem;
-							transition: all 0.2s ease;
-							background: white;
-						}
-						
-						&:checked + span {
-							border-color: {{color}};
-							background: {{color}};
-						}
-						
-						&:checked + span:after {
-							content: "";
-							display: block;
-							width: calc({{checkboxSize}} / 2 - 1px);
-							height: calc({{checkboxSize}} / 2 + 1px);
-							border: solid white;
-							border-width: 0 2px 2px 0;
-							transform: rotate(45deg) translate(-2px, -2px);
-						}
-						
-						&:focus + span {
-							box-shadow: 0 0 0 3px rgba({{colorRgb}}, 0.15);
-						}
-						
-						&:disabled + span {
-							border-color: #e5e7eb;
-							background-color: #f9fafb;
-						}
-						
-						&:disabled:checked + span {
-							background-color: #d1d5db;
-						}
+								display: none;
 					`,
 				},
 			),
-			Span(Props{}),
+			Span(Props{
+				"class": "checkbox-box",
+				"style": `
+						display: inline-flex;
+						align-items: center;
+						justify-content: center;
+						width: {{checkboxSize}};
+						height: {{checkboxSize}};
+						border-radius: {{borderRadius}};
+						border: 2px solid #d1d5db;
+						margin-right: 0.5rem;
+						transition: all 0.2s ease;
+						background: white;
+					`,
+			}),
 			Span(
 				Props{
+					"class": "checkbox-checkmark",
 					"style": `
-						font-size: {{fontSize}};
-						color: #374151;
+						display: none;
+						width: calc({{checkboxSize}} / 2 - 1px);
+						height: calc({{checkboxSize}} / 2 + 1px);
+						border: solid white;
+						border-width: 0 2px 2px 0;
+						transform: rotate(45deg) translate(-2px, -2px);
 					`,
 				},
-				"{{labelText}}",
+			),
+			Span(
+				Props{"style": `
+						font-size: {{fontSize}};
+						color: #374151;						display: ${'{{label}}'.trim() ? 'inline' : 'none'};
+					`,
+				},
+				"{{label}}",
 			),
 		),
 		Div(
-			Props{
-				"style": `
-					display: {{helpDisplay}};
+			Props{"style": `
+					display: ${{'{{helpText}}'.trim() ? 'block' : 'none'}};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: {{helpColor}};
@@ -127,8 +112,74 @@ var Checkbox = Component(
 					margin-left: calc({{checkboxSize}} + 0.5rem);
 				`,
 			},
-			"{{helpMessage}}",
+			"{{helpText}}",
 		),
+		Script(`
+			document.addEventListener('DOMContentLoaded', function() {				const boxId = '{{id}}';
+				const input = document.getElementById(boxId);
+				if (!input) return;
+				const box = input.nextElementSibling;
+				const checkmark = box.nextElementSibling;
+				
+				function updateCheckboxState() {
+					// 確保勾選和禁用狀態正確設置
+					const disabled = '{{disabled}}' === 'true';
+					const checked = '{{checked}}' === 'true';
+					
+					input.disabled = disabled;
+					input.checked = checked;
+					
+					if (checked) {
+						box.style.borderColor = '{{color}}';
+						box.style.background = '{{color}}';
+						checkmark.style.display = 'block';
+					} else {
+						box.style.borderColor = '#d1d5db';
+						box.style.background = 'white';
+						checkmark.style.display = 'none';
+					}
+					
+					if (disabled) {
+						box.style.borderColor = '#e5e7eb';
+						box.style.background = '#f9fafb';
+						if (checked) {
+							box.style.background = '#d1d5db';
+						}
+						box.style.cursor = 'not-allowed';
+					} else {
+						box.style.cursor = 'pointer';
+					}
+				}
+				
+				// 初始化狀態
+				updateCheckboxState();
+				
+				// 切換狀態時更新
+				input.addEventListener('change', updateCheckboxState);
+				
+				// Focus 效果
+				input.addEventListener('focus', function() {
+					if (!this.disabled) {
+						box.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
+					}
+				});
+				
+				input.addEventListener('blur', function() {
+					box.style.boxShadow = 'none';
+				});
+				
+				// 觸發自定義事件
+				input.addEventListener('change', function() {
+					this.dispatchEvent(new CustomEvent('checkbox:change', {
+						detail: { 
+							id: '{{id}}',
+							checked: this.checked,
+							value: this.value
+						}
+					}));
+				});
+			});
+		`),
 	),
 	PropsDef{
 		// 主要屬性
@@ -192,16 +243,15 @@ var CheckboxGroup = Component(
 			`,
 		},
 		Div(
-			Props{
-				"style": `
-					display: block;
+			Props{"style": `
+					display: ${'{{label}}'.trim() ? 'block' : 'none'};
 					margin-bottom: 0.75rem;
 					font-weight: 500;
 					font-size: {{labelSize}};
 					color: #374151;
 				`,
 			},
-			"{{labelText}}",
+			"{{label}}",
 		),
 		Div(
 			Props{
@@ -214,15 +264,14 @@ var CheckboxGroup = Component(
 			"{{checkboxItems}}",
 		),
 		Div(
-			Props{
-				"style": `
-					display: {{helpDisplay}};
+			Props{"style": `
+					display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: {{helpColor}};
 				`,
 			},
-			"{{helpMessage}}",
+			"{{helpText}}",
 		),
 	),
 	PropsDef{

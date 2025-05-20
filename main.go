@@ -206,6 +206,7 @@ func main() {
 						Div(Props{"class": "col-md-6"},
 							// 文字輸入框
 							comp.TextField(Props{
+								"id":          "nameInput",
 								"label":       "用戶名稱",
 								"placeholder": "請輸入您的用戶名",
 								"required":    "true",
@@ -213,6 +214,7 @@ func main() {
 							}),
 							// 下拉選單
 							comp.Dropdown(Props{
+								"id":       "country",
 								"label":    "選擇國家",
 								"options":  "台灣,中國,日本,美國,韓國",
 								"helpText": "請選擇您的所在國家",
@@ -220,6 +222,7 @@ func main() {
 							}),
 							// 單選按鈕組
 							comp.RadioGroup(Props{
+								"id":           "sex",
 								"label":        "選擇性別",
 								"name":         "gender",
 								"options":      "男性,女性,其他",
@@ -240,6 +243,7 @@ func main() {
 							}),
 							// 勾選框組
 							comp.CheckboxGroup(Props{
+								"id":       "hobbies",
 								"label":    "選擇愛好",
 								"name":     "hobbies",
 								"options":  "閱讀,運動,音樂,繪畫,旅行",
@@ -274,7 +278,8 @@ func main() {
 				P(Props{"class": "text-center"},
 					"© 2025 ", Span(Props{"style": "color:red;"}, "Go VDOM"), " 示範網站 | 使用 Go 和 VDOM 製作",
 				),
-			), Script(Props{"type": "module"}, DomReady(
+			),
+			Script(Props{"type": "module"}, DomReady(
 				// 導航欄點擊事件
 				QueryEach(Els(".navbar-nav .nav-link"), func(el Elem) JSAction {
 					return el.OnClick(JSAction{Code: `alert('你點擊了 ' + this.innerText)`})

@@ -27,6 +27,7 @@ import (
 var Alert = Component(
 	Div(
 		Props{
+			"id": "alert-{{id}}",
 			"style": `
 				position: relative;
 				padding: {{padding}};
@@ -75,6 +76,7 @@ var Alert = Component(
 		),
 		Button(
 			Props{
+				"id": "close-{{id}}",
 				"style": `
 					display: {{closeDisplay}};
 					background: transparent;
@@ -85,23 +87,58 @@ var Alert = Component(
 					color: {{iconColor}};
 					opacity: 0.7;
 					padding: 0;
-					margin-left: 0.5rem;
-					flex-shrink: 0;
+					margin-left: 0.5rem;					flex-shrink: 0;
 					font-family: sans-serif;
 					font-weight: 300;
 					transition: all 0.2s;
-					
-					&:hover {
-						opacity: 1;
-					}
 				`,
 				"aria-label": "關閉",
 			},
 			"×",
 		),
+		Script(`document.addEventListener('DOMContentLoaded', function() {
+			const id = '{{id}}';
+			const alert = document.getElementById('alert-' + id);
+			const closeBtn = document.getElementById('close-' + id);
+			
+			if (closeBtn && alert) {
+				// 關閉按鈕互動效果
+				closeBtn.addEventListener('mouseenter', function() {
+					this.style.opacity = '1';
+				});
+				
+				closeBtn.addEventListener('mouseleave', function() {
+					this.style.opacity = '0.7';
+				});
+				
+				// 關閉動畫效果
+				closeBtn.addEventListener('click', function() {
+					alert.style.opacity = '0';
+					alert.style.transform = 'scale(0.95)';
+					setTimeout(() => {
+						alert.style.display = 'none';
+						alert.dispatchEvent(new CustomEvent('alert:close'));
+					}, 200);
+				});
+			}
+			
+			// 初始化動畫
+			if (alert) {
+				alert.style.transition = 'all 0.2s ease-out';
+				alert.style.opacity = '0';
+				alert.style.transform = 'scale(0.95)';
+				
+				setTimeout(() => {
+					alert.style.opacity = '1';
+					alert.style.transform = 'scale(1)';
+				}, 50);
+			}
+		});
+	`),
 	),
 	PropsDef{
 		// 主要參數
+		"id":          "1",     // 提示框ID，將自動生成
 		"type":        "info",  // info, success, warning, error
 		"title":       "",      // 提示標題
 		"bordered":    "true",  // 是否顯示邊框

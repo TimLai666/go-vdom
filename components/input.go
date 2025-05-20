@@ -45,6 +45,7 @@ import (
 var TextField = Component(
 	Div(
 		Props{
+			"class": "textfield-container",
 			"style": `
 				margin-bottom: 1.25rem;
 				width: {{width}};
@@ -55,9 +56,8 @@ var TextField = Component(
 		},
 		Label(
 			Props{
-				"for": "{{id}}",
-				"style": `
-					display: block;
+				"for": "{{id}}", "class": "textfield-label", "style": `
+					display: {{label}};
 					margin-bottom: {{labelMargin}};
 					font-weight: 500;
 					font-size: {{labelSize}};
@@ -65,10 +65,11 @@ var TextField = Component(
 					width: {{labelWidth}};
 				`,
 			},
-			"{{labelText}}",
+			"{{label}}",
 		),
 		Div(
 			Props{
+				"class": "textfield-wrapper",
 				"style": `
 					position: relative;
 					width: {{inputWrapWidth}};
@@ -76,6 +77,7 @@ var TextField = Component(
 			},
 			Div(
 				Props{
+					"class": "textfield-icon-left",
 					"style": `
 						display: {{iconLeftDisplay}};
 						position: absolute;
@@ -90,56 +92,106 @@ var TextField = Component(
 			),
 			Input(
 				Props{
-					"id":           "{{id}}",
-					"name":         "{{name}}",
-					"type":         "{{type}}",
-					"placeholder":  "{{placeholder}}",
-					"value":        "{{value}}",
-					"required":     "{{required}}",
-					"disabled":     "{{disabled}}",
-					"readonly":     "{{readonly}}",
-					"pattern":      "{{pattern}}",
-					"min":          "{{min}}",
-					"max":          "{{max}}",
-					"maxlength":    "{{maxlength}}",
-					"autofocus":    "{{autofocus}}",
-					"autocomplete": "{{autocomplete}}",
+					"id":             "{{id}}",
+					"name":           "{{name}}",
+					"type":           "{{type}}",
+					"placeholder":    "{{placeholder}}",
+					"value":          "{{value}}",
+					"required":       "{{required}}",
+					"disabled":       "{{disabled}}",
+					"readonly":       "{{readonly}}",
+					"pattern":        "{{pattern}}",
+					"min":            "{{min}}",
+					"max":            "{{max}}",
+					"maxlength":      "{{maxlength}}",
+					"autofocus":      "{{autofocus}}",
+					"autocomplete":   "{{autocomplete}}",
+					"class":          "textfield-input",
+					"data-color":     "{{color}}",
+					"data-color-rgb": "{{colorRgb}}",
 					"style": `
 						display: block;
 						width: 100%;
 						padding: {{inputPadding}};
 						font-size: {{fontSize}};
 						line-height: 1.5;
-						background: {{inputBg}};
 						color: #333;
+						background: {{inputBg}};
 						border: {{inputBorder}};
 						border-radius: {{inputRadius}};
 						box-shadow: {{inputShadow}};
 						transition: all 0.2s ease;
-						appearance: none;
 						outline: none;
 						box-sizing: border-box;
-						
-						&:focus {
-							border-color: {{color}};
-							box-shadow: 0 0 0 3px rgba({{colorRgb}}, 0.15);
-						}
-						
-						&:disabled {
-							background-color: #f9fafb;
-							color: #9ca3af;
-							cursor: not-allowed;
-						}
-						
-						&::placeholder {
-							color: #94a3b8;
-							opacity: 1;
-						}
+					`,
+					"onmount": `
+						(() => {							const input = document.getElementById('{{id}}');
+							if (!input) return;
+
+							const handleFocus = () => {
+								if (!input.disabled && !input.readOnly) {
+									input.style.borderColor = '{{color}}';
+									input.style.boxShadow = '0 0 0 3px rgba(' + '{{colorRgb}}' + ', 0.15)';
+								}
+							};
+
+							const handleBlur = () => {
+								if (!input.disabled && !input.readOnly) {
+									input.style.borderColor = '#d1d5db';
+									input.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+								}
+							};
+
+							const handleInput = (e) => {
+								input.dispatchEvent(new CustomEvent('textfield:input', {
+									detail: {
+										id: input.id,
+										value: input.value,
+										type: input.type
+									},
+									bubbles: true
+								}));
+							};
+
+							const handleChange = (e) => {
+								input.dispatchEvent(new CustomEvent('textfield:change', {
+									detail: {
+										id: input.id,
+										value: input.value,
+										type: input.type
+									},
+									bubbles: true
+								}));
+							};							input.addEventListener('focus', handleFocus);
+							input.addEventListener('blur', handleBlur);
+							input.addEventListener('input', handleInput);
+							input.addEventListener('change', handleChange);							// 設置禁用和唯讀狀態
+							input.disabled = {{disabled}} === true;
+							input.readOnly = {{readonly}} === true;
+
+							// 更新樣式
+							if (input.disabled) {
+								input.style.backgroundColor = '#f9fafb';
+								input.style.color = '#9ca3af'; 
+								input.style.cursor = 'not-allowed';
+								input.style.pointerEvents = 'none';
+							} else if (input.readOnly) {
+								input.style.backgroundColor = '#f9fafb';
+								input.style.cursor = 'default';
+								input.style.color = '#374151';
+							} else {
+								input.style.backgroundColor = '#ffffff';
+								input.style.color = '#333333';
+								input.style.cursor = 'text';
+								input.style.pointerEvents = 'auto';
+							}
+						})();
 					`,
 				},
 			),
 			Div(
 				Props{
+					"class": "textfield-icon-right",
 					"style": `
 						display: {{iconRightDisplay}};
 						position: absolute;
@@ -154,15 +206,14 @@ var TextField = Component(
 			),
 		),
 		Div(
-			Props{
-				"style": `
-					display: {{helpDisplay}};
+			Props{"class": "textfield-help-text", "style": `
+					display: {{helpText}};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: {{helpColor}};
 				`,
 			},
-			"{{helpMessage}}",
+			"{{helpText}}",
 		),
 	),
 	PropsDef{

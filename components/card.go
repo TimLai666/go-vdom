@@ -19,6 +19,7 @@ import (
 //   - borderRadius: 圓角大小，默認 "12px"
 //   - background: 背景色，默認純白 "#ffffff"
 //   - contentGap: 內容間距，默認 "1.25rem"
+//   - hoverable: 是否啟用懸停效果，預設 "true"
 //
 // 用法:
 //
@@ -29,6 +30,9 @@ import (
 var Card = Component(
 	Div(
 		Props{
+			"class":          "modern-card",
+			"data-elevation": "{{elevation}}",
+			"data-hoverable": "{{hoverable}}",
 			"style": `
 				position: relative;
 				border: none;
@@ -40,16 +44,61 @@ var Card = Component(
 				max-width: {{maxWidth}};
 				box-sizing: border-box;
 				box-shadow: 0 {{shadowY}}px {{shadowBlur}}px rgba(0,0,0,{{shadowOpacity}});
-				transition: transform 0.2s, box-shadow 0.2s;
+				transition: all 0.2s ease;
 				overflow: hidden;
 				display: flex;
 				flex-direction: column;
 				gap: {{contentGap}};
 				border-top: 3px solid {{accentColor}};
+				cursor: {{cursor}};
+			`,
+			"onmount": `
+				(() => {
+					const card = document.querySelector('.modern-card');
+					if (!card) return;
+					
+					const isHoverable = card.dataset.hoverable !== 'false';
+					const elevation = parseInt(card.dataset.elevation) || 2;
+					
+					if (isHoverable) {
+						card.addEventListener('mouseenter', () => {
+							const newElevation = Math.min(elevation + 2, 5);
+							card.style.transform = 'translateY(-2px)';
+							card.style.boxShadow = '0 ' + (newElevation * 2 + 4) + 'px ' + 
+								(newElevation * 4 + 16) + 'px rgba(0,0,0,' + 
+								(0.08 + newElevation * 0.01) + ')';
+						});
+						
+						card.addEventListener('mouseleave', () => {
+							card.style.transform = 'translateY(0)';
+							card.style.boxShadow = '0 {{shadowY}}px {{shadowBlur}}px rgba(0,0,0,{{shadowOpacity}})';
+						});
+						
+						card.addEventListener('click', () => {
+							card.dispatchEvent(new CustomEvent('card:click', {
+								detail: {
+									title: card.querySelector('h3')?.textContent,
+									content: card.querySelector('.card-content')?.textContent
+								},
+								bubbles: true
+							}));
+						});
+					}
+					
+					// 添加淡入動畫
+					card.style.opacity = '0';
+					card.style.transform = 'translateY(10px)';
+					
+					requestAnimationFrame(() => {
+						card.style.opacity = '1';
+						card.style.transform = 'translateY(0)';
+					});
+				})();
 			`,
 		},
 		Div(
 			Props{
+				"class": "card-header",
 				"style": `
 					display: {{titleDisplay}};
 					margin: 0 0 0.5rem 0;
@@ -59,6 +108,7 @@ var Card = Component(
 			},
 			H3(
 				Props{
+					"class": "card-title",
 					"style": `
 						margin: 0;
 						padding: 0;
@@ -74,6 +124,7 @@ var Card = Component(
 		),
 		Div(
 			Props{
+				"class": "card-content",
 				"style": `
 					display: flex;
 					flex-direction: column;
@@ -84,6 +135,7 @@ var Card = Component(
 		),
 	),
 	PropsDef{
+		// 主要屬性
 		"title":        "",        // 卡片標題
 		"titleWeight":  "500",     // 標題字重
 		"titleColor":   "#1a2b4a", // 標題顏色
@@ -94,10 +146,13 @@ var Card = Component(
 		"borderRadius": "12px",    // 圓角大小
 		"background":   "#ffffff", // 背景色
 		"contentGap":   "1.25rem", // 內容間距
-		// 以下是計算屬性
-		"titleDisplay":  "block", // 標題顯示方式
-		"shadowY":       "4",     // 陰影Y偏移
-		"shadowBlur":    "16",    // 陰影模糊半徑
-		"shadowOpacity": "0.08",  // 陰影不透明度
+		"hoverable":    "true",    // 是否啟用懸停效果
+
+		// 計算屬性
+		"titleDisplay":  "block",   // 標題顯示方式
+		"shadowY":       "4",       // 陰影Y偏移
+		"shadowBlur":    "16",      // 陰影模糊半徑
+		"shadowOpacity": "0.08",    // 陰影不透明度
+		"cursor":        "pointer", // 滑鼠游標樣式
 	},
 )

@@ -65,52 +65,37 @@ var Switch = Component(
 						opacity: 0;
 						height: 0;
 						width: 0;
-						
-						& + span.switch-track {
-							position: relative;
-							display: inline-block;
-							width: {{trackWidth}};
-							height: {{trackHeight}};
-							background-color: {{offColor}};
-							border-radius: {{trackHeight}};
-							transition: all 0.3s ease;
-						}
-						
-						& + span.switch-track:before {
-							content: "";
-							position: absolute;
-							left: 3px;
-							top: 3px;
-							width: calc({{trackHeight}} - 6px);
-							height: calc({{trackHeight}} - 6px);
-							background-color: white;
-							border-radius: 50%;
-							transition: all 0.3s ease;
-							box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-						}
-						
-						&:checked + span.switch-track {
-							background-color: {{onColor}};
-						}
-						
-						&:checked + span.switch-track:before {
-							transform: translateX(calc({{trackWidth}} - {{trackHeight}}));
-						}
-						
-						&:focus + span.switch-track {
-							box-shadow: 0 0 0 3px rgba({{colorRgb}}, 0.15);
-						}
-						
-						&:disabled + span.switch-track {
-							opacity: 0.6;
-							cursor: not-allowed;
-						}
+								display: none;
+					`,
+				},
+			),
+			Span(
+				Props{"class": "switch-track",
+					"style": `
+						position: relative;
+						display: inline-block;
+						width: {{trackWidth}};
+						height: {{trackHeight}};
+						background-color: {{offColor}};
+						border-radius: {{trackHeight}};
+						transition: all 0.3s ease;
 					`,
 				},
 			),
 			Span(
 				Props{
-					"class": "switch-track",
+					"class": "switch-thumb",
+					"style": `
+						position: absolute;
+						left: 3px;
+						top: 3px;
+						width: calc({{trackHeight}} - 6px);
+						height: calc({{trackHeight}} - 6px);
+						background-color: white;
+						border-radius: 50%;
+						transition: all 0.3s ease;
+						box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+					`,
 				},
 			),
 			Span(
@@ -132,9 +117,63 @@ var Switch = Component(
 					margin-top: 0.375rem;
 					color: {{helpColor}};
 				`,
-			},
-			"{{helpMessage}}",
+			}, "{{helpMessage}}",
 		),
+		Script(`
+			document.addEventListener('DOMContentLoaded', function() {
+				const id = '{{id}}';
+				const input = document.getElementById(id);
+				const track = input.nextElementSibling;
+				const thumb = track.nextElementSibling;
+				
+				function updateSwitchState() {
+					if (input.checked) {
+						track.style.backgroundColor = '{{onColor}}';
+						thumb.style.transform = 'translateX(calc({{trackWidth}} - {{trackHeight}}))';
+					} else {
+						track.style.backgroundColor = '{{offColor}}';
+						thumb.style.transform = 'translateX(0)';
+					}
+					
+					if (input.disabled) {
+						track.style.opacity = '0.6';
+						track.style.cursor = 'not-allowed';
+						thumb.style.opacity = '0.6';
+					} else {
+						track.style.opacity = '1';
+						track.style.cursor = 'pointer';
+						thumb.style.opacity = '1';
+					}
+				}
+				
+				// 初始化狀態
+				updateSwitchState();
+				
+				// 切換狀態時更新
+				input.addEventListener('change', updateSwitchState);
+				
+				// Focus 效果
+				input.addEventListener('focus', function() {
+					if (!this.disabled) {
+						track.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
+					}
+				});
+				
+				input.addEventListener('blur', function() {
+					track.style.boxShadow = 'none';
+				});
+				
+				// 觸發自定義事件
+				input.addEventListener('change', function() {
+					this.dispatchEvent(new CustomEvent('switch:change', {
+						detail: { 
+							id: '{{id}}',
+							checked: this.checked 
+						}
+					}));
+				});
+			});
+		`),
 	),
 	PropsDef{
 		// 主要屬性

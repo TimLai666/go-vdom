@@ -15,7 +15,7 @@ import (
 //   - fullWidth: 是否填滿父容器寬度，預設 "false"
 //   - rounded: 圓角程度，可選 "none"、"sm"、"md"、"lg"、"full"，預設 "md"
 //   - disabled: 是否禁用，預設 "false"
-//   - id: 按鈕ID，預設空
+//   - id: 按鈕ID，必填，用於JavaScript事件綁定
 //   - name: 按鈕名稱，預設空
 //   - type: 按鈕類型，預設 "button"
 //   - weight: 字重，預設 "500"
@@ -24,92 +24,149 @@ import (
 //
 // 用法:
 //
-//	Btn(Props{"color": "#8b5cf6", "size": "lg"}, "點擊我")
-//	Btn(Props{"variant": "outlined", "icon": "&#10003;"}, "確認")
+//	Btn(Props{"id": "submit-btn", "color": "#8b5cf6", "size": "lg"}, "點擊我")
+//	Btn(Props{"id": "confirm-btn", "variant": "outlined", "icon": "&#10003;"}, "確認")
 var Btn = Component(
-	Button(
-		Props{
-			"id":       "{{id}}",
-			"name":     "{{name}}",
-			"type":     "{{type}}",
-			"disabled": "{{disabled}}",
-			"style": `
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				gap: 0.5rem;
-				font-family: inherit;
-				font-size: {{fontSize}};
-				font-weight: {{weight}};
-				line-height: 1.5;
-				text-decoration: none;
-				vertical-align: middle;
-				cursor: {{cursor}};
-				user-select: none;
-				padding: {{paddingY}} {{paddingX}};
-				border-radius: {{buttonRadius}};
-				transition: all 180ms ease-out;
-				position: relative;
-				overflow: hidden;
-				width: {{width}};
-				height: {{height}};
-				letter-spacing: 0.01em;
-				box-shadow: {{boxShadow}};
-				background: {{background}};
-				color: {{textColor}};
-				border: {{border}};
-				text-align: center;
-				opacity: {{opacity}};
-				text-transform: {{textTransform}};
-				
-				&:hover {
-					background: {{hoverBackground}};
-					border-color: {{hoverBorderColor}};
-					color: {{hoverTextColor}};
-					box-shadow: {{hoverBoxShadow}};
-				}
-				
-				&:active {
-					transform: translateY(1px);
-				}
-				
-				&:focus {
-					outline: none;
-					box-shadow: 0 0 0 3px {{focusRingColor}};
-				}
-			`,
-		},
-		Span(
-			Props{
+	Div(
+		Props{},
+		Button(
+			Props{"id": "btn-{{id}}",
+				"name":     "{{name}}",
+				"type":     "{{type}}",
+				"disabled": "{{disabled}}",
 				"style": `
-					display: {{iconLeftDisplay}};
-					margin-right: 0.35rem;
-					margin-left: -0.15rem;
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					gap: 0.5rem;
+					font-family: inherit;
+					font-size: {{fontSize}};
+					font-weight: {{weight}};
+					line-height: 1.5;
+					text-decoration: none;
+					vertical-align: middle;					cursor: {{cursor}};
+					user-select: none;
+					padding: {{paddingY}} {{paddingX}};
+					border-radius: {{buttonRadius}};
+					transition: all 180ms ease-out;
+					position: relative;
+					overflow: hidden;
+					width: {{width}};
+					height: {{height}};
+					letter-spacing: 0.01em;
+					box-shadow: {{boxShadow}};
+					background: {{background}};
+					color: {{textColor}};
+					border: {{border}};
+					text-align: center;
+					opacity: {{opacity}};
+					text-transform: {{textTransform}};
 				`,
 			},
-			"{{iconLeft}}",
+			Span(
+				Props{
+					"style": `
+						display: {{iconLeftDisplay}};
+						margin-right: 0.35rem;
+						margin-left: -0.15rem;
+					`,
+				},
+				"{{iconLeft}}",
+			),
+			"{{children}}",
+			Span(
+				Props{
+					"style": `
+						display: {{iconRightDisplay}};
+						margin-left: 0.35rem;
+						margin-right: -0.15rem;
+					`,
+				},
+				"{{iconRight}}",
+			),
 		),
-		"{{children}}",
-		Span(
-			Props{
-				"style": `
-					display: {{iconRightDisplay}};
-					margin-left: 0.35rem;
-					margin-right: -0.15rem;
-				`,
-			},
-			"{{iconRight}}",
-		),
+		Script(`document.addEventListener('DOMContentLoaded', function() {
+				const btn = document.getElementById('btn-{{id}}');
+						if (btn) {
+					// 確保禁用狀態正確設置
+					btn.disabled = btn.getAttribute('disabled') === 'true';
+					
+					// 添加點擊波紋效果
+					btn.addEventListener('click', function(e) {
+						if (!this.disabled) {
+							const rect = this.getBoundingClientRect();
+							const ripple = document.createElement('div');
+							const size = Math.max(rect.width, rect.height);
+							const x = e.clientX - rect.left - size/2;
+							const y = e.clientY - rect.top - size/2;
+									ripple.style.cssText = 
+								'position: absolute;' +
+								'left: ' + x + 'px;' +
+								'top: ' + y + 'px;' +
+								'width: ' + size + 'px;' +
+								'height: ' + size + 'px;' +
+								'background: currentColor;' +
+								'border-radius: 50%;' +
+								'opacity: 0.3;' +
+								'transform: scale(0);' +
+								'animation: ripple 0.6s linear;' +
+								'pointer-events: none;';
+							
+							this.appendChild(ripple);
+							
+							setTimeout(() => ripple.remove(), 600);
+									// 發出自定義點擊事件
+							this.dispatchEvent(new CustomEvent('btn:click', {
+								detail: { id: '{{id}}' }
+							}));
+						}
+					});					// 添加懸停效果
+					btn.addEventListener('mouseenter', function() {
+						if (!this.disabled) {
+							this.style.transform = 'translateY(-1px)';
+							this.style.background = '{{hoverBackground}}';
+							this.style.borderColor = '{{hoverBorderColor}}';
+							this.style.color = '{{hoverTextColor}}';
+							this.style.boxShadow = '{{hoverBoxShadow}}';
+							this.dispatchEvent(new CustomEvent('btn:hover'));
+						}
+					});
+
+					btn.addEventListener('mouseleave', function() {
+						if (!this.disabled) {
+							this.style.transform = 'translateY(0)';
+							this.style.background = '{{background}}';
+							this.style.borderColor = '{{border}}'.split(' ')[2];
+							this.style.color = '{{textColor}}';
+							this.style.boxShadow = '{{boxShadow}}';
+						}
+					});
+
+					// 添加 focus 效果
+					btn.addEventListener('focus', function() {
+						if (!this.disabled) {
+							this.style.outline = 'none';
+							this.style.boxShadow = '0 0 0 3px {{focusRingColor}}';
+						}
+					});
+
+					btn.addEventListener('blur', function() {
+						if (!this.disabled) {
+							this.style.boxShadow = '{{boxShadow}}';
+						}
+					});
+				}
+			});
+		`),
 	),
-	PropsDef{
-		// 主要參數
+	PropsDef{ // 主要參數
+		"id":            "1",       // 按鈕ID，必須提供
 		"variant":       "filled",  // 按鈕樣式：filled, outlined, text
 		"color":         "#3b82f6", // 主色調
 		"size":          "md",      // 尺寸：sm, md, lg
 		"fullWidth":     "false",   // 是否填滿父容器寬度
 		"rounded":       "md",      // 圓角：none, sm, md, lg, full
 		"disabled":      "false",   // 是否禁用
-		"id":            "",        // 按鈕ID
 		"name":          "",        // 按鈕名稱
 		"type":          "button",  // 按鈕類型
 		"weight":        "500",     // 字重

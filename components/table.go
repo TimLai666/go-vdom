@@ -45,6 +45,7 @@ import (
 var TableComponent = Component(
 	Div(
 		Props{
+			"class": "table-container",
 			"style": `
 				width: 100%;
 				overflow-x: {{overflowX}};
@@ -54,6 +55,9 @@ var TableComponent = Component(
 		},
 		Table(
 			Props{
+				"class":                "modern-table",
+				"data-highlight-color": "{{highlightColor}}",
+				"data-hoverable":       "{{hoverable}}",
 				"style": `
 					width: {{tableWidth}};
 					border-collapse: separate;
@@ -62,114 +66,132 @@ var TableComponent = Component(
 					border: {{tableBorder}};
 					overflow: hidden;
 				`,
+				"onmount": `
+					(() => {
+						const table = document.querySelector('.modern-table');
+						if (!table) return;
+						
+						const rows = table.querySelectorAll('tbody tr');
+						const isHoverable = table.dataset.hoverable === 'true';
+						const highlightColor = table.dataset.highlightColor;
+						
+						rows.forEach(row => {
+							if (isHoverable) {
+								row.addEventListener('mouseenter', () => {
+									row.style.backgroundColor = 'rgba(0, 0, 0, 0.02)';
+									row.style.transition = 'background-color 0.2s ease';
+								});
+								
+								row.addEventListener('mouseleave', () => {
+									if (row.classList.contains('even-row')) {
+										row.style.backgroundColor = '{{evenRowBgColor}}';
+									} else {
+										row.style.backgroundColor = 'transparent';
+									}
+								});
+							}
+							
+							// 添加點擊事件
+							row.addEventListener('click', () => {
+								table.dispatchEvent(new CustomEvent('table:row-click', {
+									detail: {
+										rowIndex: Array.from(rows).indexOf(row),
+										rowData: Array.from(row.cells).map(cell => cell.textContent.trim())
+									},
+									bubbles: true
+								}));
+							});
+							
+							// 為偶數行添加背景色
+							if (row.rowIndex % 2 === 0) {
+								row.classList.add('even-row');
+								if ('{{stripped}}' === 'true') {
+									row.style.backgroundColor = '{{evenRowBgColor}}';
+								}
+							}
+						});
+
+						// 添加排序功能
+						const headers = table.querySelectorAll('th');
+						headers.forEach((header, index) => {
+							if (header.classList.contains('sortable')) {
+								header.style.cursor = 'pointer';
+								header.addEventListener('click', () => {
+									const isAscending = header.classList.toggle('asc');
+									sortTable(table, index, isAscending);
+									table.dispatchEvent(new CustomEvent('table:sort', {
+										detail: {
+											columnIndex: index,
+											isAscending: isAscending
+										},
+										bubbles: true
+									}));
+								});
+							}
+						});
+					})();
+				`,
 			},
 			Thead(
 				Props{
+					"class": "table-header",
 					"style": `
 						background-color: {{headerBgColor}};
 						color: #1e293b;
 						vertical-align: bottom;
 						border-bottom: 2px solid {{borderColor}};
-						
-						tr {
-							border-style: solid;
-							border-width: 0;
-							border-color: {{borderColor}};
-						}
-						
-						th {
-							padding: {{thPadding}};
-							font-weight: 600;
-							text-align: left;
-							vertical-align: bottom;
-							border-right-style: solid;
-							border-right-width: {{rightBorderWidth}};
-							border-right-color: {{borderColor}};
-							border-bottom-style: solid;
-							border-bottom-width: {{bottomBorderWidth}};
-							border-bottom-color: {{borderColor}};
-						}
-						
-						th:last-child {
-							border-right: {{lastColumnRightBorder}};
-						}
 					`,
 				},
 				"{{header}}",
 			),
 			Tbody(
 				Props{
+					"class": "table-body",
 					"style": `
 						vertical-align: inherit;
-						
-						tr {
-							border-style: solid;
-							border-width: 0;
-							border-color: {{borderColor}};
-						}
-						
-						tr:last-child {
-							border-bottom: {{lastRowBorder}};
-						}
-						
-						tr:nth-child(even) {
-							background-color: {{evenRowBgColor}};
-						}
-						
-						tr:hover {
-							background-color: {{hoverBgColor}};
-						}
-						
-						td {
-							padding: {{tdPadding}};
-							vertical-align: middle;
-							border-right-style: solid;
-							border-right-width: {{rightBorderWidth}};
-							border-right-color: {{borderColor}};
-							border-bottom-style: solid;
-							border-bottom-width: {{bottomBorderWidth}};
-							border-bottom-color: {{borderColor}};
-						}
-						
-						td:last-child {
-							border-right: {{lastColumnRightBorder}};
-						}
 					`,
 				},
 				"{{children}}",
 			),
 			Tfoot(
 				Props{
+					"class": "table-footer",
 					"style": `
 						display: {{tfootDisplay}};
 						background-color: {{headerBgColor}};
 						color: #1e293b;
 						vertical-align: bottom;
 						border-top: 2px solid {{borderColor}};
-						
-						tr {
-							border-style: solid;
-							border-width: 0;
-							border-color: {{borderColor}};
-						}
-						
-						td {
-							padding: {{thPadding}};
-							font-weight: 600;
-							text-align: left;
-							vertical-align: bottom;
-							border-right-style: solid;
-							border-right-width: {{rightBorderWidth}};
-							border-right-color: {{borderColor}};
-						}
-						
-						td:last-child {
-							border-right: {{lastColumnRightBorder}};
-						}
 					`,
 				},
 				"{{footer}}",
 			),
+			Script(`
+				function sortTable(table, columnIndex, ascending) {
+					const tbody = table.querySelector('tbody');
+					const rows = Array.from(tbody.querySelectorAll('tr'));
+					
+					const sortedRows = rows.sort((a, b) => {
+						const aValue = a.cells[columnIndex].textContent.trim();
+						const bValue = b.cells[columnIndex].textContent.trim();
+						
+						// 判斷是否為數字
+						const aNum = Number(aValue);
+						const bNum = Number(bValue);
+						
+						if (!isNaN(aNum) && !isNaN(bNum)) {
+							return ascending ? aNum - bNum : bNum - aNum;
+						}
+						
+						return ascending 
+							? aValue.localeCompare(bValue)
+							: bValue.localeCompare(aValue);
+					});
+					
+					tbody.innerHTML = '';
+					sortedRows.forEach(row => tbody.appendChild(row));
+				}
+			`),
 		),
 	),
 	PropsDef{
