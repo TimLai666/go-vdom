@@ -127,7 +127,7 @@ func main() {
 			Script(Props{"type": "module"},
 				jsdsl.DomReady(
 					jsdsl.QueryEach(jsdsl.Els(".navbar-nav .nav-link"), func(el jsdsl.Elem) JSAction {
-						return jsdsl.OnClick(el, jsdsl.Alert(`'你點擊了 ' + `+jsdsl.InnerText(el)))
+						return el.OnClick(jsdsl.Alert(`'你點擊了 ' + ` + el.InnerText()))
 					}),
 				),
 			),

@@ -54,15 +54,19 @@ func DomReady(actions ...JSAction) JSAction {
 });`, indent(Do(actions...).Code, "  "))}
 }
 
-func SetText(el Elem, text string) JSAction {
+func (el Elem) SetText(text string) JSAction {
 	return JSAction{Code: fmt.Sprintf(`%s.innerText = '%s'`, el.Ref(), escapeJS(text))}
 }
 
-func AddClass(el Elem, class string) JSAction {
+func (el Elem) SetHTML(html string) JSAction {
+	return JSAction{Code: fmt.Sprintf(`%s.innerHTML = '%s'`, el.Ref(), escapeJS(html))}
+}
+
+func (el Elem) AddClass(class string) JSAction {
 	return JSAction{Code: fmt.Sprintf(`%s.classList.add('%s')`, el.Ref(), class)}
 }
 
-func RemoveClass(el Elem, class string) JSAction {
+func (el Elem) RemoveClass(class string) JSAction {
 	return JSAction{Code: fmt.Sprintf(`%s.classList.remove('%s')`, el.Ref(), class)}
 }
 
@@ -74,7 +78,7 @@ func Redirect(url string) JSAction {
 	return JSAction{Code: fmt.Sprintf(`location.href = '%s'`, url)}
 }
 
-func OnClick(el Elem, action JSAction) JSAction {
+func (el Elem) OnClick(action JSAction) JSAction {
 	return JSAction{Code: fmt.Sprintf(`%s.addEventListener('click', function() {
 %s
 });`, el.Ref(), indent(action.Code, "  "))}
@@ -84,8 +88,12 @@ func Alert(jsExpr string) JSAction {
 	return JSAction{Code: fmt.Sprintf(`alert(%s)`, jsExpr)}
 }
 
-func InnerText(el Elem) string {
+func (el Elem) InnerText() string {
 	return fmt.Sprintf("%s.innerText", el.Ref())
+}
+
+func (el Elem) InnerHTML() string {
+	return fmt.Sprintf("%s.innerHTML", el.Ref())
 }
 
 func ForEach(arrayExpr string, fn func(el Elem) JSAction) JSAction {
