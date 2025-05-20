@@ -568,3 +568,13 @@ func (el Elem) Pipe(fn func(Elem, JSAction) []JSAction) []JSAction {
 func generateRandomID() int {
 	return rand.Intn(10000)
 }
+
+// SetTimeout 產生 setTimeout 語法
+func SetTimeout(action JSAction, delayMs int) JSAction {
+	return JSAction{Code: fmt.Sprintf("setTimeout(\n%s\n, %d)", indent(action.Code, "  "), delayMs)}
+}
+
+// SetInterval 產生 setInterval 語法
+func SetInterval(action JSAction, intervalMs int) JSAction {
+	return JSAction{Code: fmt.Sprintf("setInterval(\n%s\n, %d)", indent(action.Code, "  "), intervalMs)}
+}
