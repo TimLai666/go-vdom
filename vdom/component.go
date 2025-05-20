@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
+type PropsDef map[string]string
+
 // Component 創建一個新的組件函數，支援預設 props
-func Component(template VNode, defaultProps ...Props) func(props Props, children ...VNode) VNode {
+func Component(template VNode, defaultProps ...PropsDef) func(props Props, children ...VNode) VNode {
 	return func(p Props, children ...VNode) VNode {
 		mergedProps := make(Props)
 		if len(defaultProps) > 0 {
