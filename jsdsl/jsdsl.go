@@ -2,6 +2,7 @@ package jsdsl
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 
 	. "github.com/TimLai666/go-vdom/vdom"
@@ -532,4 +533,38 @@ func StoreResult(varName string, additionalActions ...interface{}) JSAction {
 	}
 
 	return JSAction{Code: strings.Join(actionCodes, "\n")}
+}
+
+// CreateEl 創建一個 DOM 元素，並返回一個 Elem 物件以及創建元素的 JSAction
+// tagName：要創建的 HTML 元素標籤名
+// varName：可選參數，為創建的元素指定一個變數名稱
+func CreateEl(tagName string, varName ...string) (Elem, JSAction) {
+	var vName string
+	if len(varName) > 0 {
+		vName = varName[0]
+	} else {
+		vName = fmt.Sprintf("el_%s_%d", tagName, generateRandomID())
+	}
+
+	jsAction := JSAction{Code: fmt.Sprintf("const %s = document.createElement('%s');", vName, tagName)}
+	return Elem{VarName: vName}, jsAction
+}
+
+// AppendChild 將子元素添加到父元素中
+func (el Elem) AppendChild(child Elem) JSAction {
+	return JSAction{Code: fmt.Sprintf("%s.appendChild(%s)", el.Ref(), child.Ref())}
+}
+
+// Pipe 將元素和創建元素的動作傳遞給函數，並返回函數執行的結果
+// 這允許在一個流暢的鏈式操作中同時處理元素和創建元素的 JSAction
+func (el Elem) Pipe(fn func(Elem, JSAction) []JSAction) []JSAction {
+	// 創建一個虛擬的 JSAction，因為 Pipe 通常與 CreateEl 一起使用
+	// 在這種情況下，實際的創建動作會由調用者傳入
+	dummyAction := JSAction{Code: fmt.Sprintf("// Reference to %s", el.Ref())}
+	return fn(el, dummyAction)
+}
+
+// generateRandomID 生成一個隨機的 ID 用於元素命名
+func generateRandomID() int {
+	return rand.Intn(10000)
 }
