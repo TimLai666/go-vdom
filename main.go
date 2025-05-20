@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom" // 使用 dot import
+
 	// 注意：不要用 dot import 匯入 control，請用 control.xxx
 	control "github.com/TimLai666/go-vdom/control"
 )
@@ -122,13 +124,12 @@ func main() {
 					"© 2025 ", Span(Props{"style": "color:red;"}, "Go VDOM"), " 示範網站 | 使用 Go 和 VDOM 製作",
 				),
 			),
-			Script(Props{"type": "module"}, `
-				const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-				navLinks.forEach(link => {
-					link.addEventListener('click', function() {
-						alert('你點擊了 ' + this.innerText);
-					});
-				});`,
+			Script(Props{"type": "module"},
+				jsdsl.DomReady(
+					jsdsl.QueryEach(jsdsl.Els(".navbar-nav .nav-link"), func(el jsdsl.Elem) JSAction {
+						return jsdsl.OnClick(el, jsdsl.Alert(`'你點擊了 ' + `+jsdsl.InnerText(el)))
+					}),
+				),
 			),
 		)
 

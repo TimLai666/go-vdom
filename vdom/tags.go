@@ -1,6 +1,8 @@
 // tags.go
 package vdom
 
+import "strings"
+
 // 基本標籤函數
 
 // Text 創建一個文字節點
@@ -189,7 +191,21 @@ func Dialog(args ...any) VNode  { return tag("dialog", args...) }
 func Menu(args ...any) VNode    { return tag("menu", args...) }
 
 // 腳本元素
-func Script(args ...any) VNode   { return tag("script", args...) }
+func Script(args ...any) VNode {
+	var content strings.Builder
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case string:
+			content.WriteString(v)
+		case JSAction:
+			content.WriteString(v.Code)
+		}
+	}
+	return VNode{
+		Tag:     "script",
+		Content: content.String(),
+	}
+}
 func Noscript(args ...any) VNode { return tag("noscript", args...) }
 func Template(args ...any) VNode { return tag("template", args...) }
 func Slot(args ...any) VNode     { return tag("slot", args...) }

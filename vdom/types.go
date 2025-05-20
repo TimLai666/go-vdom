@@ -11,3 +11,7 @@ type VNode struct {
 	Children []VNode
 	Content  string
 }
+
+type JSAction struct {
+	Code string
+}
