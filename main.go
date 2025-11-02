@@ -176,37 +176,33 @@ func main() {
 						"class": "btn btn-primary mb-3",
 						"onClick": js.AsyncDo(nil,
 							js.Log("'開始獲取數據...'"),
-							js.TryCatch(
-								[]JSAction{
-									js.Const("response", "await fetch('/api/data', { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' })"),
-									js.Log("'收到響應: ' + response.status"),
-									JSAction{Code: "if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText)"},
-									js.Const("apiData", "await response.json()"),
-									js.Log("'API 數據:', apiData"),
-									js.Const("container", "document.getElementById('dataContainer')"),
-									JSAction{Code: `if (!container) {
+							js.Try(
+								js.Const("response", "await fetch('/api/data', { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' })"),
+								js.Log("'收到響應: ' + response.status"),
+								JSAction{Code: "if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText)"},
+								js.Const("apiData", "await response.json()"),
+								js.Log("'API 數據:', apiData"),
+								js.Const("container", "document.getElementById('dataContainer')"),
+								JSAction{Code: `if (!container) {
 										console.error('找不到 dataContainer 元素');
 										return;
 									}`},
-									JSAction{Code: "container.innerHTML = ''"},
-									js.Const("ul", "document.createElement('ul')"),
-									JSAction{Code: "ul.classList.add('list-group')"},
-									JSAction{Code: `apiData.forEach(function(item) {
+								JSAction{Code: "container.innerHTML = ''"},
+								js.Const("ul", "document.createElement('ul')"),
+								JSAction{Code: "ul.classList.add('list-group')"},
+								JSAction{Code: `apiData.forEach(function(item) {
 										const li = document.createElement('li');
 										li.classList.add('list-group-item');
 										li.innerHTML = '<strong>' + item.name + '</strong>: ' + item.message;
 										ul.appendChild(li);
 									})`},
-									JSAction{Code: "container.appendChild(ul)"},
-									js.Log("'成功顯示 ' + apiData.length + ' 條數據'"),
-								},
-								[]JSAction{
-									js.Log("'獲取數據時出錯:', e"),
-									js.Const("container", "document.getElementById('dataContainer')"),
-									JSAction{Code: "if (container) { container.innerHTML = '<div class=\"alert alert-danger\">獲取數據時出錯: ' + e.message + '</div>' }"},
-								},
-								nil,
-							),
+								JSAction{Code: "container.appendChild(ul)"},
+								js.Log("'成功顯示 ' + apiData.length + ' 條數據'"),
+							).Catch("e",
+								js.Log("'獲取數據時出錯:', e.message"),
+								js.Const("container", "document.getElementById('dataContainer')"),
+								JSAction{Code: "if (container) { container.innerHTML = '<div class=\"alert alert-danger\">獲取數據時出錯: ' + e.message + '</div>' }"},
+							).End(),
 						),
 					}, "獲取數據"),
 					Div(Props{

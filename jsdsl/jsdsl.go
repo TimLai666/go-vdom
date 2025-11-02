@@ -527,9 +527,10 @@ func buildFetch(url string, responseType ResponseType, then interface{}, catch i
 
 // tryBuilder 用於構建 try-catch-finally 語句的流暢 API
 type tryBuilder struct {
-	tryActions     []JSAction
-	catchActions   []JSAction
-	finallyActions []JSAction
+	tryActions       []JSAction
+	catchErrorName   string
+	catchActions     []JSAction
+	finallyActions   []JSAction
 }
 
 // Try 創建一個 try-catch-finally 語句的構建器（不包裝在自執行函數中）
@@ -537,12 +538,13 @@ type tryBuilder struct {
 //
 // 用法：
 //
-//	// 同步 try-catch:
+//	// 同步 try-catch（自訂錯誤名稱）:
 //	js.Try(
-//	    js.Const("x", "1"),
+//	    js.Const("x", "JSON.parse(input)"),
 //	    js.Log("x"),
-//	).Catch(
-//	    js.Log("error.message"),
+//	).Catch("err",  // 第一個參數指定錯誤物件名稱
+//	    js.Log("err.message"),
+//	    js.Alert("'解析失敗'"),
 //	).End()
 //
 //	// 異步 try-catch（包在 AsyncFn 中）:
@@ -550,19 +552,26 @@ type tryBuilder struct {
 //	    "onClick": js.AsyncFn(nil,
 //	        js.Try(
 //	            js.Const("data", "await fetch('/api')"),
-//	        ).Catch(
-//	            js.Log("error.message"),
+//	        ).Catch("e",  // 使用簡短的錯誤名稱
+//	            js.Log("e.message"),
 //	        ).End(),
 //	    ),
 //	})
 //
-//	// 或使用 AsyncDo 立即執行:
-//	js.AsyncDo(
-//	    js.Try(
-//	        js.Const("data", "await fetch('/api')"),
-//	    ).Catch(
-//	        js.Log("error.message"),
-//	    ).End(),
+//	// 使用預設名稱 "error"（傳空字串）:
+//	js.Try(
+//	    js.Const("result", "riskyOperation()"),
+//	).Catch("",  // 空字串使用預設名稱 "error"
+//	    js.Log("error"),
+//	).End()
+//
+//	// 使用 finally:
+//	js.Try(
+//	    js.Const("file", "openFile()"),
+//	).Catch("exception",
+//	    js.Log("exception.message"),
+//	).Finally(
+//	    js.Log("'清理資源'"),
 //	)
 func Try(actions ...JSAction) *tryBuilder {
 	return &tryBuilder{
@@ -570,9 +579,12 @@ func Try(actions ...JSAction) *tryBuilder {
 	}
 }
 
-// Catch 添加 catch 區塊，接收錯誤處理動作（錯誤對象為 error）
+// Catch 添加 catch 區塊
+// errorName: 錯誤物件的變數名稱（如 "err", "e", "error"）
+// actions: 錯誤處理動作
 // 可以繼續鏈式調用 Finally()
-func (tb *tryBuilder) Catch(actions ...JSAction) *tryBuilder {
+func (tb *tryBuilder) Catch(errorName string, actions ...JSAction) *tryBuilder {
+	tb.catchErrorName = errorName
 	tb.catchActions = actions
 	return tb
 }
@@ -614,7 +626,11 @@ func (tb *tryBuilder) build() JSAction {
 
 	// catch 區塊
 	if len(tb.catchActions) > 0 {
-		sb.WriteString("catch(error){")
+		errName := tb.catchErrorName
+		if errName == "" {
+			errName = "error" // 預設名稱
+		}
+		sb.WriteString("catch(" + errName + "){")
 		for i, action := range tb.catchActions {
 			line := strings.TrimSpace(action.Code)
 			if line != "" {
