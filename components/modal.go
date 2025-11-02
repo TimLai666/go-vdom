@@ -54,12 +54,12 @@ var Modal = Component(
 				overflow-y: {{overlayOverflow}};
 				animation: {{overlayAnimation}} 0.3s ease;
 				pointer-events: {{pointerEvents}};
-				
+
 				@keyframes modalOverlayFadeIn {
 					0% { opacity: 0; }
 					100% { opacity: 1; }
 				}
-				
+
 				@keyframes modalOverlayFadeOut {
 					0% { opacity: 1; }
 					100% { opacity: 0; }
@@ -93,17 +93,17 @@ var Modal = Component(
 					flex-direction: column;
 					max-height: {{maxHeight}};
 					animation: {{contentAnimation}} 0.3s ease;
-					
+
 					@keyframes modalFadeIn {
 						0% { opacity: 0; transform: translate(0, -20px); }
 						100% { opacity: 1; transform: translate(0, 0); }
 					}
-					
+
 					@keyframes modalSlideIn {
 						0% { opacity: 0; transform: translate(0, 40px); }
 						100% { opacity: 1; transform: translate(0, 0); }
 					}
-					
+
 					@keyframes modalZoomIn {
 						0% { opacity: 0; transform: scale(0.95); }
 						100% { opacity: 1; transform: scale(1); }
@@ -146,7 +146,7 @@ var Modal = Component(
 							transition: color 0.15s;
 							margin: -0.5rem -0.5rem -0.5rem 0.5rem;
 							border-radius: 0.25rem;
-		
+
 						`,
 						"aria-label": "關閉",
 					},
@@ -182,33 +182,33 @@ var Modal = Component(
 				const overlay = modal.children[0];
 				const content = modal.children[1];
 				const closeBtn = content.querySelector('button[aria-label="關閉"]');
-				
+
 				function closeModal() {
 					modal.style.display = 'none';
 					modal.dispatchEvent(new CustomEvent('modal:close'));
 				}
-				
+
 				function handleKeydown(event) {
 					if (event.key === 'Escape' && '{{closeOnEsc}}' === 'true') {
 						closeModal();
 					}
 				}
-				
+
 				// 關閉按鈕互動效果
 				if (closeBtn) {
 					closeBtn.addEventListener('mouseenter', function() {
 						this.style.color = '#334155';
 						this.style.background = '#f1f5f9';
 					});
-					
+
 					closeBtn.addEventListener('mouseleave', function() {
 						this.style.color = '#64748b';
 						this.style.background = 'transparent';
 					});
-					
+
 					closeBtn.addEventListener('click', closeModal);
 				}
-				
+
 				// 點擊遮罩層關閉
 				if ('{{closeOnOverlayClick}}' === 'true') {
 					overlay.addEventListener('click', function(e) {
@@ -217,19 +217,19 @@ var Modal = Component(
 						}
 					});
 				}
-				
+
 				// ESC 鍵關閉
 				document.addEventListener('keydown', handleKeydown);
-				
+
 				// 清理事件監聽器
 				modal.addEventListener('DOMNodeRemoved', function() {
 					document.removeEventListener('keydown', handleKeydown);
 				});
-				
+
 				// 打開時的動畫效果
 				if ('{{open}}' === 'true') {
 					modal.style.display = 'block';
-					
+
 					// 根據不同的動畫類型設置不同的初始狀態
 					switch('{{animation}}') {
 						case 'fade':
@@ -245,7 +245,7 @@ var Modal = Component(
 							content.style.transform = 'scale(0.95)';
 							break;
 					}
-					
+
 					// 等待 DOM 更新後開始動畫
 					requestAnimationFrame(() => {
 						content.style.opacity = '1';
@@ -255,6 +255,7 @@ var Modal = Component(
 			});
 		`),
 	),
+	JSAction{},
 	PropsDef{
 		// 主要參數
 		"title":               "",                // 對話框標題

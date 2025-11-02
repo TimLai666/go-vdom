@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -59,9 +60,14 @@ var Checkbox = Component(
 					"style": `
 						position: absolute;
 						opacity: 0;
-						height: 0;
-						width: 0;
-								display: none;
+						height: 1px;
+						width: 1px;
+						margin: -1px;
+						padding: 0;
+						border: 0;
+						overflow: hidden;
+						clip: rect(0 0 0 0);
+						white-space: nowrap;
 					`,
 				},
 			),
@@ -84,7 +90,10 @@ var Checkbox = Component(
 				Props{
 					"class": "checkbox-checkmark",
 					"style": `
-						display: none;
+						/* visually hidden when not active, but remains in layout for accessibility/interaction */
+						visibility: hidden;
+						opacity: 0;
+						transition: opacity 150ms ease-in-out, visibility 150ms step-end;
 						width: calc({{checkboxSize}} / 2 - 1px);
 						height: calc({{checkboxSize}} / 2 + 1px);
 						border: solid white;
@@ -96,7 +105,8 @@ var Checkbox = Component(
 			Span(
 				Props{"style": `
 						font-size: {{fontSize}};
-						color: #374151;						display: ${'{{label}}'.trim() ? 'inline' : 'none'};
+						color: #374151;
+						display: ${'{{label}}'.trim() ? 'inline' : 'none'};
 					`,
 				},
 				"{{label}}",
@@ -114,31 +124,37 @@ var Checkbox = Component(
 			},
 			"{{helpText}}",
 		),
-		Script(`
-			document.addEventListener('DOMContentLoaded', function() {				const boxId = '{{id}}';
+	),
+	// onDOMReady: 初始化單一 Checkbox 的互動行為（保持原先邏輯）
+	jsdsl.Fn(nil, JSAction{Code: `try {
+				const boxId = '{{id}}';
 				const input = document.getElementById(boxId);
 				if (!input) return;
 				const box = input.nextElementSibling;
 				const checkmark = box.nextElementSibling;
-				
+
 				function updateCheckboxState() {
 					// 確保勾選和禁用狀態正確設置
 					const disabled = '{{disabled}}' === 'true';
 					const checked = '{{checked}}' === 'true';
-					
+
 					input.disabled = disabled;
 					input.checked = checked;
-					
+
 					if (checked) {
 						box.style.borderColor = '{{color}}';
 						box.style.background = '{{color}}';
-						checkmark.style.display = 'block';
+						/* show checkmark by making it visible and opaque */
+						checkmark.style.visibility = 'visible';
+						checkmark.style.opacity = '1';
 					} else {
 						box.style.borderColor = '#d1d5db';
 						box.style.background = 'white';
-						checkmark.style.display = 'none';
+						/* hide checkmark visually but keep it in layout for accessibility */
+						checkmark.style.opacity = '0';
+						checkmark.style.visibility = 'hidden';
 					}
-					
+
 					if (disabled) {
 						box.style.borderColor = '#e5e7eb';
 						box.style.background = '#f9fafb';
@@ -150,37 +166,37 @@ var Checkbox = Component(
 						box.style.cursor = 'pointer';
 					}
 				}
-				
+
 				// 初始化狀態
 				updateCheckboxState();
-				
+
 				// 切換狀態時更新
 				input.addEventListener('change', updateCheckboxState);
-				
+
 				// Focus 效果
 				input.addEventListener('focus', function() {
 					if (!this.disabled) {
 						box.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
 					}
 				});
-				
+
 				input.addEventListener('blur', function() {
 					box.style.boxShadow = 'none';
 				});
-				
+
 				// 觸發自定義事件
 				input.addEventListener('change', function() {
 					this.dispatchEvent(new CustomEvent('checkbox:change', {
-						detail: { 
+						detail: {
 							id: '{{id}}',
 							checked: this.checked,
 							value: this.value
 						}
 					}));
 				});
-			});
-		`),
-	),
+			} catch (err) {
+				console.error('Checkbox init error for id={{id}}', err);
+			}`}),
 	PropsDef{
 		// 主要屬性
 		"id":            "",        // 勾選框ID
@@ -255,13 +271,14 @@ var CheckboxGroup = Component(
 		),
 		Div(
 			Props{
+				"id":        "checkbox-group-{{id}}",
+				"data-name": "{{name}}",
 				"style": `
 					display: flex;
 					flex-direction: {{flexDirection}};
 					gap: {{gap}};
 				`,
 			},
-			"{{checkboxItems}}",
 		),
 		Div(
 			Props{"style": `
@@ -274,8 +291,133 @@ var CheckboxGroup = Component(
 			"{{helpText}}",
 		),
 	),
+	// onDOMReady: 初始化 CheckboxGroup（由原先的 onmount 移入，使用 jsdsl.Fn 以確保是函數表達式）
+	jsdsl.Fn(nil, JSAction{Code: `try {
+					const rawId = '{{id}}';
+					const rawName = '{{name}}';
+					let container = null;
+					// 優先使用明確提供的 id（checkbox-group-<id>）
+					if (rawId && rawId.trim()) {
+						container = document.getElementById('checkbox-group-' + rawId);
+					}
+
+					// 如果沒有 id，使用 name（如果提供），並允許透過 data-name 或 class 選取
+					if (!container && rawName && rawName.trim()) {
+						container = document.getElementById('checkbox-group-' + rawName) ||
+									document.querySelector('[data-name=\"' + rawName + '\"]') ||
+									document.querySelector('.checkbox-group-options-' + rawName);
+					}
+
+					if (!container) return;
+
+					// 解析 options / values
+					const rawOptions = '{{options}}';
+					const rawValues = '{{values}}';
+					const options = rawOptions ? rawOptions.split(',').map(s=>s.trim()).filter(Boolean) : [];
+					const values = rawValues ? rawValues.split(',').map(s=>s.trim()).filter(Boolean) : [];
+					const required = '{{required}}' === 'true';
+					const disabled = '{{disabled}}' === 'true';
+					const color = '{{color}}';
+					const colorRgb = '{{colorRgb}}';
+
+					// 清空舊內容（保證 id 可重複使用或重新渲染）
+					container.innerHTML = '';
+
+					options.forEach(function(opt, idx){
+						const val = opt;
+						const safeName = (rawName && rawName.trim()) ? rawName : (rawId && rawId.trim() ? rawId : 'checkboxgroup');
+						const id = 'checkbox-' + safeName + '-' + idx;
+
+						// label 容器
+						const label = document.createElement('label');
+						label.className = 'checkbox-label';
+						label.style.cssText = 'display:flex; align-items:center; cursor:pointer; user-select:none; gap:0.5rem;';
+
+						// 原生 input（視覺隱藏但仍可聚焦與互動）
+						const input = document.createElement('input');
+						input.type = 'checkbox';
+						input.id = id;
+						input.name = safeName;
+						input.value = val;
+						input.required = required;
+						input.disabled = disabled;
+						if (values.indexOf(val) !== -1) {
+							input.checked = true;
+						}
+						input.style.cssText = 'position:absolute; opacity:0; height:1px; width:1px; margin:-1px; padding:0; border:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;';
+
+						// 裝飾性方塊
+						const box = document.createElement('span');
+						box.className = 'checkbox-box';
+						box.style.cssText = 'display:inline-flex; align-items:center; justify-content:center; width: {{checkboxSize}}; height: {{checkboxSize}}; border-radius: {{borderRadius}}; border: 2px solid #d1d5db; margin-right: 0.5rem; transition: all 0.2s ease; background: white;';
+
+						// 勾選符號
+						const checkmark = document.createElement('span');
+						checkmark.className = 'checkbox-checkmark';
+						checkmark.style.cssText = 'visibility:hidden; opacity:0; transition: opacity 150ms ease-in-out, visibility 150ms step-end; width: calc({{checkboxSize}} / 2 - 1px); height: calc({{checkboxSize}} / 2 + 1px); border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-2px, -2px);';
+
+						// 文本
+						const text = document.createElement('span');
+						text.className = 'checkbox-label-text';
+						text.textContent = opt;
+						text.style.cssText = 'font-size: {{fontSize}}; color: #374151;';
+
+						// 組裝節點順序： input（隱藏） -> 裝飾 box (內含 checkmark) -> 文本
+						label.appendChild(input);
+						label.appendChild(box);
+						box.appendChild(checkmark);
+						label.appendChild(text);
+						container.appendChild(label);
+
+						// 更新 UI 狀態的函數
+						function updateState() {
+							if (input.checked) {
+								box.style.borderColor = color;
+								box.style.background = color;
+								checkmark.style.visibility = 'visible';
+								checkmark.style.opacity = '1';
+							} else {
+								box.style.borderColor = '#d1d5db';
+								box.style.background = 'white';
+								checkmark.style.opacity = '0';
+								checkmark.style.visibility = 'hidden';
+							}
+							if (input.disabled) {
+								label.style.cursor = 'not-allowed';
+							} else {
+								label.style.cursor = 'pointer';
+							}
+						}
+
+						// 綁定事件
+						input.addEventListener('change', function() {
+							updateState();
+							// 發出群組事件（包含目前所有被選中的值）
+							const selected = Array.from(container.querySelectorAll('input[type=\"checkbox\"]:checked')).map(i=>i.value);
+							container.dispatchEvent(new CustomEvent('checkbox-group:change', {
+								detail: { name: safeName, values: selected },
+								bubbles: true
+							}));
+						});
+
+						input.addEventListener('focus', function() {
+							if (!input.disabled) {
+								box.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
+							}
+						});
+						input.addEventListener('blur', function() {
+							box.style.boxShadow = 'none';
+						});
+
+						// 初始化狀態
+						updateState();
+					});
+				} catch (err) {
+					console.error('CheckboxGroup init error for ' + (rawName || rawId), err);
+				}`}),
 	PropsDef{
 		// 主要屬性
+		"id":        "",         // 群組 ID（可選，用於明確指定容器）
 		"name":      "",         // 勾選框組名稱
 		"label":     "",         // 標籤文字
 		"options":   "",         // 選項清單，逗號分隔

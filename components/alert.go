@@ -96,21 +96,22 @@ var Alert = Component(
 			},
 			"×",
 		),
-		Script(`document.addEventListener('DOMContentLoaded', function() {
+	),
+	JSAction{Code: `
 			const id = '{{id}}';
 			const alert = document.getElementById('alert-' + id);
 			const closeBtn = document.getElementById('close-' + id);
-			
+
 			if (closeBtn && alert) {
 				// 關閉按鈕互動效果
 				closeBtn.addEventListener('mouseenter', function() {
 					this.style.opacity = '1';
 				});
-				
+
 				closeBtn.addEventListener('mouseleave', function() {
 					this.style.opacity = '0.7';
 				});
-				
+
 				// 關閉動畫效果
 				closeBtn.addEventListener('click', function() {
 					alert.style.opacity = '0';
@@ -121,21 +122,19 @@ var Alert = Component(
 					}, 200);
 				});
 			}
-			
+
 			// 初始化動畫
 			if (alert) {
 				alert.style.transition = 'all 0.2s ease-out';
 				alert.style.opacity = '0';
 				alert.style.transform = 'scale(0.95)';
-				
+
 				setTimeout(() => {
 					alert.style.opacity = '1';
 					alert.style.transform = 'scale(1)';
 				}, 50);
 			}
-		});
-	`),
-	),
+	`},
 	PropsDef{
 		// 主要參數
 		"id":          "1",     // 提示框ID，將自動生成

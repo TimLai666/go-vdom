@@ -193,16 +193,27 @@ func Menu(args ...any) VNode    { return tag("menu", args...) }
 // 腳本元素
 func Script(args ...any) VNode {
 	var content strings.Builder
+	props := make(Props)
+
 	for _, arg := range args {
 		switch v := arg.(type) {
+		case Props:
+			for k, val := range v {
+				props[k] = val
+			}
 		case string:
 			content.WriteString(v)
 		case JSAction:
 			content.WriteString(v.Code)
+		case VNode:
+			// If someone passes VNode(s) as script children, render them and append.
+			content.WriteString(Render(v))
 		}
 	}
+
 	return VNode{
 		Tag:     "script",
+		Props:   props,
 		Content: content.String(),
 	}
 }

@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -52,49 +53,6 @@ var Card = Component(
 				border-top: 3px solid {{accentColor}};
 				cursor: {{cursor}};
 			`,
-			"onmount": `
-				(() => {
-					const card = document.querySelector('.modern-card');
-					if (!card) return;
-					
-					const isHoverable = card.dataset.hoverable !== 'false';
-					const elevation = parseInt(card.dataset.elevation) || 2;
-					
-					if (isHoverable) {
-						card.addEventListener('mouseenter', () => {
-							const newElevation = Math.min(elevation + 2, 5);
-							card.style.transform = 'translateY(-2px)';
-							card.style.boxShadow = '0 ' + (newElevation * 2 + 4) + 'px ' + 
-								(newElevation * 4 + 16) + 'px rgba(0,0,0,' + 
-								(0.08 + newElevation * 0.01) + ')';
-						});
-						
-						card.addEventListener('mouseleave', () => {
-							card.style.transform = 'translateY(0)';
-							card.style.boxShadow = '0 {{shadowY}}px {{shadowBlur}}px rgba(0,0,0,{{shadowOpacity}})';
-						});
-						
-						card.addEventListener('click', () => {
-							card.dispatchEvent(new CustomEvent('card:click', {
-								detail: {
-									title: card.querySelector('h3')?.textContent,
-									content: card.querySelector('.card-content')?.textContent
-								},
-								bubbles: true
-							}));
-						});
-					}
-					
-					// 添加淡入動畫
-					card.style.opacity = '0';
-					card.style.transform = 'translateY(10px)';
-					
-					requestAnimationFrame(() => {
-						card.style.opacity = '1';
-						card.style.transform = 'translateY(0)';
-					});
-				})();
-			`,
 		},
 		Div(
 			Props{
@@ -134,6 +92,51 @@ var Card = Component(
 			"{{children}}",
 		),
 	),
+	jsdsl.Fn(nil, JSAction{Code: `
+		try {
+			const card = document.querySelector('.modern-card');
+			if (!card) return;
+
+			const isHoverable = card.dataset.hoverable !== 'false';
+			const elevation = parseInt(card.dataset.elevation) || 2;
+
+			if (isHoverable) {
+				card.addEventListener('mouseenter', () => {
+					const newElevation = Math.min(elevation + 2, 5);
+					card.style.transform = 'translateY(-2px)';
+					card.style.boxShadow = '0 ' + (newElevation * 2 + 4) + 'px ' +
+						(newElevation * 4 + 16) + 'px rgba(0,0,0,' +
+						(0.08 + newElevation * 0.01) + ')';
+				});
+
+				card.addEventListener('mouseleave', () => {
+					card.style.transform = 'translateY(0)';
+					card.style.boxShadow = '0 {{shadowY}}px {{shadowBlur}}px rgba(0,0,0,{{shadowOpacity}})';
+				});
+
+				card.addEventListener('click', () => {
+					card.dispatchEvent(new CustomEvent('card:click', {
+						detail: {
+							title: card.querySelector('h3')?.textContent,
+							content: card.querySelector('.card-content')?.textContent
+						},
+						bubbles: true
+					}));
+				});
+			}
+
+			// 添加淡入動畫
+			card.style.opacity = '0';
+			card.style.transform = 'translateY(10px)';
+
+			requestAnimationFrame(() => {
+				card.style.opacity = '1';
+				card.style.transform = 'translateY(0)';
+			});
+		} catch (err) {
+			console.error('Card init error', err);
+		}
+	`}),
 	PropsDef{
 		// 主要屬性
 		"title":        "",        // 卡片標題

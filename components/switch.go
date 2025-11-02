@@ -63,9 +63,14 @@ var Switch = Component(
 					"style": `
 						position: absolute;
 						opacity: 0;
-						height: 0;
-						width: 0;
-								display: none;
+						height: 1px;
+						width: 1px;
+						margin: -1px;
+						padding: 0;
+						border: 0;
+						overflow: hidden;
+						clip: rect(0 0 0 0);
+						white-space: nowrap;
 					`,
 				},
 			),
@@ -125,7 +130,7 @@ var Switch = Component(
 				const input = document.getElementById(id);
 				const track = input.nextElementSibling;
 				const thumb = track.nextElementSibling;
-				
+
 				function updateSwitchState() {
 					if (input.checked) {
 						track.style.backgroundColor = '{{onColor}}';
@@ -134,7 +139,7 @@ var Switch = Component(
 						track.style.backgroundColor = '{{offColor}}';
 						thumb.style.transform = 'translateX(0)';
 					}
-					
+
 					if (input.disabled) {
 						track.style.opacity = '0.6';
 						track.style.cursor = 'not-allowed';
@@ -145,36 +150,37 @@ var Switch = Component(
 						thumb.style.opacity = '1';
 					}
 				}
-				
+
 				// 初始化狀態
 				updateSwitchState();
-				
+
 				// 切換狀態時更新
 				input.addEventListener('change', updateSwitchState);
-				
+
 				// Focus 效果
 				input.addEventListener('focus', function() {
 					if (!this.disabled) {
 						track.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
 					}
 				});
-				
+
 				input.addEventListener('blur', function() {
 					track.style.boxShadow = 'none';
 				});
-				
+
 				// 觸發自定義事件
 				input.addEventListener('change', function() {
 					this.dispatchEvent(new CustomEvent('switch:change', {
-						detail: { 
+						detail: {
 							id: '{{id}}',
-							checked: this.checked 
+							checked: this.checked
 						}
 					}));
 				});
 			});
 		`),
 	),
+	JSAction{},
 	PropsDef{
 		// 主要屬性
 		"id":            "",        // 開關ID

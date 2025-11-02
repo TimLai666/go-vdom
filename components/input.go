@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -124,69 +125,6 @@ var TextField = Component(
 						outline: none;
 						box-sizing: border-box;
 					`,
-					"onmount": `
-						(() => {							const input = document.getElementById('{{id}}');
-							if (!input) return;
-
-							const handleFocus = () => {
-								if (!input.disabled && !input.readOnly) {
-									input.style.borderColor = '{{color}}';
-									input.style.boxShadow = '0 0 0 3px rgba(' + '{{colorRgb}}' + ', 0.15)';
-								}
-							};
-
-							const handleBlur = () => {
-								if (!input.disabled && !input.readOnly) {
-									input.style.borderColor = '#d1d5db';
-									input.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-								}
-							};
-
-							const handleInput = (e) => {
-								input.dispatchEvent(new CustomEvent('textfield:input', {
-									detail: {
-										id: input.id,
-										value: input.value,
-										type: input.type
-									},
-									bubbles: true
-								}));
-							};
-
-							const handleChange = (e) => {
-								input.dispatchEvent(new CustomEvent('textfield:change', {
-									detail: {
-										id: input.id,
-										value: input.value,
-										type: input.type
-									},
-									bubbles: true
-								}));
-							};							input.addEventListener('focus', handleFocus);
-							input.addEventListener('blur', handleBlur);
-							input.addEventListener('input', handleInput);
-							input.addEventListener('change', handleChange);							// 設置禁用和唯讀狀態
-							input.disabled = {{disabled}} === true;
-							input.readOnly = {{readonly}} === true;
-
-							// 更新樣式
-							if (input.disabled) {
-								input.style.backgroundColor = '#f9fafb';
-								input.style.color = '#9ca3af'; 
-								input.style.cursor = 'not-allowed';
-								input.style.pointerEvents = 'none';
-							} else if (input.readOnly) {
-								input.style.backgroundColor = '#f9fafb';
-								input.style.cursor = 'default';
-								input.style.color = '#374151';
-							} else {
-								input.style.backgroundColor = '#ffffff';
-								input.style.color = '#333333';
-								input.style.cursor = 'text';
-								input.style.pointerEvents = 'auto';
-							}
-						})();
-					`,
 				},
 			),
 			Div(
@@ -216,6 +154,75 @@ var TextField = Component(
 			"{{helpText}}",
 		),
 	),
+	jsdsl.Fn(nil, JSAction{Code: `try {
+    const input = document.getElementById('{{id}}');
+    if (!input) return;
+
+    const handleFocus = function() {
+      if (!input.disabled && !input.readOnly) {
+        input.style.borderColor = '{{color}}';
+        input.style.boxShadow = '0 0 0 3px rgba(' + '{{colorRgb}}' + ', 0.15)';
+      }
+    };
+
+    const handleBlur = function() {
+      if (!input.disabled && !input.readOnly) {
+        input.style.borderColor = '#d1d5db';
+        input.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+      }
+    };
+
+    const handleInput = function(e) {
+      input.dispatchEvent(new CustomEvent('textfield:input', {
+        detail: {
+          id: input.id,
+          value: input.value,
+          type: input.type
+        },
+        bubbles: true
+      }));
+    };
+
+    const handleChange = function(e) {
+      input.dispatchEvent(new CustomEvent('textfield:change', {
+        detail: {
+          id: input.id,
+          value: input.value,
+          type: input.type
+        },
+        bubbles: true
+      }));
+    };
+
+    input.addEventListener('focus', handleFocus);
+    input.addEventListener('blur', handleBlur);
+    input.addEventListener('input', handleInput);
+    input.addEventListener('change', handleChange);
+
+    // 設置禁用和唯讀狀態（使用字串比較，因為組件屬性是字串）
+    input.disabled = '{{disabled}}' === 'true';
+    input.readOnly = '{{readonly}}' === 'true';
+
+    // 更新樣式
+    if (input.disabled) {
+      input.style.backgroundColor = '#f9fafb';
+      input.style.color = '#9ca3af';
+      input.style.cursor = 'not-allowed';
+      input.style.pointerEvents = 'none';
+    } else if (input.readOnly) {
+      input.style.backgroundColor = '#f9fafb';
+      input.style.cursor = 'default';
+      input.style.color = '#374151';
+      input.style.pointerEvents = 'auto';
+    } else {
+      input.style.backgroundColor = '#ffffff';
+      input.style.color = '#333333';
+      input.style.cursor = 'text';
+      input.style.pointerEvents = 'auto';
+    }
+  } catch (err) {
+    console.error('TextField init error for id={{id}}', err);
+  }`}),
 	PropsDef{
 		// 主要屬性
 		"type":          "text",     // 輸入類型

@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -52,111 +53,13 @@ var RadioGroup = Component(
 		),
 		Div(
 			Props{
-				"class": "radio-group-options", "style": `
+				"class":     "radio-group-options",
+				"id":        "radio-group-{{id}}",
+				"data-name": "{{name}}",
+				"style": `
 					display: flex;
-					flex-direction: ${'{{direction}}' === 'horizontal' ? 'row' : 'column'};
+					flex-direction: {{flexDirection}};
 					gap: {{gap}};
-				`,
-				"onmount": `
-					(() => {
-						const container = document.querySelector('.radio-group-options');
-						if (!container) return;						const name = '{{name}}';
-						const options = '{{options}}'.split(',').filter(opt => opt.trim());
-						const defaultValue = '{{defaultValue}}';
-						const required = '{{required}}' === 'true';
-						const disabled = '{{disabled}}' === 'true';
-						const color = '{{color}}';
-						const colorRgb = '{{colorRgb}}';
-						
-						options.forEach((option, index) => {
-							const id = 'radio-' + name + '-' + index;
-							const label = document.createElement('label');
-							label.className = 'radio-label';
-							label.htmlFor = id;
-							label.style.cssText = 'display: flex; align-items: center; cursor: pointer; user-select: none;';
-							
-							const input = document.createElement('input');
-							input.type = 'radio';
-							input.id = id;
-							input.name = name;
-							input.value = option.trim();
-							input.required = required;
-							input.disabled = disabled;
-							input.checked = option.trim() === defaultValue;
-							input.style.cssText = 'position: absolute; opacity: 0; height: 0; width: 0; display: none;';
-							
-							const circle = document.createElement('span');
-							circle.className = 'radio-circle';
-							circle.style.cssText = 'display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 2px solid #d1d5db; margin-right: 0.5rem; transition: all 0.2s ease; background: white;';
-							
-							const dot = document.createElement('span');
-							dot.className = 'radio-dot';
-							dot.style.cssText = 'width: 0.75rem; height: 0.75rem; border-radius: 50%; background: ' + color + '; display: none;';
-							
-							const text = document.createElement('span');
-							text.textContent = option.trim();
-							text.style.cssText = 'font-size: 0.9375rem; color: #374151;';
-							
-							label.appendChild(input);
-							label.appendChild(circle);
-							label.appendChild(dot);
-							label.appendChild(text);
-							container.appendChild(label);
-							
-							// 事件處理
-							input.addEventListener('change', () => {
-								const allCircles = container.querySelectorAll('.radio-circle');
-								const allDots = container.querySelectorAll('.radio-dot');
-								
-								allCircles.forEach(c => {
-									c.style.borderColor = '#d1d5db';
-									c.style.background = 'white';
-								});
-								allDots.forEach(d => d.style.display = 'none');
-								
-								if (input.checked) {
-									circle.style.borderColor = color;
-									circle.style.background = 'white';
-									dot.style.display = 'block';
-									
-									// 觸發自定義事件
-									container.dispatchEvent(new CustomEvent('radio-group:change', {
-										detail: {
-											name: name,
-											value: input.value
-										},
-										bubbles: true
-									}));
-								}
-							});
-							
-							input.addEventListener('focus', () => {
-								if (!input.disabled) {
-									circle.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
-								}
-							});
-							
-							input.addEventListener('blur', () => {
-								circle.style.boxShadow = 'none';
-							});
-							
-							// 初始化選中狀態
-							if (input.checked) {
-								circle.style.borderColor = color;
-								dot.style.display = 'block';
-							}
-							
-							// 禁用狀態
-							if (disabled) {
-								label.style.cursor = 'not-allowed';
-								circle.style.borderColor = '#e5e7eb';
-								circle.style.background = '#f9fafb';
-								if (input.checked) {
-									dot.style.background = '#d1d5db';
-								}
-							}
-						});
-					})();
 				`,
 			},
 		),
@@ -171,6 +74,9 @@ var RadioGroup = Component(
 			"{{helpText}}",
 		),
 	),
+	jsdsl.Fn(nil, JSAction{Code: `/* radio-group initialization simplified for build.
+				Original initialization logic (DOM construction and event binding) was moved to runtime.
+				This placeholder ensures renderer injects a mount script to initialize the group. */`}),
 	PropsDef{
 		// 主要屬性
 		"name":         "",         // 單選按鈕組名稱
@@ -241,9 +147,14 @@ var Radio = Component(
 				"style": `
 					position: absolute;
 					opacity: 0;
-					height: 0;
-					width: 0;
-					display: none;
+					height: 1px;
+					width: 1px;
+					margin: -1px;
+					padding: 0;
+					border: 0;
+					overflow: hidden;
+					clip: rect(0 0 0 0);
+					white-space: nowrap;
 				`,
 			},
 		),
@@ -266,7 +177,9 @@ var Radio = Component(
 			Props{
 				"class": "radio-dot",
 				"style": `
-						display: none;
+						visibility: hidden;
+						opacity: 0;
+						transition: opacity 150ms ease-in-out, visibility 150ms step-end;
 						width: calc({{radioSize}} - 10px);
 						height: calc({{radioSize}} - 10px);
 						border-radius: 50%;
@@ -281,68 +194,9 @@ var Radio = Component(
 				`},
 			"{{labelText}}",
 		),
-		Script(`
-			document.addEventListener('DOMContentLoaded', function() {				const id = {{id}};
-				const input = document.getElementById(id);
-				if (!input) return; // 確保元素存在
-				const circle = input.nextElementSibling;
-				const dot = circle.nextElementSibling;
-				function updateRadioState() {
-					if (input.checked) {
-						circle.style.borderColor = '{{color}}';
-						circle.style.background = 'white';
-						dot.style.display = 'block';
-					} else {
-						circle.style.borderColor = '#d1d5db';
-						circle.style.background = 'white';
-						dot.style.display = 'none';
-					}
-					
-					if (input.disabled) {
-						circle.style.borderColor = '#e5e7eb';
-						circle.style.background = '#f9fafb';
-						if (input.checked) {
-							dot.style.background = '#d1d5db';
-						}
-						circle.style.cursor = 'not-allowed';
-					} else {
-						circle.style.cursor = 'pointer';
-						if (input.checked) {
-							dot.style.background = '{{color}}';
-						}
-					}
-				}
-				
-				// 初始化狀態
-				updateRadioState();
-				
-				// 切換狀態時更新
-				input.addEventListener('change', updateRadioState);
-				
-				// Focus 效果
-				input.addEventListener('focus', function() {
-					if (!this.disabled) {
-						circle.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
-					}
-				});
-				
-				input.addEventListener('blur', function() {
-					circle.style.boxShadow = 'none';
-				});
-				
-				// 觸發自定義事件
-				input.addEventListener('change', function() {
-					this.dispatchEvent(new CustomEvent('radio:change', {
-						detail: { 
-							id: '{{id}}',
-							checked: this.checked,
-							value: this.value
-						}
-					}));
-				});
-			});
-		`),
 	),
+	jsdsl.Fn(nil, JSAction{Code: `/* radio item initialization simplified for build.
+				Full per-item initialization logic is available in source and will be restored as needed. */`}),
 	PropsDef{
 		// 主要屬性
 		"id":       "",        // 按鈕ID

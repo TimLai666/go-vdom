@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -96,66 +97,6 @@ var Dropdown = Component(
 						background-size: 1rem;
 						padding-right: 2.5rem;
 					`,
-					"onmount": `
-						(() => {							const selectId = '{{id}}';
-							const select = document.getElementById(selectId);
-							if (!select) return;
-							
-							// 清除現有選項
-							while (select.firstChild) {
-								select.removeChild(select.firstChild);
-							}
-							
-							// 添加預設選項
-							const placeholder = document.createElement('option');
-							placeholder.value = '';
-							placeholder.textContent = '{{placeholder}}';
-							placeholder.disabled = true;
-							placeholder.selected = true;
-							select.appendChild(placeholder);
-							
-							// 解析選項
-							const options = '{{options}}'.split(',').filter(opt => opt.trim());
-							const defaultValue = '{{defaultValue}}';
-							// 創建選項
-							options.forEach(option => {
-								const opt = document.createElement('option');
-								opt.value = option.trim();
-								opt.textContent = option.trim();
-								if (option.trim() === defaultValue) {
-									opt.selected = true;
-								}
-								select.appendChild(opt);
-							});
-							
-							select.addEventListener('focus', () => {								select.style.borderColor = '{{color}}';
-								select.style.boxShadow = '0 0 0 3px rgba(' + '{{colorRgb}}' + ', 0.15)';
-							});
-							
-							select.addEventListener('blur', () => {
-								select.style.borderColor = '#d1d5db';
-								select.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-							});
-							
-							select.addEventListener('change', () => {
-								select.dispatchEvent(new CustomEvent('dropdown:change', {
-									detail: {
-										value: select.value,
-										id: select.id
-									},
-									bubbles: true
-								}));
-							});
-
-							// 設置初始狀態							const disabled = '{{disabled}}' === 'true';
-							if (disabled) {
-								select.disabled = true;
-								select.style.backgroundColor = '#f9fafb';
-								select.style.color = '#9ca3af';
-								select.style.cursor = 'not-allowed';
-							}
-						})();
-					`,
 				},
 				Option(
 					Props{
@@ -177,6 +118,67 @@ var Dropdown = Component(
 			),
 		),
 	),
+	jsdsl.Fn(nil, JSAction{Code: `try {
+    const selectId = '{{id}}';
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    // 清除現有選項
+    while (select.firstChild) {
+        select.removeChild(select.firstChild);
+    }
+
+    // 添加預設選項
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '{{placeholder}}';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    select.appendChild(placeholder);
+
+    // 解析選項
+    const options = '{{options}}'.split(',').filter(opt => opt.trim());
+    const defaultValue = '{{defaultValue}}';
+    // 創建選項
+    options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option.trim();
+        opt.textContent = option.trim();
+        if (option.trim() === defaultValue) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    });
+
+    select.addEventListener('focus', function() {
+        select.style.borderColor = '{{color}}';
+        select.style.boxShadow = '0 0 0 3px rgba(' + '{{colorRgb}}' + ', 0.15)';
+    });
+
+    select.addEventListener('blur', function() {
+        select.style.borderColor = '#d1d5db';
+        select.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+    });
+
+    select.addEventListener('change', function() {
+        select.dispatchEvent(new CustomEvent('dropdown:change', {
+            detail: {
+                value: select.value,
+                id: select.id
+            },
+            bubbles: true
+        }));
+    });
+
+    // 設置初狀態
+    const disabled = '{{disabled}}' === 'true';
+    if (disabled) {
+        select.disabled = true;
+        select.style.backgroundColor = '#f9fafb';
+        select.style.color = '#9ca3af';
+        select.style.cursor = 'not-allowed';
+    }
+} catch (err) { console.error('Dropdown init error for id={{id}}', err); }`}),
 	PropsDef{
 		// 主要屬性
 		"label":         "",

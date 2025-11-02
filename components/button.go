@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -85,12 +86,13 @@ var Btn = Component(
 				"{{iconRight}}",
 			),
 		),
-		Script(`document.addEventListener('DOMContentLoaded', function() {
-				const btn = document.getElementById('btn-{{id}}');
-						if (btn) {
+	),
+	jsdsl.Fn(nil, JSAction{Code: `try {
+					const btn = document.getElementById('btn-{{id}}');
+					if (!btn) return;
 					// 確保禁用狀態正確設置
 					btn.disabled = btn.getAttribute('disabled') === 'true';
-					
+
 					// 添加點擊波紋效果
 					btn.addEventListener('click', function(e) {
 						if (!this.disabled) {
@@ -99,7 +101,7 @@ var Btn = Component(
 							const size = Math.max(rect.width, rect.height);
 							const x = e.clientX - rect.left - size/2;
 							const y = e.clientY - rect.top - size/2;
-									ripple.style.cssText = 
+							ripple.style.cssText =
 								'position: absolute;' +
 								'left: ' + x + 'px;' +
 								'top: ' + y + 'px;' +
@@ -111,16 +113,18 @@ var Btn = Component(
 								'transform: scale(0);' +
 								'animation: ripple 0.6s linear;' +
 								'pointer-events: none;';
-							
+
 							this.appendChild(ripple);
-							
-							setTimeout(() => ripple.remove(), 600);
-									// 發出自定義點擊事件
+
+							setTimeout(function(){ ripple.remove(); }, 600);
+							// 發出自定義點擊事件
 							this.dispatchEvent(new CustomEvent('btn:click', {
 								detail: { id: '{{id}}' }
 							}));
 						}
-					});					// 添加懸停效果
+					});
+
+					// 添加懸停效果
 					btn.addEventListener('mouseenter', function() {
 						if (!this.disabled) {
 							this.style.transform = 'translateY(-1px)';
@@ -155,10 +159,9 @@ var Btn = Component(
 							this.style.boxShadow = '{{boxShadow}}';
 						}
 					});
-				}
-			});
-		`),
-	),
+				} catch (err) {
+					console.error('Btn init error for id={{id}}', err);
+				}`}),
 	PropsDef{ // 主要參數
 		"id":            "1",       // 按鈕ID，必須提供
 		"variant":       "filled",  // 按鈕樣式：filled, outlined, text
