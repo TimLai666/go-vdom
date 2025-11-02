@@ -1,5 +1,65 @@
 # 最近更新
 
+## 包重命名：vdom → dom
+
+### 變更內容
+
+**之前**：核心包名為 `vdom`，導入路徑為 `github.com/TimLai666/go-vdom/vdom`
+
+**現在**：核心包名改為 `dom`，導入路徑為 `github.com/TimLai666/go-vdom/dom`
+
+### 影響
+
+所有使用 go-vdom 的代碼需要更新導入語句：
+
+```go
+// 之前
+import . "github.com/TimLai666/go-vdom/vdom"
+
+// 現在
+import . "github.com/TimLai666/go-vdom/dom"
+```
+
+### 遷移步驟
+
+1. **查找替換導入語句**：
+
+   ```bash
+   # Linux/Mac
+   find . -name "*.go" -exec sed -i 's|github.com/TimLai666/go-vdom/vdom|github.com/TimLai666/go-vdom/dom|g' {} \;
+
+   # Windows PowerShell
+   Get-ChildItem -Recurse -Filter *.go | ForEach-Object {
+       (Get-Content $_.FullName) -replace 'github\.com/TimLai666/go-vdom/vdom', 'github.com/TimLai666/go-vdom/dom' | Set-Content $_.FullName
+   }
+   ```
+
+2. **更新代碼中的包引用**：
+
+   ```go
+   // 如果使用了完整包名引用（未使用 . 導入）
+   // 之前
+   vdom.VNode
+   vdom.Props
+
+   // 現在
+   dom.VNode
+   dom.Props
+   ```
+
+3. **重新編譯**：
+   ```bash
+   go build ./...
+   ```
+
+### 為什麼改名？
+
+- 更簡潔：`dom` 比 `vdom` 更短，導入更方便
+- 更直觀：這是一個 DOM 構建庫，名稱更能反映其用途
+- 避免混淆：減少"虛擬 DOM"這個術語帶來的概念負擔
+
+---
+
 ## Do/AsyncDo 參數注入改進
 
 ### 變更內容
@@ -105,6 +165,7 @@ Input(Props{
 新增測試文件 `test_param_injection.go`，用於驗證 Do/AsyncDo 可以使用任意參數名注入 event 對象。
 
 運行測試：
+
 ```bash
 go run test_param_injection.go
 ```

@@ -1,5 +1,5 @@
 // types.go
-package vdom
+package dom
 
 // Props 是一個用於存儲元素屬性的映射
 // 調整：Props 現在允許儲存多種型別（例如 string、JSAction、ServerHandlerRef 等）

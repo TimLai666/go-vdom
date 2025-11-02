@@ -66,7 +66,7 @@ import (
     "net/http"
 
     js "github.com/TimLai666/go-vdom/jsdsl"
-    . "github.com/TimLai666/go-vdom/vdom"
+    . "github.com/TimLai666/go-vdom/dom"
 )
 
 func main() {
@@ -108,8 +108,11 @@ go-vdom/
 ├── jsdsl/               # JavaScript DSL 生成器
 │   ├── jsdsl.go         # 核心 DSL 函數（Fn, AsyncFn, TryCatch 等）
 │   └── builder.go       # JSAction 建構器
-├── vdom/                # 核心虛擬 DOM 實現
-│   ├── vdom.go          # VNode、Props、渲染邏輯
+├── dom/                 # 核心 DOM 實現
+│   ├── types.go         # VNode、Props 類型定義
+│   ├── tags.go          # HTML 標籤函數
+│   ├── render.go        # 渲染邏輯
+│   ├── component.go     # 組件系統
 │   ├── template.go      # 模板序列化（JSON、Go template）
 │   └── template_test.go # 單元測試
 ├── runtime/             # 運行時支持

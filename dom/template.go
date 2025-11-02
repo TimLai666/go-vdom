@@ -1,5 +1,5 @@
 // template.go
-package vdom
+package dom
 
 import (
 	"bytes"

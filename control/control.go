@@ -2,43 +2,43 @@
 package control
 
 import (
-	"github.com/TimLai666/go-vdom/vdom"
+	"github.com/TimLai666/go-vdom/dom"
 )
 
 // ThenBlock 表示If條件為真時要渲染的內容
 type ThenBlock struct {
-	Content []vdom.VNode
+	Content []dom.VNode
 }
 
 // ElseBlock 表示If條件為假時要渲染的內容
 type ElseBlock struct {
-	Content []vdom.VNode
+	Content []dom.VNode
 }
 
 // ElseIfBlock 表示If條件為假且符合ElseIf條件時要渲染的內容
 type ElseIfBlock struct {
 	Condition bool
-	Content   []vdom.VNode
+	Content   []dom.VNode
 }
 
 // Then 創建一個ThenBlock
-func Then(nodes ...vdom.VNode) ThenBlock {
+func Then(nodes ...dom.VNode) ThenBlock {
 	return ThenBlock{Content: nodes}
 }
 
 // Else 創建一個ElseBlock
-func Else(nodes ...vdom.VNode) ElseBlock {
+func Else(nodes ...dom.VNode) ElseBlock {
 	return ElseBlock{Content: nodes}
 }
 
 // ElseIf 創建一個 ElseIfBlock
-func ElseIf(condition bool, nodes ...vdom.VNode) ElseIfBlock {
+func ElseIf(condition bool, nodes ...dom.VNode) ElseIfBlock {
 	return ElseIfBlock{Condition: condition, Content: nodes}
 }
 
 // If 條件渲染
 // 支援 If(condition, Then(...), ElseIf(cond, ...), ..., Else(...))
-func If(condition bool, thenBlock ThenBlock, elseIfOrElse ...any) []vdom.VNode {
+func If(condition bool, thenBlock ThenBlock, elseIfOrElse ...any) []dom.VNode {
 	if condition {
 		return thenBlock.Content
 	}
@@ -52,17 +52,17 @@ func If(condition bool, thenBlock ThenBlock, elseIfOrElse ...any) []vdom.VNode {
 			return b.Content
 		}
 	}
-	return []vdom.VNode{}
+	return []dom.VNode{}
 }
 
 // Repeat 重複渲染
 // 重複指定次數的渲染
-func Repeat(count int, renderFunc func(index int) vdom.VNode) []vdom.VNode {
+func Repeat(count int, renderFunc func(index int) dom.VNode) []dom.VNode {
 	if count <= 0 {
-		return []vdom.VNode{}
+		return []dom.VNode{}
 	}
 
-	result := make([]vdom.VNode, count)
+	result := make([]dom.VNode, count)
 	for i := 0; i < count; i++ {
 		result[i] = renderFunc(i)
 	}
@@ -71,8 +71,8 @@ func Repeat(count int, renderFunc func(index int) vdom.VNode) []vdom.VNode {
 
 // ForEach 遍歷渲染
 // 對數據集合中的每一項應用渲染函數
-func ForEach[T any](items []T, renderFunc func(item T, index int) vdom.VNode) []vdom.VNode {
-	result := make([]vdom.VNode, len(items))
+func ForEach[T any](items []T, renderFunc func(item T, index int) dom.VNode) []dom.VNode {
+	result := make([]dom.VNode, len(items))
 	for i, item := range items {
 		result[i] = renderFunc(item, i)
 	}
@@ -90,12 +90,12 @@ func ForEach[T any](items []T, renderFunc func(item T, index int) vdom.VNode) []
 //	For(0, 10, 1, func(i int) VNode { return Div(fmt.Sprintf("項目 %d", i)) })  // 0-9
 //	For(10, 0, -1, func(i int) VNode { return Div(fmt.Sprintf("項目 %d", i)) }) // 10-1 倒序
 //	For(0, 100, 10, func(i int) VNode { return Div(fmt.Sprintf("項目 %d", i)) }) // 0, 10, 20, ..., 90
-func For(start, end, step int, renderFunc func(i int) vdom.VNode) []vdom.VNode {
+func For(start, end, step int, renderFunc func(i int) dom.VNode) []dom.VNode {
 	if step == 0 {
-		return []vdom.VNode{}
+		return []dom.VNode{}
 	}
 
-	var result []vdom.VNode
+	var result []dom.VNode
 
 	if step > 0 {
 		// 正向循環
@@ -114,8 +114,8 @@ func For(start, end, step int, renderFunc func(i int) vdom.VNode) []vdom.VNode {
 
 // Map 映射渲染
 // 與 For 類似，但更強調數據轉換
-func Map[T any, U any](items []T, mapFunc func(item T, index int) U, renderFunc func(mappedItem U, index int) vdom.VNode) []vdom.VNode {
-	result := make([]vdom.VNode, len(items))
+func Map[T any, U any](items []T, mapFunc func(item T, index int) U, renderFunc func(mappedItem U, index int) dom.VNode) []dom.VNode {
+	result := make([]dom.VNode, len(items))
 	for i, item := range items {
 		mappedItem := mapFunc(item, i)
 		result[i] = renderFunc(mappedItem, i)
@@ -127,10 +127,10 @@ func Map[T any, U any](items []T, mapFunc func(item T, index int) U, renderFunc 
 // 類似於 switch-case 語句的條件渲染
 type Case struct {
 	Condition bool
-	Content   []vdom.VNode
+	Content   []dom.VNode
 }
 
-func Switch(cases []Case, defaultContent []vdom.VNode) []vdom.VNode {
+func Switch(cases []Case, defaultContent []dom.VNode) []dom.VNode {
 	for _, c := range cases {
 		if c.Condition {
 			return c.Content
@@ -142,12 +142,12 @@ func Switch(cases []Case, defaultContent []vdom.VNode) []vdom.VNode {
 // 帶有鍵值的節點，用於提高列表渲染性能
 type KeyedNode struct {
 	Key  string
-	Node vdom.VNode
+	Node dom.VNode
 }
 
 // KeyedForEach 帶鍵值的循環渲染
 // 為列表中的每個項目創建帶有唯一鍵的節點
-func KeyedForEach[T any](items []T, keyFunc func(item T, index int) string, renderFunc func(item T, index int) vdom.VNode) []KeyedNode {
+func KeyedForEach[T any](items []T, keyFunc func(item T, index int) string, renderFunc func(item T, index int) dom.VNode) []KeyedNode {
 	result := make([]KeyedNode, len(items))
 	for i, item := range items {
 		key := keyFunc(item, i)
@@ -160,8 +160,8 @@ func KeyedForEach[T any](items []T, keyFunc func(item T, index int) string, rend
 }
 
 // ToNodes 將 KeyedNode 轉換為普通的 VNode 數組
-func ToNodes(keyedNodes []KeyedNode) []vdom.VNode {
-	result := make([]vdom.VNode, len(keyedNodes))
+func ToNodes(keyedNodes []KeyedNode) []dom.VNode {
+	result := make([]dom.VNode, len(keyedNodes))
 	for i, kn := range keyedNodes {
 		result[i] = kn.Node
 	}

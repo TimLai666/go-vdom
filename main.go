@@ -9,7 +9,7 @@ import (
 	comp "github.com/TimLai666/go-vdom/components"
 	control "github.com/TimLai666/go-vdom/control"
 	js "github.com/TimLai666/go-vdom/jsdsl"
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // 定義一個簡單的數據結構用於 API 響應

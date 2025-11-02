@@ -1,5 +1,5 @@
 // render.go
-package vdom
+package dom
 
 import (
 	"fmt"

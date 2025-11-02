@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/TimLai666/go-vdom/control"
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 func main() {

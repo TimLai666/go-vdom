@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"strings"
 
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // variable 代表一個 JS 變數，可以呼叫常用屬性與方法

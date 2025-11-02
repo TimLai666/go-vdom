@@ -1,4 +1,4 @@
-# Go VDOM JavaScript DSL API Reference
+# Go DOM JavaScript DSL API Reference
 
 完整的 JavaScript DSL API 參考文檔，包含所有函數、類型和使用示例。
 
@@ -20,12 +20,14 @@
 創建一個同步 JavaScript 函數。
 
 **參數：**
+
 - `params`: 函數參數列表，如不需要參數可傳入 `nil`
 - `actions`: 函數體內的動作序列
 
 **返回：** `JSAction`
 
 **示例：**
+
 ```go
 // 無參數函數
 js.Fn(nil,
@@ -40,15 +42,16 @@ js.Fn([]string{"event"},
 ```
 
 **生成的 JavaScript：**
+
 ```javascript
 () => {
-  console.log('Hello World');
-}
+  console.log("Hello World");
+};
 
 (event) => {
   event.preventDefault();
-  console.log('Button clicked');
-}
+  console.log("Button clicked");
+};
 ```
 
 ---
@@ -58,12 +61,14 @@ js.Fn([]string{"event"},
 創建一個異步 JavaScript 函數，支持 `await` 語法。
 
 **參數：**
+
 - `params`: 函數參數列表，如不需要參數可傳入 `nil`
 - `actions`: 函數體內的動作序列（可包含 `await` 語句）
 
 **返回：** `JSAction`
 
 **示例：**
+
 ```go
 // 異步 API 調用
 js.AsyncFn(nil,
@@ -80,17 +85,18 @@ js.AsyncFn([]string{"url"},
 ```
 
 **生成的 JavaScript：**
+
 ```javascript
 async () => {
-  const response = await fetch('/api/data');
+  const response = await fetch("/api/data");
   const data = await response.json();
   console.log(data);
-}
+};
 
 async (url) => {
   const response = await fetch(url);
   return await response.json();
-}
+};
 ```
 
 ---
@@ -100,12 +106,14 @@ async (url) => {
 調用一個函數。
 
 **參數：**
+
 - `fnExpr`: 函數表達式（可以是 `string` 或 `JSAction`）
 - `args`: 函數參數
 
 **返回：** `JSAction`
 
 **示例：**
+
 ```go
 js.Call("myFunction", "'arg1'", "123")
 js.Call("window.alert", "'Hello'")
@@ -118,6 +126,7 @@ js.Call("window.alert", "'Hello'")
 調用對象的方法。
 
 **參數：**
+
 - `objExpr`: 對象表達式
 - `methodName`: 方法名稱
 - `args`: 方法參數
@@ -125,6 +134,7 @@ js.Call("window.alert", "'Hello'")
 **返回：** `JSAction`
 
 **示例：**
+
 ```go
 js.CallMethod("document", "getElementById", "'myId'")
 js.CallMethod("console", "log", "'message'", "data")
@@ -139,11 +149,13 @@ js.CallMethod("console", "log", "'message'", "data")
 通過 CSS 選擇器獲取單個元素。
 
 **參數：**
+
 - `selector`: CSS 選擇器字符串
 
 **返回：** `Elem` 對象
 
 **示例：**
+
 ```go
 element := js.El("#myButton")
 element.SetText("'Click me'")
@@ -157,11 +169,13 @@ element.AddClass("'active'")
 通過 CSS 選擇器獲取多個元素。
 
 **參數：**
+
 - `selector`: CSS 選擇器字符串
 
 **返回：** `ElemList` 對象
 
 **示例：**
+
 ```go
 elements := js.Els(".item")
 js.QueryEach(elements, func(el js.Elem) JSAction {
@@ -176,14 +190,17 @@ js.QueryEach(elements, func(el js.Elem) JSAction {
 動態創建 DOM 元素。
 
 **參數：**
+
 - `tagName`: HTML 標籤名稱
 - `varName`: 可選的變數名稱
 
-**返回：** 
+**返回：**
+
 - `Elem`: 元素對象
 - `JSAction`: 創建元素的動作
 
 **示例：**
+
 ```go
 div, createAction := js.CreateEl("div", "myDiv")
 js.NewJSActionBuilder().
@@ -264,11 +281,13 @@ js.Const("content", html)
 在 DOM 加載完成後執行代碼。
 
 **參數：**
+
 - `actions`: 要執行的動作序列
 
 **返回：** `JSAction`
 
 **示例：**
+
 ```go
 js.DomReady(
     js.Log("'DOM is ready'"),
@@ -277,12 +296,12 @@ js.DomReady(
 ```
 
 **生成的 JavaScript：**
+
 ```javascript
-document.addEventListener("DOMContentLoaded",
-  () => {
-    console.log('DOM is ready');
-    document.querySelector('#app').innerText = 'Application loaded';
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM is ready");
+  document.querySelector("#app").innerText = "Application loaded";
+});
 ```
 
 ---
@@ -294,6 +313,7 @@ document.addEventListener("DOMContentLoaded",
 為元素添加點擊事件監聽器。
 
 **示例：**
+
 ```go
 js.El("#button").OnClick(
     js.Alert("'Button clicked!'"),
@@ -309,6 +329,7 @@ js.El("#button").OnClick(
 生成一個自動執行的異步函數，包含 try/catch/finally 邏輯。
 
 **參數：**
+
 - `tryActions`: try 區塊中執行的動作列表
 - `catchActions`: catch 區塊中執行的動作列表（可選，錯誤對象為 `e`）
 - `finallyActions`: finally 區塊中執行的動作列表（可選）
@@ -316,12 +337,14 @@ js.El("#button").OnClick(
 **注意：** `catchActions` 和 `finallyActions` 至少需要提供一個。
 
 **特點：**
+
 - ✅ 自動創建 async 函數包裝，支持 `await` 語法
 - ✅ 立即執行該函數
 - ✅ 接受動作列表，自動處理語句格式
 - ✅ 錯誤對象自動命名為 `e`
 
 **示例：**
+
 ```go
 // 外層使用 AsyncFn，內部使用 TryCatch
 js.AsyncFn(nil,
@@ -349,27 +372,29 @@ js.AsyncFn(nil,
 ```
 
 **生成的 JavaScript：**
+
 ```javascript
 async () => {
-  console.log('開始操作...');
+  console.log("開始操作...");
   (async () => {
     try {
-      const response = await fetch('/api/data');
-      console.log('收到響應');
-      if (!response.ok) throw new Error('請求失敗');
+      const response = await fetch("/api/data");
+      console.log("收到響應");
+      if (!response.ok) throw new Error("請求失敗");
       const data = await response.json();
-      console.log('數據:', data);
+      console.log("數據:", data);
     } catch (e) {
-      console.log('錯誤:', e.message);
-      alert('發生錯誤: ' + e.message);
+      console.log("錯誤:", e.message);
+      alert("發生錯誤: " + e.message);
     } finally {
-      console.log('請求完成');
+      console.log("請求完成");
     }
   })();
-}
+};
 ```
 
 **簡單示例（只有 try-catch）：**
+
 ```go
 js.TryCatch(
     []JSAction{
@@ -392,6 +417,7 @@ js.TryCatch(
 創建一個 fetch 請求。
 
 **示例：**
+
 ```go
 js.FetchRequest("/api/data",
     js.WithMethod("POST"),
@@ -517,11 +543,13 @@ js.SetInterval(
 遍歷任意 JavaScript 數組或可迭代對象（前端渲染）。
 
 **參數：**
+
 - `arrayExpr`: 數組表達式（如 `"myArray"`, `"[1,2,3]"`, `"data.items"`）
 - `itemVar`: 項目變數名稱（如 `"item"`, `"user"`）
 - `actions`: 對每個項目執行的動作
 
 **示例：**
+
 ```go
 // 遍歷數組並輸出每個項目
 js.ForEachJS("['Apple', 'Banana', 'Orange']", "fruit",
@@ -544,9 +572,10 @@ js.ForEachJS("colors", "color",
 ```
 
 **生成的 JavaScript：**
+
 ```javascript
-['Apple', 'Banana', 'Orange'].forEach(function(fruit) {
-  console.log('水果: ' + fruit);
+["Apple", "Banana", "Orange"].forEach(function (fruit) {
+  console.log("水果: " + fruit);
 });
 ```
 
@@ -557,12 +586,14 @@ js.ForEachJS("colors", "color",
 遍歷數組並提供索引。
 
 **參數：**
+
 - `arrayExpr`: 數組表達式
 - `itemVar`: 項目變數名稱
 - `indexVar`: 索引變數名稱
 - `actions`: 對每個項目執行的動作
 
 **示例：**
+
 ```go
 js.ForEachWithIndexJS("items", "item", "index",
     js.Log("'[' + index + '] = ' + item"),
@@ -577,9 +608,10 @@ js.ForEachWithIndexJS("names", "name", "i",
 ```
 
 **生成的 JavaScript：**
+
 ```javascript
-items.forEach(function(item, index) {
-  console.log('[' + index + '] = ' + item);
+items.forEach(function (item, index) {
+  console.log("[" + index + "] = " + item);
 });
 ```
 
@@ -590,6 +622,7 @@ items.forEach(function(item, index) {
 遍歷 DOM 元素列表（專門用於 DOM 操作）。
 
 **示例：**
+
 ```go
 js.ForEachElement("document.querySelectorAll('.item')", func(el js.Elem) JSAction {
     return el.AddClass("'highlighted'")
@@ -816,7 +849,7 @@ const (
 4. **列表渲染選擇**
    - 前端動態數據使用 `js.ForEach` 或 `js.ForEachWithIndex`
    - DOM 元素操作使用 `js.ForEachElement`
-   - 後端靜態數據使用 Go 的 `ForEach` 或 `ForEachWithIndex`（見 vdom 包）
+   - 後端靜態數據使用 Go 的 `ForEach` 或 `ForEachWithIndex`（見 dom 包）
 
 5. **代碼組織**
    - 複雜邏輯使用 `JSActionBuilder`

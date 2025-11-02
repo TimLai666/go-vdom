@@ -2,7 +2,7 @@ package components
 
 import (
 	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // Alert 現代化提示框組件

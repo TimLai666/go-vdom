@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 func main() {

@@ -1,5 +1,5 @@
 // tags.go
-package vdom
+package dom
 
 import (
 	"strings"

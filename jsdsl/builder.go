@@ -3,7 +3,7 @@ package jsdsl
 import (
 	"fmt"
 
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // JSActionBuilder 用於收集和處理 JSAction

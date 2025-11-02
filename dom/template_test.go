@@ -1,5 +1,5 @@
 // template_test.go
-package vdom
+package dom
 
 import (
 	"encoding/json"

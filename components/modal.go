@@ -2,7 +2,7 @@ package components
 
 import (
 	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // Modal 現代化對話框組件

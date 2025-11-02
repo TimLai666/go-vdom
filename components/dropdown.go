@@ -2,7 +2,7 @@ package components
 
 import (
 	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // Dropdown 下拉式選單組件

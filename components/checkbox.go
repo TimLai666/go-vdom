@@ -2,7 +2,7 @@ package components
 
 import (
 	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
-	. "github.com/TimLai666/go-vdom/vdom"
+	. "github.com/TimLai666/go-vdom/dom"
 )
 
 // Checkbox 勾選框組件
