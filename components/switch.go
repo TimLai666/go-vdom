@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -34,84 +35,94 @@ var Switch = Component(
 		Props{
 			"style": `
 				margin-bottom: 1rem;
-				display: flex;
-				align-items: center;
-				flex-direction: {{flexDirection}};
-				gap: 0.75rem;
 			`,
 		},
-		Label(
+		Div(
 			Props{
-				"for": "{{id}}",
 				"style": `
 					display: flex;
 					align-items: center;
-					cursor: pointer;
-					user-select: none;
-					order: {{labelOrder}};
-					{{disabledStyle}}
+					flex-direction: {{flexDirection}};
+					gap: 0.75rem;
 				`,
 			},
-			Input(
+			Label(
 				Props{
-					"id":       "{{id}}",
-					"name":     "{{name}}",
-					"type":     "checkbox",
-					"checked":  "{{checked}}",
-					"required": "{{required}}",
-					"disabled": "{{disabled}}",
+					"for": "{{id}}",
 					"style": `
-						position: absolute;
-						opacity: 0;
-						height: 1px;
-						width: 1px;
-						margin: -1px;
-						padding: 0;
-						border: 0;
-						overflow: hidden;
-						clip: rect(0 0 0 0);
-						white-space: nowrap;
-					`,
-				},
-			),
-			Span(
-				Props{"class": "switch-track",
-					"style": `
-						position: relative;
-						display: inline-block;
-						width: {{trackWidth}};
-						height: {{trackHeight}};
-						background-color: {{offColor}};
-						border-radius: {{trackHeight}};
-						transition: all 0.3s ease;
-					`,
-				},
-			),
-			Span(
-				Props{
-					"class": "switch-thumb",
-					"style": `
-						position: absolute;
-						left: 3px;
-						top: 3px;
-						width: calc({{trackHeight}} - 6px);
-						height: calc({{trackHeight}} - 6px);
-						background-color: white;
-						border-radius: 50%;
-						transition: all 0.3s ease;
-						box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-					`,
-				},
-			),
-			Span(
-				Props{
-					"style": `
-						margin-left: 0.5rem;
+						display: inline-flex;
+						align-items: center;
+						cursor: pointer;
+						user-select: none;
+						order: {{labelOrder}};
 						font-size: {{fontSize}};
 						color: #374151;
 					`,
 				},
-				"{{labelText}}",
+				"{{label}}",
+			),
+			Div(
+				Props{
+					"style": `
+						position: relative;
+						display: inline-flex;
+						align-items: center;
+					`,
+				},
+				Input(
+					Props{
+						"id":       "{{id}}",
+						"name":     "{{name}}",
+						"type":     "checkbox",
+						"checked":  "{{checked}}",
+						"required": "{{required}}",
+						"disabled": "{{disabled}}",
+						"style": `
+							position: absolute;
+							opacity: 0;
+							height: 1px;
+							width: 1px;
+							margin: -1px;
+							padding: 0;
+							border: 0;
+							overflow: hidden;
+							clip: rect(0 0 0 0);
+							white-space: nowrap;
+						`,
+					},
+				),
+				Span(
+					Props{
+						"class": "switch-track",
+						"style": `
+							display: inline-block;
+							width: {{trackWidth}};
+							height: {{trackHeight}};
+							background-color: {{offColor}};
+							border-radius: calc({{trackHeight}} / 2);
+							transition: all 0.2s ease;
+							position: relative;
+							cursor: pointer;
+						`,
+					},
+					Span(
+						Props{
+							"class": "switch-thumb",
+							"style": `
+								display: block;
+								width: calc({{trackHeight}} - 4px);
+								height: calc({{trackHeight}} - 4px);
+								background-color: white;
+								border-radius: 50%;
+								transition: all 0.2s ease;
+								position: absolute;
+								top: 2px;
+								left: 2px;
+								box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+							`,
+						},
+					),
+				),
 			),
 		),
 		Div(
@@ -120,92 +131,100 @@ var Switch = Component(
 					display: {{helpDisplay}};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
-					color: {{helpColor}};
+					color: #64748b;
 				`,
-			}, "{{helpMessage}}",
+			},
+			"{{helpText}}",
 		),
-		Script(`
-			document.addEventListener('DOMContentLoaded', function() {
-				const id = '{{id}}';
-				const input = document.getElementById(id);
-				const track = input.nextElementSibling;
-				const thumb = track.nextElementSibling;
-
-				function updateSwitchState() {
-					if (input.checked) {
-						track.style.backgroundColor = '{{onColor}}';
-						thumb.style.transform = 'translateX(calc({{trackWidth}} - {{trackHeight}}))';
-					} else {
-						track.style.backgroundColor = '{{offColor}}';
-						thumb.style.transform = 'translateX(0)';
-					}
-
-					if (input.disabled) {
-						track.style.opacity = '0.6';
-						track.style.cursor = 'not-allowed';
-						thumb.style.opacity = '0.6';
-					} else {
-						track.style.opacity = '1';
-						track.style.cursor = 'pointer';
-						thumb.style.opacity = '1';
-					}
-				}
-
-				// 初始化狀態
-				updateSwitchState();
-
-				// 切換狀態時更新
-				input.addEventListener('change', updateSwitchState);
-
-				// Focus 效果
-				input.addEventListener('focus', function() {
-					if (!this.disabled) {
-						track.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
-					}
-				});
-
-				input.addEventListener('blur', function() {
-					track.style.boxShadow = 'none';
-				});
-
-				// 觸發自定義事件
-				input.addEventListener('change', function() {
-					this.dispatchEvent(new CustomEvent('switch:change', {
-						detail: {
-							id: '{{id}}',
-							checked: this.checked
-						}
-					}));
-				});
-			});
-		`),
 	),
-	JSAction{},
-	PropsDef{
-		// 主要屬性
-		"id":            "",        // 開關ID
-		"name":          "",        // 開關名稱
-		"label":         "",        // 標籤文字
-		"checked":       "false",   // 是否開啟
-		"required":      "false",   // 是否必填
-		"disabled":      "false",   // 是否禁用
-		"size":          "md",      // 尺寸: sm, md, lg
-		"labelPosition": "right",   // 標籤位置: right, left
-		"onColor":       "#3b82f6", // 開啟時的顏色
-		"offColor":      "#d1d5db", // 關閉時的顏色
-		"helpText":      "",        // 幫助文字
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
+		const input = document.getElementById('{{id}}');
+		if (!input) return;
 
-		// 計算屬性
+		const track = input.nextElementSibling;
+		const thumb = track.querySelector('.switch-thumb');
+		if (!track || !thumb) return;
+
+		const onColor = '{{onColor}}';
+		const offColor = '{{offColor}}';
+		const trackWidth = '{{trackWidth}}';
+		const trackHeight = '{{trackHeight}}';
+		const colorRgb = '{{colorRgb}}';
+
+		function updateState() {
+			const checked = input.checked;
+			const disabled = input.disabled;
+
+			if (checked) {
+				track.style.backgroundColor = onColor;
+				thumb.style.transform = 'translateX(calc(' + trackWidth + ' - ' + trackHeight + '))';
+			} else {
+				track.style.backgroundColor = offColor;
+				thumb.style.transform = 'translateX(0)';
+			}
+
+			if (disabled) {
+				track.style.opacity = '0.6';
+				track.style.cursor = 'not-allowed';
+				thumb.style.opacity = '0.6';
+			} else {
+				track.style.opacity = '1';
+				track.style.cursor = 'pointer';
+				thumb.style.opacity = '1';
+			}
+		}
+
+		// 初始化
+		updateState();
+
+		// 點擊 track 切換狀態
+		track.addEventListener('click', function(e) {
+			e.preventDefault();
+			if (!input.disabled) {
+				input.checked = !input.checked;
+				updateState();
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		});
+
+		// 監聽 change 事件
+		input.addEventListener('change', function() {
+			updateState();
+			this.dispatchEvent(new CustomEvent('switch:change', {
+				detail: { id: '{{id}}', checked: this.checked },
+				bubbles: true
+			}));
+		});
+
+		// Focus 效果
+		input.addEventListener('focus', function() {
+			if (!this.disabled) {
+				track.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
+			}
+		});
+
+		input.addEventListener('blur', function() {
+			track.style.boxShadow = 'none';
+		});
+	`})),
+	PropsDef{
+		"id":            "",
+		"name":          "",
+		"label":         "",
+		"checked":       "false",
+		"required":      "false",
+		"disabled":      "false",
+		"size":          "md",
+		"labelPosition": "right",
+		"onColor":       "#3b82f6",
+		"offColor":      "#d1d5db",
+		"helpText":      "",
 		"trackWidth":    "2.75rem",
 		"trackHeight":   "1.5rem",
 		"fontSize":      "0.9375rem",
-		"helpDisplay":   "none",
-		"helpColor":     "#64748b",
-		"labelText":     "",
-		"helpMessage":   "",
 		"flexDirection": "row",
-		"labelOrder":    "0",
-		"disabledStyle": "",
+		"labelOrder":    "1",
+		"helpDisplay":   "none",
 		"colorRgb":      "59, 130, 246",
 	},
 )

@@ -1,6 +1,7 @@
 package components
 
 import (
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/vdom"
 )
 
@@ -146,7 +147,6 @@ var Modal = Component(
 							transition: color 0.15s;
 							margin: -0.5rem -0.5rem -0.5rem 0.5rem;
 							border-radius: 0.25rem;
-
 						`,
 						"aria-label": "關閉",
 					},
@@ -173,89 +173,81 @@ var Modal = Component(
 						justify-content: flex-end;
 						gap: 0.75rem;
 					`,
-				}, "{{footer}}",
+				},
+				"{{footer}}",
 			),
 		),
-		Script(`
-			document.addEventListener('DOMContentLoaded', function() {
-				const modal = document.querySelector('[style*="z-index: {{zIndex}}"]');
-				const overlay = modal.children[0];
-				const content = modal.children[1];
-				const closeBtn = content.querySelector('button[aria-label="關閉"]');
-
-				function closeModal() {
-					modal.style.display = 'none';
-					modal.dispatchEvent(new CustomEvent('modal:close'));
-				}
-
-				function handleKeydown(event) {
-					if (event.key === 'Escape' && '{{closeOnEsc}}' === 'true') {
-						closeModal();
-					}
-				}
-
-				// 關閉按鈕互動效果
-				if (closeBtn) {
-					closeBtn.addEventListener('mouseenter', function() {
-						this.style.color = '#334155';
-						this.style.background = '#f1f5f9';
-					});
-
-					closeBtn.addEventListener('mouseleave', function() {
-						this.style.color = '#64748b';
-						this.style.background = 'transparent';
-					});
-
-					closeBtn.addEventListener('click', closeModal);
-				}
-
-				// 點擊遮罩層關閉
-				if ('{{closeOnOverlayClick}}' === 'true') {
-					overlay.addEventListener('click', function(e) {
-						if (e.target === overlay) {
-							closeModal();
-						}
-					});
-				}
-
-				// ESC 鍵關閉
-				document.addEventListener('keydown', handleKeydown);
-
-				// 清理事件監聽器
-				modal.addEventListener('DOMNodeRemoved', function() {
-					document.removeEventListener('keydown', handleKeydown);
-				});
-
-				// 打開時的動畫效果
-				if ('{{open}}' === 'true') {
-					modal.style.display = 'block';
-
-					// 根據不同的動畫類型設置不同的初始狀態
-					switch('{{animation}}') {
-						case 'fade':
-							content.style.opacity = '0';
-							content.style.transform = 'translate(0, -20px)';
-							break;
-						case 'slide':
-							content.style.opacity = '0';
-							content.style.transform = 'translate(0, 40px)';
-							break;
-						case 'zoom':
-							content.style.opacity = '0';
-							content.style.transform = 'scale(0.95)';
-							break;
-					}
-
-					// 等待 DOM 更新後開始動畫
-					requestAnimationFrame(() => {
-						content.style.opacity = '1';
-						content.style.transform = 'none';
-					});
-				}
-			});
-		`),
 	),
-	JSAction{},
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
+const modal = document.querySelector('[style*="z-index: {{zIndex}}"]');
+const overlay = modal.children[0];
+const content = modal.children[1];
+const closeBtn = content.querySelector('button[aria-label="關閉"]');
+
+function closeModal() {
+	modal.style.display = 'none';
+	modal.dispatchEvent(new CustomEvent('modal:close'));
+}
+
+function handleKeydown(event) {
+	if (event.key === 'Escape' && '{{closeOnEsc}}' === 'true') {
+		closeModal();
+	}
+}
+
+if (closeBtn) {
+	closeBtn.addEventListener('mouseenter', function() {
+		this.style.color = '#334155';
+		this.style.background = '#f1f5f9';
+	});
+
+	closeBtn.addEventListener('mouseleave', function() {
+		this.style.color = '#64748b';
+		this.style.background = 'transparent';
+	});
+
+	closeBtn.addEventListener('click', closeModal);
+}
+
+if ('{{closeOnOverlayClick}}' === 'true') {
+	overlay.addEventListener('click', function(e) {
+		if (e.target === overlay) {
+			closeModal();
+		}
+	});
+}
+
+document.addEventListener('keydown', handleKeydown);
+
+modal.addEventListener('DOMNodeRemoved', function() {
+	document.removeEventListener('keydown', handleKeydown);
+});
+
+if ('{{open}}' === 'true') {
+	modal.style.display = 'block';
+
+	switch('{{animation}}') {
+		case 'fade':
+			content.style.opacity = '0';
+			content.style.transform = 'translate(0, -20px)';
+			break;
+		case 'slide':
+			content.style.opacity = '0';
+			content.style.transform = 'translate(0, 40px)';
+			break;
+		case 'zoom':
+			content.style.opacity = '0';
+			content.style.transform = 'scale(0.95)';
+			break;
+	}
+
+	requestAnimationFrame(() => {
+		content.style.opacity = '1';
+		content.style.transform = 'none';
+	});
+}
+	`})),
+	nil,
 	PropsDef{
 		// 主要參數
 		"title":               "",                // 對話框標題

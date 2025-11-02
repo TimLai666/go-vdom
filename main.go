@@ -28,7 +28,7 @@ func main() {
 			H1("{{title}}"),
 			Div("{{children}}"),
 		),
-		JSAction{},
+		nil,
 		PropsDef{"title": ""}, // 預設 props
 	)
 

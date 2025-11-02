@@ -87,7 +87,7 @@ var Btn = Component(
 			),
 		),
 	),
-	jsdsl.Fn(nil, JSAction{Code: `try {
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
 					const btn = document.getElementById('btn-{{id}}');
 					if (!btn) return;
 					// 確保禁用狀態正確設置
@@ -139,7 +139,6 @@ var Btn = Component(
 					btn.addEventListener('mouseleave', function() {
 						if (!this.disabled) {
 							this.style.transform = 'translateY(0)';
-							this.style.background = '{{background}}';
 							this.style.borderColor = '{{border}}'.split(' ')[2];
 							this.style.color = '{{textColor}}';
 							this.style.boxShadow = '{{boxShadow}}';
@@ -161,7 +160,7 @@ var Btn = Component(
 					});
 				} catch (err) {
 					console.error('Btn init error for id={{id}}', err);
-				}`}),
+				}`})),
 	PropsDef{ // 主要參數
 		"id":            "1",       // 按鈕ID，必須提供
 		"variant":       "filled",  // 按鈕樣式：filled, outlined, text

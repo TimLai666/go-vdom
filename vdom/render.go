@@ -23,7 +23,7 @@ func Render(v VNode) string {
 
 	// 收集 onDOMReady（如果有），但不要直接作為屬性輸出
 	var onDOMReady string
-	// 收集要注入到頁面的 handler registry 腳本片段（對應於 props 中的 JSAction 或命名 handler）
+	// 收集要注入到頁面的 handler 註冊片段（對應於 props 中的 JSAction 或命名 handler）
 	var injectedHandlers []string
 
 	for k, rawVal := range v.Props {
@@ -52,8 +52,8 @@ func Render(v VNode) string {
 				sb.WriteString(fmt.Sprintf(" data-gvd-handler=\"%s|%s\"", handlerID, eventName))
 				// 安全處理：避免內嵌 </script> 破壞文檔結構
 				safeCode := strings.ReplaceAll(t.Code, "</script>", "</scr\" + \"ipt>")
-				// 把 handler 註冊片段加入 injectedHandlers，等會會被注入為一段 script
-				reg := fmt.Sprintf("window.__gvd=window.__gvd||{};window.__gvd.handlers=window.__gvd.handlers||{};window.__gvd.handlers['%s']={fn:function(evt,el){%s},eventType:'%s'};", handlerID, safeCode, eventName)
+				// 把 handler 註冊片段加入 injectedHandlers（不在這裡重複初始化全域物件，由統一的 registry 腳本負責）
+				reg := fmt.Sprintf("window.__gvd.handlers['%s']={fn:function(evt,el){%s},eventType:'%s'};", handlerID, safeCode, eventName)
 				injectedHandlers = append(injectedHandlers, reg)
 			case string:
 				// 當作命名的全域函式參考（named handler），在 client 端 runtime 會解析並呼叫
@@ -131,9 +131,9 @@ func Render(v VNode) string {
 		if onDOMReady != "" {
 			// 以簡單方式避免原始 onDOMReady 中出現 "</script>" 導致 HTML 結構中斷
 			safeScript := strings.ReplaceAll(onDOMReady, "</script>", "</scr\" + \"ipt>")
-			// 建立包裹：嘗試將 safeScript 當作函數表達式賦值並呼叫；若不是函數則以原始腳本方式執行。
-			// 這樣可以支援由 jsdsl.Fn 產生的函數表達式 (e.g. "(...) => { ... }")，同時對於裸腳本也能執行。
-			onReadyWrapper := "(function(){function __gvd_call_onready(){try{var __gvd_onready = " + safeScript + "; if(typeof __gvd_onready === 'function'){ __gvd_onready(); return; }}catch(err){} try{ " + safeScript + " }catch(err2){ console.error('onDOMReady execution error', err2); }}; if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',__gvd_call_onready);}else{__gvd_call_onready();}})();"
+			// onDOMReady 應由 jsdsl.Fn 產生函數表達式，直接在 DOMContentLoaded 時呼叫
+			// 使用立即執行函數來確保只執行一次
+			onReadyWrapper := "(function(){var fn=" + safeScript + ";if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fn);}else{fn();}})();"
 			scripts = append(scripts, onReadyWrapper)
 		}
 

@@ -154,7 +154,7 @@ var TextField = Component(
 			"{{helpText}}",
 		),
 	),
-	jsdsl.Fn(nil, JSAction{Code: `try {
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
     const input = document.getElementById('{{id}}');
     if (!input) return;
 
@@ -220,9 +220,9 @@ var TextField = Component(
       input.style.cursor = 'text';
       input.style.pointerEvents = 'auto';
     }
-  } catch (err) {
-    console.error('TextField init error for id={{id}}', err);
-  }`}),
+  			} catch (err) {
+  				console.error('Input init error for id={{id}}', err);
+  			}`})),
 	PropsDef{
 		// 主要屬性
 		"type":          "text",     // 輸入類型

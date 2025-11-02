@@ -17,7 +17,6 @@ import (
 //   - checked: 是否選中，預設 "false"
 //   - required: 是否必填，預設 "false"
 //   - disabled: 是否禁用，預設 "false"
-//   - indeterminate: 是否為不確定狀態，預設 "false"
 //   - size: 尺寸，可選 "sm"、"md"、"lg"，預設 "md"
 //   - helpText: 幫助文字，預設為空
 //   - color: 主題色，預設現代藍 "#3b82f6"
@@ -34,7 +33,7 @@ var Checkbox = Component(
 	Div(
 		Props{
 			"style": `
-				margin-bottom: {{marginBottom}};
+				margin-bottom: 1rem;
 			`,
 		},
 		Label(
@@ -45,7 +44,6 @@ var Checkbox = Component(
 					align-items: center;
 					cursor: pointer;
 					user-select: none;
-					{{disabledStyle}}
 				`,
 			},
 			Input(
@@ -71,9 +69,10 @@ var Checkbox = Component(
 					`,
 				},
 			),
-			Span(Props{
-				"class": "checkbox-box",
-				"style": `
+			Span(
+				Props{
+					"class": "checkbox-box",
+					"style": `
 						display: inline-flex;
 						align-items: center;
 						justify-content: center;
@@ -85,143 +84,131 @@ var Checkbox = Component(
 						transition: all 0.2s ease;
 						background: white;
 					`,
-			}),
-			Span(
-				Props{
-					"class": "checkbox-checkmark",
-					"style": `
-						/* visually hidden when not active, but remains in layout for accessibility/interaction */
-						visibility: hidden;
-						opacity: 0;
-						transition: opacity 150ms ease-in-out, visibility 150ms step-end;
-						width: calc({{checkboxSize}} / 2 - 1px);
-						height: calc({{checkboxSize}} / 2 + 1px);
-						border: solid white;
-						border-width: 0 2px 2px 0;
-						transform: rotate(45deg) translate(-2px, -2px);
-					`,
 				},
+				Span(
+					Props{
+						"class": "checkbox-checkmark",
+						"style": `
+							visibility: hidden;
+							opacity: 0;
+							transition: opacity 150ms ease-in-out, visibility 150ms step-end;
+							width: calc({{checkboxSize}} / 2 - 1px);
+							height: calc({{checkboxSize}} / 2 + 1px);
+							border: solid white;
+							border-width: 0 2px 2px 0;
+							transform: rotate(45deg) translate(-2px, -2px);
+						`,
+					},
+				),
 			),
 			Span(
-				Props{"style": `
+				Props{
+					"style": `
 						font-size: {{fontSize}};
 						color: #374151;
-						display: ${'{{label}}'.trim() ? 'inline' : 'none'};
 					`,
 				},
 				"{{label}}",
 			),
 		),
 		Div(
-			Props{"style": `
-					display: ${{'{{helpText}}'.trim() ? 'block' : 'none'}};
+			Props{
+				"style": `
+					display: {{helpDisplay}};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
-					color: {{helpColor}};
-					margin-left: {{checkboxSize}};
+					color: #64748b;
 					margin-left: calc({{checkboxSize}} + 0.5rem);
 				`,
 			},
 			"{{helpText}}",
 		),
 	),
-	// onDOMReady: 初始化單一 Checkbox 的互動行為（保持原先邏輯）
-	jsdsl.Fn(nil, JSAction{Code: `try {
-				const boxId = '{{id}}';
-				const input = document.getElementById(boxId);
-				if (!input) return;
-				const box = input.nextElementSibling;
-				const checkmark = box.nextElementSibling;
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
+		const input = document.getElementById('{{id}}');
+		if (!input) return;
 
-				function updateCheckboxState() {
-					// 確保勾選和禁用狀態正確設置
-					const disabled = '{{disabled}}' === 'true';
-					const checked = '{{checked}}' === 'true';
+		const box = input.nextElementSibling;
+		const checkmark = box.querySelector('.checkbox-checkmark');
+		if (!box || !checkmark) return;
 
-					input.disabled = disabled;
-					input.checked = checked;
+		function updateState() {
+			const checked = input.checked;
+			const disabled = input.disabled;
 
-					if (checked) {
-						box.style.borderColor = '{{color}}';
-						box.style.background = '{{color}}';
-						/* show checkmark by making it visible and opaque */
-						checkmark.style.visibility = 'visible';
-						checkmark.style.opacity = '1';
-					} else {
-						box.style.borderColor = '#d1d5db';
-						box.style.background = 'white';
-						/* hide checkmark visually but keep it in layout for accessibility */
-						checkmark.style.opacity = '0';
-						checkmark.style.visibility = 'hidden';
-					}
+			if (checked) {
+				box.style.borderColor = '{{color}}';
+				box.style.background = '{{color}}';
+				checkmark.style.visibility = 'visible';
+				checkmark.style.opacity = '1';
+			} else {
+				box.style.borderColor = '#d1d5db';
+				box.style.background = 'white';
+				checkmark.style.visibility = 'hidden';
+				checkmark.style.opacity = '0';
+			}
 
-					if (disabled) {
-						box.style.borderColor = '#e5e7eb';
-						box.style.background = '#f9fafb';
-						if (checked) {
-							box.style.background = '#d1d5db';
-						}
-						box.style.cursor = 'not-allowed';
-					} else {
-						box.style.cursor = 'pointer';
-					}
+			if (disabled) {
+				box.style.borderColor = '#e5e7eb';
+				box.style.background = '#f9fafb';
+				box.style.cursor = 'not-allowed';
+				if (checked) {
+					box.style.background = '#d1d5db';
 				}
+			} else {
+				box.style.cursor = 'pointer';
+			}
+		}
 
-				// 初始化狀態
-				updateCheckboxState();
+		// 初始化狀態
+		updateState();
 
-				// 切換狀態時更新
-				input.addEventListener('change', updateCheckboxState);
+		// 點擊 box 時切換狀態
+		box.addEventListener('click', function(e) {
+			e.preventDefault();
+			if (!input.disabled) {
+				input.checked = !input.checked;
+				updateState();
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		});
 
-				// Focus 效果
-				input.addEventListener('focus', function() {
-					if (!this.disabled) {
-						box.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
-					}
-				});
+		// 監聽 input 的 change 事件
+		input.addEventListener('change', function() {
+			updateState();
+			this.dispatchEvent(new CustomEvent('checkbox:change', {
+				detail: { id: '{{id}}', checked: this.checked, value: this.value },
+				bubbles: true
+			}));
+		});
 
-				input.addEventListener('blur', function() {
-					box.style.boxShadow = 'none';
-				});
+		// Focus 效果
+		input.addEventListener('focus', function() {
+			if (!this.disabled) {
+				box.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
+			}
+		});
 
-				// 觸發自定義事件
-				input.addEventListener('change', function() {
-					this.dispatchEvent(new CustomEvent('checkbox:change', {
-						detail: {
-							id: '{{id}}',
-							checked: this.checked,
-							value: this.value
-						}
-					}));
-				});
-			} catch (err) {
-				console.error('Checkbox init error for id={{id}}', err);
-			}`}),
+		input.addEventListener('blur', function() {
+			box.style.boxShadow = 'none';
+		});
+	`})),
 	PropsDef{
-		// 主要屬性
-		"id":            "",        // 勾選框ID
-		"name":          "",        // 勾選框名稱
-		"value":         "",        // 勾選框值
-		"label":         "",        // 標籤文字
-		"checked":       "false",   // 是否選中
-		"required":      "false",   // 是否必填
-		"disabled":      "false",   // 是否禁用
-		"indeterminate": "false",   // 是否為不確定狀態 (暫未實作)
-		"size":          "md",      // 尺寸: sm, md, lg
-		"helpText":      "",        // 幫助文字
-		"color":         "#3b82f6", // 主題色
-
-		// 計算屬性
-		"checkboxSize":  "1.25rem",
-		"fontSize":      "0.9375rem",
-		"borderRadius":  "0.25rem",
-		"marginBottom":  "1rem",
-		"disabledStyle": "",
-		"helpDisplay":   "none",
-		"helpColor":     "#64748b",
-		"labelText":     "",
-		"helpMessage":   "",
-		"colorRgb":      "59, 130, 246",
+		"id":           "",
+		"name":         "",
+		"value":        "",
+		"label":        "",
+		"checked":      "false",
+		"required":     "false",
+		"disabled":     "false",
+		"size":         "md",
+		"helpText":     "",
+		"color":        "#3b82f6",
+		"checkboxSize": "1.25rem",
+		"fontSize":     "0.9375rem",
+		"borderRadius": "0.25rem",
+		"helpDisplay":  "none",
+		"colorRgb":     "59, 130, 246",
 	},
 )
 
@@ -230,6 +217,7 @@ var Checkbox = Component(
 // 提供一組相關的勾選框，適合多項選擇場景。
 //
 // 參數:
+//   - id: 群組 ID，預設自動生成
 //   - name: 勾選框組名稱，預設為空
 //   - label: 標籤文字，預設為空
 //   - options: 選項清單，以逗號分隔，如 "選項1,選項2,選項3"
@@ -239,7 +227,6 @@ var Checkbox = Component(
 //   - direction: 排列方向，可選 "horizontal"、"vertical"，預設 "vertical"
 //   - size: 尺寸，可選 "sm"、"md"、"lg"，預設 "md"
 //   - helpText: 幫助文字，預設為空
-//   - errorText: 錯誤文字，預設為空
 //   - color: 主題色，預設現代藍 "#3b82f6"
 //
 // 用法:
@@ -259,11 +246,12 @@ var CheckboxGroup = Component(
 			`,
 		},
 		Div(
-			Props{"style": `
-					display: ${'{{label}}'.trim() ? 'block' : 'none'};
+			Props{
+				"style": `
+					display: {{labelDisplay}};
 					margin-bottom: 0.75rem;
 					font-weight: 500;
-					font-size: {{labelSize}};
+					font-size: 0.9375rem;
 					color: #374151;
 				`,
 			},
@@ -276,169 +264,146 @@ var CheckboxGroup = Component(
 				"style": `
 					display: flex;
 					flex-direction: {{flexDirection}};
-					gap: {{gap}};
+					gap: 0.75rem;
 				`,
 			},
 		),
 		Div(
-			Props{"style": `
-					display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
+			Props{
+				"style": `
+					display: {{helpDisplay}};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
-					color: {{helpColor}};
+					color: #64748b;
 				`,
 			},
 			"{{helpText}}",
 		),
 	),
-	// onDOMReady: 初始化 CheckboxGroup（由原先的 onmount 移入，使用 jsdsl.Fn 以確保是函數表達式）
-	jsdsl.Fn(nil, JSAction{Code: `try {
-					const rawId = '{{id}}';
-					const rawName = '{{name}}';
-					let container = null;
-					// 優先使用明確提供的 id（checkbox-group-<id>）
-					if (rawId && rawId.trim()) {
-						container = document.getElementById('checkbox-group-' + rawId);
-					}
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
+		const container = document.getElementById('checkbox-group-{{id}}');
+		if (!container) return;
 
-					// 如果沒有 id，使用 name（如果提供），並允許透過 data-name 或 class 選取
-					if (!container && rawName && rawName.trim()) {
-						container = document.getElementById('checkbox-group-' + rawName) ||
-									document.querySelector('[data-name=\"' + rawName + '\"]') ||
-									document.querySelector('.checkbox-group-options-' + rawName);
-					}
+		const options = '{{options}}'.split(',').map(s => s.trim()).filter(Boolean);
+		const values = '{{values}}'.split(',').map(s => s.trim()).filter(Boolean);
+		const name = '{{name}}' || '{{id}}';
+		const disabled = '{{disabled}}' === 'true';
+		const color = '{{color}}';
+		const colorRgb = '{{colorRgb}}';
 
-					if (!container) return;
+		options.forEach(function(option, index) {
+			const id = 'checkbox-{{id}}-' + index;
+			const isChecked = values.indexOf(option) !== -1;
 
-					// 解析 options / values
-					const rawOptions = '{{options}}';
-					const rawValues = '{{values}}';
-					const options = rawOptions ? rawOptions.split(',').map(s=>s.trim()).filter(Boolean) : [];
-					const values = rawValues ? rawValues.split(',').map(s=>s.trim()).filter(Boolean) : [];
-					const required = '{{required}}' === 'true';
-					const disabled = '{{disabled}}' === 'true';
-					const color = '{{color}}';
-					const colorRgb = '{{colorRgb}}';
+			// 創建 label 容器
+			const label = document.createElement('label');
+			label.style.cssText = 'display:inline-flex; align-items:center; cursor:pointer; user-select:none;';
 
-					// 清空舊內容（保證 id 可重複使用或重新渲染）
-					container.innerHTML = '';
+			// 創建隱藏的 input
+			const input = document.createElement('input');
+			input.type = 'checkbox';
+			input.id = id;
+			input.name = name;
+			input.value = option;
+			input.checked = isChecked;
+			input.disabled = disabled;
+			input.style.cssText = 'position:absolute; opacity:0; height:1px; width:1px; margin:-1px; padding:0; border:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;';
 
-					options.forEach(function(opt, idx){
-						const val = opt;
-						const safeName = (rawName && rawName.trim()) ? rawName : (rawId && rawId.trim() ? rawId : 'checkboxgroup');
-						const id = 'checkbox-' + safeName + '-' + idx;
+			// 創建裝飾 box
+			const box = document.createElement('span');
+			box.className = 'checkbox-box';
+			box.style.cssText = 'display:inline-flex; align-items:center; justify-content:center; width:1.25rem; height:1.25rem; border-radius:0.25rem; border:2px solid #d1d5db; margin-right:0.5rem; transition:all 0.2s ease; background:white;';
 
-						// label 容器
-						const label = document.createElement('label');
-						label.className = 'checkbox-label';
-						label.style.cssText = 'display:flex; align-items:center; cursor:pointer; user-select:none; gap:0.5rem;';
+			// 創建 checkmark
+			const checkmark = document.createElement('span');
+			checkmark.className = 'checkbox-checkmark';
+			checkmark.style.cssText = 'visibility:hidden; opacity:0; transition:opacity 150ms ease-in-out, visibility 150ms step-end; width:calc(1.25rem / 2 - 1px); height:calc(1.25rem / 2 + 1px); border:solid white; border-width:0 2px 2px 0; transform:rotate(45deg) translate(-2px, -2px);';
 
-						// 原生 input（視覺隱藏但仍可聚焦與互動）
-						const input = document.createElement('input');
-						input.type = 'checkbox';
-						input.id = id;
-						input.name = safeName;
-						input.value = val;
-						input.required = required;
-						input.disabled = disabled;
-						if (values.indexOf(val) !== -1) {
-							input.checked = true;
-						}
-						input.style.cssText = 'position:absolute; opacity:0; height:1px; width:1px; margin:-1px; padding:0; border:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;';
+			// 創建文本
+			const text = document.createElement('span');
+			text.textContent = option;
+			text.style.cssText = 'font-size:0.9375rem; color:#374151;';
 
-						// 裝飾性方塊
-						const box = document.createElement('span');
-						box.className = 'checkbox-box';
-						box.style.cssText = 'display:inline-flex; align-items:center; justify-content:center; width: {{checkboxSize}}; height: {{checkboxSize}}; border-radius: {{borderRadius}}; border: 2px solid #d1d5db; margin-right: 0.5rem; transition: all 0.2s ease; background: white;';
+			// 組裝
+			box.appendChild(checkmark);
+			label.appendChild(input);
+			label.appendChild(box);
+			label.appendChild(text);
+			container.appendChild(label);
 
-						// 勾選符號
-						const checkmark = document.createElement('span');
-						checkmark.className = 'checkbox-checkmark';
-						checkmark.style.cssText = 'visibility:hidden; opacity:0; transition: opacity 150ms ease-in-out, visibility 150ms step-end; width: calc({{checkboxSize}} / 2 - 1px); height: calc({{checkboxSize}} / 2 + 1px); border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-2px, -2px);';
+			// 更新狀態函數
+			function updateState() {
+				if (input.checked) {
+					box.style.borderColor = color;
+					box.style.background = color;
+					checkmark.style.visibility = 'visible';
+					checkmark.style.opacity = '1';
+				} else {
+					box.style.borderColor = '#d1d5db';
+					box.style.background = 'white';
+					checkmark.style.visibility = 'hidden';
+					checkmark.style.opacity = '0';
+				}
 
-						// 文本
-						const text = document.createElement('span');
-						text.className = 'checkbox-label-text';
-						text.textContent = opt;
-						text.style.cssText = 'font-size: {{fontSize}}; color: #374151;';
+				if (input.disabled) {
+					box.style.cursor = 'not-allowed';
+					label.style.cursor = 'not-allowed';
+				} else {
+					box.style.cursor = 'pointer';
+					label.style.cursor = 'pointer';
+				}
+			}
 
-						// 組裝節點順序： input（隱藏） -> 裝飾 box (內含 checkmark) -> 文本
-						label.appendChild(input);
-						label.appendChild(box);
-						box.appendChild(checkmark);
-						label.appendChild(text);
-						container.appendChild(label);
+			// 初始化
+			updateState();
 
-						// 更新 UI 狀態的函數
-						function updateState() {
-							if (input.checked) {
-								box.style.borderColor = color;
-								box.style.background = color;
-								checkmark.style.visibility = 'visible';
-								checkmark.style.opacity = '1';
-							} else {
-								box.style.borderColor = '#d1d5db';
-								box.style.background = 'white';
-								checkmark.style.opacity = '0';
-								checkmark.style.visibility = 'hidden';
-							}
-							if (input.disabled) {
-								label.style.cursor = 'not-allowed';
-							} else {
-								label.style.cursor = 'pointer';
-							}
-						}
+			// 點擊 box 切換狀態
+			box.addEventListener('click', function(e) {
+				e.preventDefault();
+				if (!input.disabled) {
+					input.checked = !input.checked;
+					updateState();
+					input.dispatchEvent(new Event('change', { bubbles: true }));
+				}
+			});
 
-						// 綁定事件
-						input.addEventListener('change', function() {
-							updateState();
-							// 發出群組事件（包含目前所有被選中的值）
-							const selected = Array.from(container.querySelectorAll('input[type=\"checkbox\"]:checked')).map(i=>i.value);
-							container.dispatchEvent(new CustomEvent('checkbox-group:change', {
-								detail: { name: safeName, values: selected },
-								bubbles: true
-							}));
-						});
+			// 監聽 change 事件
+			input.addEventListener('change', function() {
+				updateState();
+				const selected = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
+				container.dispatchEvent(new CustomEvent('checkbox-group:change', {
+					detail: { name: name, values: selected },
+					bubbles: true
+				}));
+			});
 
-						input.addEventListener('focus', function() {
-							if (!input.disabled) {
-								box.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
-							}
-						});
-						input.addEventListener('blur', function() {
-							box.style.boxShadow = 'none';
-						});
+			// Focus 效果
+			input.addEventListener('focus', function() {
+				if (!this.disabled) {
+					box.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
+				}
+			});
 
-						// 初始化狀態
-						updateState();
-					});
-				} catch (err) {
-					console.error('CheckboxGroup init error for ' + (rawName || rawId), err);
-				}`}),
+			input.addEventListener('blur', function() {
+				box.style.boxShadow = 'none';
+			});
+		});
+	`})),
 	PropsDef{
-		// 主要屬性
-		"id":        "",         // 群組 ID（可選，用於明確指定容器）
-		"name":      "",         // 勾選框組名稱
-		"label":     "",         // 標籤文字
-		"options":   "",         // 選項清單，逗號分隔
-		"values":    "",         // 已選中值，逗號分隔
-		"required":  "false",    // 是否必填
-		"disabled":  "false",    // 是否禁用
-		"direction": "vertical", // 排列方向: horizontal, vertical
-		"size":      "md",       // 尺寸: sm, md, lg
-		"helpText":  "",         // 幫助文字
-		"errorText": "",         // 錯誤文字
-		"color":     "#3b82f6",  // 主題色
-
-		// 計算屬性
-		"labelSize":     "0.9375rem",
-		"helpDisplay":   "none",
-		"helpColor":     "#64748b",
-		"labelText":     "",
-		"helpMessage":   "",
-		"checkboxItems": "",
+		"id":            "",
+		"name":          "",
+		"label":         "",
+		"options":       "",
+		"values":        "",
+		"required":      "false",
+		"disabled":      "false",
+		"direction":     "vertical",
+		"size":          "md",
+		"helpText":      "",
+		"color":         "#3b82f6",
 		"flexDirection": "column",
-		"gap":           "0.75rem",
+		"labelDisplay":  "none",
+		"helpDisplay":   "none",
 		"colorRgb":      "59, 130, 246",
 	},
 )

@@ -92,7 +92,7 @@ var Card = Component(
 			"{{children}}",
 		),
 	),
-	jsdsl.Fn(nil, JSAction{Code: `
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
 		try {
 			const card = document.querySelector('.modern-card');
 			if (!card) return;
@@ -136,7 +136,7 @@ var Card = Component(
 		} catch (err) {
 			console.error('Card init error', err);
 		}
-	`}),
+	`})),
 	PropsDef{
 		// 主要屬性
 		"title":        "",        // 卡片標題

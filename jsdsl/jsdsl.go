@@ -48,6 +48,14 @@ func VRef(varName string) JSAction {
 	return JSAction{Code: varName}
 }
 
+// Ptr returns a pointer to the provided JSAction.
+// This is a small helper so callers can easily pass *JSAction where needed,
+// e.g. Component(template, jsdsl.Ptr(jsdsl.Fn(nil, ...)), ...)
+// The parameter is safe to take address of because it will escape to the heap.
+func Ptr(a JSAction) *JSAction {
+	return &a
+}
+
 type Elem struct {
 	Selector string
 	VarName  string
@@ -312,59 +320,11 @@ func WithThen(thenCodes ...interface{}) JSAction {
 	return JSAction{Code: fmt.Sprintf("then(data => {\n%s})", sb.String())}
 }
 
-// WithCatch 添加 catch 處理器
-func WithCatch(catchCodes ...interface{}) JSAction {
-	var sb strings.Builder
+// Deprecated: WithCatch was removed. Use TryCatch(baseAction JSAction, catchFn *JSAction, finallyFn *JSAction) instead.
+// This placeholder comment remains to indicate the old API has been intentionally removed.
 
-	for _, catchCode := range catchCodes {
-		var codeStr string
-		switch v := catchCode.(type) {
-		case string:
-			codeStr = v
-		case JSAction:
-			codeStr = v.Code
-		default:
-			codeStr = fmt.Sprintf("%v", catchCode)
-		}
-
-		// 添加代碼，確保每行都有適當的縮進
-		lines := strings.Split(codeStr, "\n")
-		for _, line := range lines {
-			if strings.TrimSpace(line) != "" {
-				sb.WriteString("  " + line + "\n")
-			}
-		}
-	}
-
-	return JSAction{Code: fmt.Sprintf("catch(error => {\n%s})", sb.String())}
-}
-
-// WithFinally 添加 finally 處理器
-func WithFinally(finallyCodes ...interface{}) JSAction {
-	var sb strings.Builder
-
-	for _, finallyCode := range finallyCodes {
-		var codeStr string
-		switch v := finallyCode.(type) {
-		case string:
-			codeStr = v
-		case JSAction:
-			codeStr = v.Code
-		default:
-			codeStr = fmt.Sprintf("%v", finallyCode)
-		}
-
-		// 添加代碼，確保每行都有適當的縮進
-		lines := strings.Split(codeStr, "\n")
-		for _, line := range lines {
-			if strings.TrimSpace(line) != "" {
-				sb.WriteString("  " + line + "\n")
-			}
-		}
-	}
-
-	return JSAction{Code: fmt.Sprintf("finally(() => {\n%s})", sb.String())}
-}
+// Deprecated: WithFinally was removed. Use TryCatch(baseAction JSAction, catchFn *JSAction, finallyFn *JSAction) instead.
+// This placeholder comment remains to indicate the old API has been intentionally removed.
 
 // WithResponseType 設定響應類型
 func WithResponseType(responseType ResponseType) JSAction {
@@ -470,44 +430,55 @@ func buildFetch(url string, responseType ResponseType, then interface{}, catch i
 	return JSAction{Code: codeBuilder.String()}
 }
 
-// Try 鏈接多個 JSAction，支持錯誤處理和後續操作
-func Try(baseAction JSAction, nextActions ...JSAction) JSAction {
-	// 解析基本 fetch 請求
-	baseCode := baseAction.Code
-
-	// 默認響應類型
-	responseType := JSONResponse
-
-	// 解析鏈接的操作
-	var thenCode string
-	var catchCode string
-	var finallyCode string
-
-	for _, action := range nextActions {
-		code := action.Code
-
-		if strings.HasPrefix(code, "then") {
-			thenCode = strings.TrimPrefix(code, "then(data => {\n")
-			thenCode = strings.TrimSuffix(thenCode, "})")
-		} else if strings.HasPrefix(code, "catch") {
-			catchCode = strings.TrimPrefix(code, "catch(error => {\n")
-			catchCode = strings.TrimSuffix(catchCode, "})")
-		} else if strings.HasPrefix(code, "finally") {
-			finallyCode = strings.TrimPrefix(code, "finally(() => {\n")
-			finallyCode = strings.TrimSuffix(finallyCode, "})")
-		} else if strings.HasPrefix(code, "response_type:") {
-			responseTypeStr := strings.TrimPrefix(code, "response_type:")
-			responseType = ResponseType(responseTypeStr)
-		}
+// TryCatch 生成一個自動執行的 async 函數，含 try/catch/finally 邏輯
+//   - baseAction: 由 jsdsl.Fn 產生的函數表達式，放在 try { ... } 中
+//   - catchFn: 可選，由 jsdsl.Fn 產生的函數表達式，放在 catch (e) { ... } 中；
+//     若提供，會在異常發生時執行（可訪問 error 對象為 `e`）
+//   - finallyFn: 可選，由 jsdsl.Fn 產生的函數表達式，放在 finally { ... } 中
+//
+// 要求：catchFn 與 finallyFn 不能同時為 nil（至少提供一個處理路徑）
+//
+// 生成的代碼形如：(async () => { try { <baseAction> } catch (e) { <catchFn> } finally { <finallyFn> } })()
+// 會立即執行該函數表達式。
+func TryCatch(baseAction JSAction, catchFn *JSAction, finallyFn *JSAction) JSAction {
+	// 驗證輸入
+	if strings.TrimSpace(baseAction.Code) == "" {
+		// 沒有有意義的 try 主體，返回空 JSAction
+		return JSAction{Code: ""}
+	}
+	if (catchFn == nil || strings.TrimSpace(catchFn.Code) == "") && (finallyFn == nil || strings.TrimSpace(finallyFn.Code) == "") {
+		panic("TryCatch requires at least one of catchFn or finallyFn to be non-nil")
 	}
 
-	// 從 baseCode 中提取 URL 和選項
-	urlStart := strings.Index(baseCode, "fetch('") + 7
-	urlEnd := strings.Index(baseCode[urlStart:], "'")
-	url := baseCode[urlStart : urlStart+urlEnd]
+	// 準備 base 代碼（由 jsdsl.Fn 產生，期望是函數表達式或代碼片段）
+	baseCode := strings.TrimSpace(baseAction.Code)
 
-	// 構建一個新的 fetch 請求
-	return buildFetch(url, responseType, thenCode, catchCode, finallyCode)
+	var sb strings.Builder
+	// 生成自調用的 async 函數包裝
+	sb.WriteString("(async () => { try { ")
+	sb.WriteString(baseCode)
+	sb.WriteString(" } ")
+
+	// catch 部分（如果提供）
+	if catchFn != nil && strings.TrimSpace(catchFn.Code) != "" {
+		sb.WriteString("catch (e) { ")
+		catchCode := strings.TrimSpace(catchFn.Code)
+		sb.WriteString(catchCode)
+		sb.WriteString(" } ")
+	}
+
+	// finally 部分（如果提供）
+	if finallyFn != nil && strings.TrimSpace(finallyFn.Code) != "" {
+		sb.WriteString("finally { ")
+		finallyCode := strings.TrimSpace(finallyFn.Code)
+		sb.WriteString(finallyCode)
+		sb.WriteString(" } ")
+	}
+
+	// 立即執行該函數
+	sb.WriteString("})()")
+
+	return JSAction{Code: sb.String()}
 }
 
 // StoreResult 將 fetch 的結果存儲到指定的變數中，並可以執行額外的動作

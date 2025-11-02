@@ -118,7 +118,7 @@ var Dropdown = Component(
 			),
 		),
 	),
-	jsdsl.Fn(nil, JSAction{Code: `try {
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
     const selectId = '{{id}}';
     const select = document.getElementById(selectId);
     if (!select) return;
@@ -178,7 +178,7 @@ var Dropdown = Component(
         select.style.color = '#9ca3af';
         select.style.cursor = 'not-allowed';
     }
-} catch (err) { console.error('Dropdown init error for id={{id}}', err); }`}),
+} catch (err) { console.error('Dropdown init error for id={{id}}', err); }`})),
 	PropsDef{
 		// 主要屬性
 		"label":         "",

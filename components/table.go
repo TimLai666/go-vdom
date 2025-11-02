@@ -96,7 +96,7 @@ var TableComponent = Component(
 		),
 	),
 	// onDOMReady: 初始化表格互動（hover, row click, striped rows, sorting）
-	jsdsl.Fn(nil, JSAction{Code: `try {
+	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
 		const table = document.querySelector('.modern-table');
 		if (!table) return;
 
@@ -163,7 +163,7 @@ var TableComponent = Component(
 		});
 	} catch (err) {
 		console.error('Table init error', err);
-	}`}),
+	}`})),
 	PropsDef{
 		// 主要屬性
 		"stripped":       "false",   // 是否顯示條紋
