@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Btn 現代化按鈕組件
@@ -166,9 +166,9 @@ var Btn = Component(
 		"variant":       "filled",  // 按鈕樣式：filled, outlined, text
 		"color":         "#3b82f6", // 主色調
 		"size":          "md",      // 尺寸：sm, md, lg
-		"fullWidth":     "false",   // 是否填滿父容器寬度
+		"fullWidth":     false,     // 是否填滿父容器寬度
 		"rounded":       "md",      // 圓角：none, sm, md, lg, full
-		"disabled":      "false",   // 是否禁用
+		"disabled":      false,     // 是否禁用
 		"name":          "",        // 按鈕名稱
 		"type":          "button",  // 按鈕類型
 		"weight":        "500",     // 字重

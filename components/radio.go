@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // RadioGroup 單選按鈕組
@@ -210,8 +210,8 @@ var RadioGroup = Component(
 		"label":         "",
 		"options":       "",
 		"defaultValue":  "",
-		"required":      "false",
-		"disabled":      "false",
+		"required":      false,
+		"disabled":      false,
 		"direction":     "vertical",
 		"size":          "md",
 		"helpText":      "",
@@ -413,10 +413,11 @@ var Radio = Component(
 		"name":      "",
 		"value":     "",
 		"label":     "",
-		"checked":   "false",
-		"required":  "false",
-		"disabled":  "false",
+		"checked":   false,
+		"required":  false,
+		"disabled":  false,
 		"size":      "md",
+		"helpText":  "",
 		"color":     "#3b82f6",
 		"radioSize": "1.25rem",
 		"fontSize":  "0.9375rem",

@@ -154,7 +154,12 @@ Card := Component(
         P("{{content}}"),
     ),
     nil,
-    PropsDef{"title": "", "content": ""},
+    PropsDef{
+        "title": "",
+        "content": "",
+        "visible": true,  // 布林值
+        "priority": 1,    // 整數
+    },
 )
 
 // 使用組件

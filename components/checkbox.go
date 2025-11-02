@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Checkbox 勾選框組件
@@ -198,9 +198,9 @@ var Checkbox = Component(
 		"name":         "",
 		"value":        "",
 		"label":        "",
-		"checked":      "false",
-		"required":     "false",
-		"disabled":     "false",
+		"checked":      false,
+		"required":     false,
+		"disabled":     false,
 		"size":         "md",
 		"helpText":     "",
 		"color":        "#3b82f6",
@@ -395,8 +395,8 @@ var CheckboxGroup = Component(
 		"label":         "",
 		"options":       "",
 		"values":        "",
-		"required":      "false",
-		"disabled":      "false",
+		"required":      false,
+		"disabled":      false,
 		"direction":     "vertical",
 		"size":          "md",
 		"helpText":      "",

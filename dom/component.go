@@ -15,7 +15,7 @@ func genComponentID() string {
 	return fmt.Sprintf("vdom-%d", v)
 }
 
-type PropsDef map[string]string
+type PropsDef map[string]interface{}
 
 // Component 創建一個新的組件函數，支援預設 props
 //   - template: 組件模板 VNode
@@ -93,21 +93,40 @@ func Component(template VNode, onDOMReadyCallback *JSAction, defaultProps ...Pro
 // interpolate 替換模板中的變量
 func interpolate(template VNode, p Props, children []VNode) VNode {
 	newProps := make(Props)
+
+	// 先處理模板中定義的 Props
 	for k, v := range template.Props {
-		// template.Props 的值可能為非 string 型別，先格式化為字串再進行插值
+		// template.Props 的值可能為非 string 型別
 		// 若值為 JSAction，則對其 Code 內容做插值（替換 {{...}}），並保留為 JSAction 類型
 		switch t := v.(type) {
 		case string:
-			newProps[k] = interpolateString(t, p)
+			// 檢查是否為純模板引用（如 "{{key}}"）
+			trimmed := strings.TrimSpace(t)
+			if strings.HasPrefix(trimmed, "{{") && strings.HasSuffix(trimmed, "}}") && strings.Count(trimmed, "{{") == 1 {
+				// 純模板引用：直接取值，保持原始類型
+				key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(trimmed, "{{"), "}}"))
+				if val, ok := p[key]; ok {
+					newProps[k] = val // 保持原始類型
+				} else {
+					newProps[k] = "" // 找不到則為空字串
+				}
+			} else {
+				// 混合字串或複雜模板：進行字串插值
+				newProps[k] = interpolateString(t, p)
+			}
 		case JSAction:
 			// 對 JSAction 的 Code 字串進行插值處理，保留為 JSAction
 			newProps[k] = JSAction{Code: interpolateString(t.Code, p)}
+		case bool, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+			// 保留原始類型的數字和布林值
+			newProps[k] = v
 		default:
-			// 其他類型以字串形式處理
-			valStr := fmt.Sprint(t)
-			newProps[k] = interpolateString(valStr, p)
+			// 其他類型（如 slice, map 等）保留原值，不做轉換
+			// 如果將來需要對這些類型進行插值處理，可以在這裡擴展
+			newProps[k] = v
 		}
 	}
+
 
 	newChildren := []VNode{}
 	for _, c := range template.Children {
@@ -145,8 +164,18 @@ func interpolateString(s string, p Props) string {
 	res := re.ReplaceAllStringFunc(s, func(match string) string {
 		key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(match, "{{"), "}}"))
 		if val, ok := p[key]; ok {
-			// p[key] 可能是各種型別，統一以 fmt.Sprint 轉字串
-			return fmt.Sprint(val)
+			// p[key] 可能是各種型別
+			// 對於布林值，轉換為 "true" 或 "false"
+			// 對於其他類型，統一以 fmt.Sprint 轉字串
+			switch v := val.(type) {
+			case bool:
+				if v {
+					return "true"
+				}
+				return "false"
+			default:
+				return fmt.Sprint(val)
+			}
 		}
 		return ""
 	})

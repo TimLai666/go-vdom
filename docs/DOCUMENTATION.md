@@ -67,17 +67,20 @@
 ### 模塊說明
 
 #### vdom (核心)
+
 - 虛擬 DOM 節點定義
 - HTML 元素構建函數
 - 渲染引擎
 - 組件系統基礎
 
 #### control (控制流)
+
 - 條件渲染 (If/Then/Else)
 - 循環渲染 (For/Repeat)
 - 邏輯控制
 
 #### jsdsl (JavaScript DSL)
+
 - JavaScript 代碼生成
 - DOM 操作
 - 事件處理
@@ -85,6 +88,7 @@
 - 異步處理 (Try/Catch)
 
 #### components (UI 組件)
+
 - 表單組件
 - 輸入組件
 - 交互組件
@@ -128,10 +132,10 @@ div := Div(
 
 ### Props (屬性)
 
-Props 是一個字符串映射，用於設置 HTML 屬性。
+Props 是一個映射，用於設置元素屬性，支援多種類型。
 
 ```go
-type Props map[string]string
+type Props map[string]interface{}
 ```
 
 #### 常用屬性
@@ -142,22 +146,28 @@ Props{
     "id":    "myElement",
     "class": "btn btn-primary",
     "style": "color: red;",
-    
+
     // 數據屬性
     "data-id":    "123",
     "data-value": "test",
-    
+
     // 布爾屬性
-    "disabled": "true",
-    "required": "true",
-    "checked":  "true",
-    
+    "disabled": true,     // 使用布林值而非字串
+    "required": true,
+    "checked":  false,
+
+    // 數字屬性
+    "tabindex": 0,
+    "maxlength": 100,
+
     // 事件屬性（接受 JSAction）
     "onClick":  jsAction,
     "onChange": jsAction,
     "onSubmit": jsAction,
 }
 ```
+
+**注意**：Props 和 PropsDef 使用相同的類型 `map[string]interface{}`，類型處理規則也完全一致。
 
 #### 特殊處理
 
@@ -175,16 +185,49 @@ Props{
 
 ### PropsDef (組件屬性定義)
 
-PropsDef 定義組件的默認 props。
+PropsDef 定義組件的默認 props，支援多種 Go 原生類型。
 
 ```go
-type PropsDef map[string]string
+type PropsDef map[string]interface{}
 
 // 使用示例
 PropsDef{
-    "title":   "默認標題",
-    "color":   "blue",
-    "visible": "true",
+    "title":   "默認標題",                      // 字串
+    "color":   "blue",                          // 字串
+    "visible": true,                            // 布林值
+    "count":   42,                              // 整數
+    "price":   99.99,                           // 浮點數
+    "items":   []string{"a", "b", "c"},        // 切片
+    "config":  map[string]string{"key": "value"}, // map
+}
+```
+
+#### 類型處理說明
+
+PropsDef 中的值會根據以下規則處理：
+
+1. **字串類型**：直接使用，支援模板插值 `{{key}}`
+2. **布林類型**：保持為 `bool`，在模板插值時轉換為 `"true"` 或 `"false"`
+3. **數字類型**：保持為原始類型（`int`, `float64` 等）
+4. **複雜類型**：切片、map 等保持原始類型
+
+**重要提示**：
+
+- 如果屬性在組件模板中使用了 `{{key}}` 語法，插值後會變成字串
+- 如果屬性沒有出現在模板中，會保持 PropsDef 中定義的原始類型
+- 建議布林值使用 `true`/`false` 而非字串 `"true"`/`"false"`
+
+```go
+// 正確示例
+PropsDef{
+    "disabled": false,    // ✓ 使用布林值
+    "count":    10,       // ✓ 使用數字
+}
+
+// 避免使用
+PropsDef{
+    "disabled": "false",  // ✗ 不建議使用字串表示布林值
+    "count":    "10",     // ✗ 不建議使用字串表示數字
 }
 ```
 
@@ -382,7 +425,7 @@ Div(
 func Component(
     template VNode,
     jsAction *JSAction,
-    propsDef PropsDef,
+    propsDef PropsDef,  // map[string]interface{} 支援多種類型
 ) func(Props, ...VNode) VNode
 ```
 
@@ -1363,7 +1406,7 @@ var Modal = Component(
 func WithLoading(component func(Props, ...VNode) VNode) func(Props, ...VNode) VNode {
     return func(props Props, children ...VNode) VNode {
         loading := props["loading"] == "true"
-        
+
         if loading {
             return Div(
                 Props{"class": "loading-wrapper"},
@@ -1373,7 +1416,7 @@ func WithLoading(component func(Props, ...VNode) VNode) func(Props, ...VNode) VN
                 ),
             )
         }
-        
+
         return component(props, children...)
     }
 }
@@ -1397,7 +1440,7 @@ instance := EnhancedCard(
 func UserProfile(user User) VNode {
     return Div(
         Props{"class": "user-profile"},
-        
+
         // 頭像卡片
         Card(Props{
             "title": "個人信息",
@@ -1410,7 +1453,7 @@ func UserProfile(user User) VNode {
             H4(user.Name),
             P(user.Email),
         ),
-        
+
         // 編輯表單
         Card(Props{
             "title": "編輯資料",
@@ -1449,7 +1492,7 @@ func UserProfile(user User) VNode {
 func StatusBadge(status string) VNode {
     var badgeClass string
     var text string
-    
+
     switch status {
     case "active":
         badgeClass = "bg-success"
@@ -1464,7 +1507,7 @@ func StatusBadge(status string) VNode {
         badgeClass = "bg-info"
         text = "未知"
     }
-    
+
     return Span(
         Props{"class": fmt.Sprintf("badge %s", badgeClass)},
         text,
@@ -1477,19 +1520,19 @@ func StatusBadge(status string) VNode {
 ```go
 func buildProps(base Props, conditional map[string]bool) Props {
     result := Props{}
-    
+
     // 複製基礎 props
     for k, v := range base {
         result[k] = v
     }
-    
+
     // 根據條件添加
     for k, v := range conditional {
         if v {
             result[k] = "true"
         }
     }
-    
+
     return result
 }
 
@@ -1725,6 +1768,7 @@ fmt.Println(Render(page))
 #### 4. 使用瀏覽器開發工具
 
 生成 HTML 後，在瀏覽器中：
+
 - 查看元素（Elements/Inspector）
 - 查看控制台（Console）
 - 查看網絡請求（Network）
@@ -1753,6 +1797,6 @@ go-vdom 提供了一套完整的工具鏈，讓你能夠在 Go 中以類型安�
 
 ---
 
-**文檔版本**: 1.0.0  
-**最後更新**: 2025-01-24  
+**文檔版本**: 1.0.0
+**最後更新**: 2025-01-24
 **作者**: TimLai666

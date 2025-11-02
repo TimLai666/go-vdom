@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Dropdown 下拉式選單組件
@@ -187,11 +187,11 @@ var Dropdown = Component(
 		"options":       "",
 		"defaultValue":  "",
 		"placeholder":   "請選擇",
-		"required":      "false",
-		"disabled":      "false",
-		"searchable":    "false",
+		"required":      false,
+		"disabled":      false,
+		"searchable":    false,
 		"size":          "md",
-		"fullWidth":     "true",
+		"fullWidth":     true,
 		"helpText":      "",
 		"errorText":     "",
 		"labelPosition": "top",

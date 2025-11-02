@@ -76,7 +76,18 @@ func Render(v VNode) string {
 
 		// 處理一般屬性（如果不是事件，也不是 onmount）
 		var valStr string
+		var isBool bool
+		var boolVal bool
+
 		switch t := rawVal.(type) {
+		case bool:
+			// 布林值：false 時不輸出屬性，true 時輸出屬性名（HTML 布林屬性）
+			isBool = true
+			boolVal = t
+			if !t {
+				continue // false 時跳過
+			}
+			valStr = k // true 時只輸出屬性名
 		case string:
 			valStr = t
 		case JSAction:
@@ -96,7 +107,12 @@ func Render(v VNode) string {
 		escaped = strings.ReplaceAll(escaped, "\n", " ")
 		escaped = strings.ReplaceAll(escaped, "\r", " ")
 
-		sb.WriteString(fmt.Sprintf(" %s=\"%s\"", k, escaped))
+		// HTML 布林屬性（如 disabled, checked）：true 時只輸出屬性名
+		if isBool && boolVal {
+			sb.WriteString(fmt.Sprintf(" %s", k))
+		} else {
+			sb.WriteString(fmt.Sprintf(" %s=\"%s\"", k, escaped))
+		}
 	}
 	sb.WriteString(">")
 

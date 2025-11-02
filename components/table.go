@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // TableComponent 現代化表格組件
@@ -166,12 +166,12 @@ var TableComponent = Component(
 	}`})),
 	PropsDef{
 		// 主要屬性
-		"stripped":       "false",   // 是否顯示條紋
-		"bordered":       "false",   // 是否顯示邊框
-		"hoverable":      "true",    // 是否顯示懸停效果
-		"small":          "false",   // 是否使用緊湊布局
-		"responsive":     "true",    // 是否響應式
-		"fullWidth":      "true",    // 是否填滿容器寬度
+		"stripped":       false,     // 是否顯示條紋
+		"bordered":       false,     // 是否顯示邊框
+		"hoverable":      true,      // 是否顯示懸停效果
+		"small":          false,     // 是否使用緊湊布局
+		"responsive":     true,      // 是否響應式
+		"fullWidth":      true,      // 是否填滿容器寬度
 		"header":         "",        // 表頭內容
 		"footer":         "",        // 表尾內容
 		"highlightColor": "#3b82f6", // 高亮色

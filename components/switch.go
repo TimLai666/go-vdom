@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Switch 開關組件
@@ -211,9 +211,9 @@ var Switch = Component(
 		"id":            "",
 		"name":          "",
 		"label":         "",
-		"checked":       "false",
-		"required":      "false",
-		"disabled":      "false",
+		"checked":       false,
+		"required":      false,
+		"disabled":      false,
 		"size":          "md",
 		"labelPosition": "right",
 		"onColor":       "#3b82f6",

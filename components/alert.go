@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Alert 現代化提示框組件
@@ -136,17 +136,17 @@ if (alert) {
 	`})),
 	PropsDef{
 		// 主要參數
-		"id":          "1",     // 提示框ID，將自動生成
-		"type":        "info",  // info, success, warning, error
-		"title":       "",      // 提示標題
-		"bordered":    "true",  // 是否顯示邊框
-		"closable":    "false", // 是否可關閉
-		"icon":        "true",  // 是否顯示圖標
-		"rounded":     "md",    // 圓角：none, sm, md, lg
-		"elevation":   "0",     // 陰影高度
-		"compact":     "false", // 是否緊湊模式
-		"customIcon":  "",      // 自訂圖標HTML
-		"customColor": "",      // 自訂主色調
+		"id":          "1",    // 提示框ID，將自動生成
+		"type":        "info", // info, success, warning, error
+		"title":       "",     // 提示標題
+		"bordered":    true,   // 是否顯示邊框
+		"closable":    false,  // 是否可關閉
+		"icon":        true,   // 是否顯示圖標
+		"rounded":     "md",   // 圓角：none, sm, md, lg
+		"elevation":   "0",    // 陰影高度
+		"compact":     false,  // 是否緊湊模式
+		"customIcon":  "",     // 自訂圖標HTML
+		"customColor": "",     // 自訂主色調
 
 		// 計算屬性
 		"padding":      "1rem 1.25rem",

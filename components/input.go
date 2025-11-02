@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // TextField 現代化輸入框組件
@@ -231,18 +231,18 @@ var TextField = Component(
 		"value":         "",         // 預設值
 		"id":            "",         // 輸入框ID
 		"name":          "",         // 輸入框名稱
-		"required":      "false",    // 是否必填
-		"disabled":      "false",    // 是否禁用
-		"readonly":      "false",    // 是否唯讀
+		"required":      false,      // 是否必填
+		"disabled":      false,      // 是否禁用
+		"readonly":      false,      // 是否唯讀
 		"pattern":       "",         // 驗證模式
 		"min":           "",         // 最小值
 		"max":           "",         // 最大值
 		"maxlength":     "",         // 最大長度
-		"autofocus":     "false",    // 是否自動聚焦
+		"autofocus":     false,      // 是否自動聚焦
 		"autocomplete":  "",         // 自動完成
 		"size":          "md",       // 尺寸: sm, md, lg
 		"variant":       "outlined", // 變體: outlined, filled, underlined
-		"fullWidth":     "true",     // 是否填滿父容器寬度
+		"fullWidth":     true,       // 是否填滿父容器寬度
 		"icon":          "",         // 圖標HTML
 		"iconPosition":  "left",     // 圖標位置
 		"helpText":      "",         // 幫助文字

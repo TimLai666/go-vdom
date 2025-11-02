@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Card 現代化卡片組件
@@ -149,7 +149,7 @@ var Card = Component(
 		"borderRadius": "12px",    // 圓角大小
 		"background":   "#ffffff", // 背景色
 		"contentGap":   "1.25rem", // 內容間距
-		"hoverable":    "true",    // 是否啟用懸停效果
+		"hoverable":    true,      // 是否啟用懸停效果
 
 		// 計算屬性
 		"titleDisplay":  "block",   // 標題顯示方式

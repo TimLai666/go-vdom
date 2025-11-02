@@ -1,8 +1,8 @@
 package components
 
 import (
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // Modal 現代化對話框組件
@@ -251,20 +251,20 @@ if ('{{open}}' === 'true') {
 	PropsDef{
 		// 主要參數
 		"title":               "",                // 對話框標題
-		"open":                "false",           // 是否顯示
+		"open":                false,             // 是否顯示
 		"size":                "md",              // 尺寸: xs, sm, md, lg, xl, full
-		"closeButton":         "true",            // 是否顯示關閉按鈕
-		"closeOnEsc":          "true",            // 是否按ESC鍵關閉
-		"closeOnOverlayClick": "true",            // 是否點擊遮罩層關閉
-		"centered":            "true",            // 是否垂直居中
-		"scrollable":          "true",            // 內容是否可滾動
+		"closeButton":         true,              // 是否顯示關閉按鈕
+		"closeOnEsc":          true,              // 是否按ESC鍵關閉
+		"closeOnOverlayClick": true,              // 是否點擊遮罩層關閉
+		"centered":            true,              // 是否垂直居中
+		"scrollable":          true,              // 內容是否可滾動
 		"animation":           "fade",            // 動畫效果: fade, slide, zoom
 		"footer":              "",                // 底部內容
 		"overlayColor":        "rgba(0,0,0,0.5)", // 遮罩層顏色
 		"radius":              "md",              // 圓角大小: none, sm, md, lg
 		"elevation":           "3",               // 陰影高度: 0-5
-		"hideHeader":          "false",           // 是否隱藏頭部
-		"hideFooter":          "false",           // 是否隱藏底部
+		"hideHeader":          false,             // 是否隱藏頭部
+		"hideFooter":          false,             // 是否隱藏底部
 		"zIndex":              "1050",            // 層級
 
 		// 計算屬性

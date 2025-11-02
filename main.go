@@ -8,8 +8,8 @@ import (
 
 	comp "github.com/TimLai666/go-vdom/components"
 	control "github.com/TimLai666/go-vdom/control"
-	js "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	js "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 // 定義一個簡單的數據結構用於 API 響應
@@ -28,7 +28,7 @@ func main() {
 			Div("{{children}}"),
 		),
 		nil,
-		PropsDef{"title": ""}, // 預設 props
+		nil, // 預設 props
 	)
 
 	// 測試 control: If/Then/Else/Repeat
@@ -339,7 +339,7 @@ func main() {
 								"id":            "notifications",
 								"name":          "notifications",
 								"label":         "啟用電子郵件通知",
-								"checked":       "true",
+								"checked":       true,
 								"helpText":      "開啟以接收重要通知",
 								"labelPosition": "right",
 							}),
