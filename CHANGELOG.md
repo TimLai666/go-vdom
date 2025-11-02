@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2024
+
+### Changed
+- **事件處理器簡化**: 移除自動函數包裝和檢測機制
+  - 事件處理器現在直接渲染為提供的代碼，不再自動檢測或包裝
+  - 開發者必須明確使用 `js.Do()` 或 `js.AsyncDo()` 來創建 IIFE
+  - `js.Fn()` 和 `js.AsyncFn()` 不應用於事件處理器（它們只創建函數定義但不執行）
+  - 更簡單、更可預測的行為
+  - 更好的錯誤信息和調試體驗
+
+### Fixed
+- 修復 `js.AsyncDo()` 在事件處理器中被錯誤識別為函數定義的問題
+- 修復由於自動包裝導致的 "...is not a function" 錯誤
+
+### Added
+- 新示例：`examples/09_event_handlers.go` - 展示所有事件處理器模式
+- 新文檔：`docs/EVENT_HANDLER_CHANGES.md` - 事件處理器變更說明和遷移指南
+
+### Breaking Changes
+- **Do/AsyncDo 簽名變更**：現在需要明確的參數列表（可為 nil）
+  - `js.Do(...)` → `js.Do(nil, ...)`
+  - `js.AsyncDo(...)` → `js.AsyncDo(nil, ...)`
+  - 帶參數：`js.Do([]string{"x", "y"}, ...)`
+- 如果您在事件處理器中使用 `js.Fn()` 或 `js.AsyncFn()`，請替換為：
+  - `js.Fn(nil, ...)` → `js.Do(nil, ...)`
+  - `js.AsyncFn(nil, ...)` → `js.AsyncDo(nil, ...)`
+
 ## [1.2.0] - 2024
 
 ### Added
@@ -20,17 +47,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `js.Do(...)` - 創建立即執行的普通函數
   - `js.AsyncDo(...)` - 創建立即執行的異步函數
   - 職責分離：Try 負責錯誤處理，Do/AsyncDo 負責 IIFE
+- **JavaScript 代碼最小化**: 自動最小化生成的 JavaScript 代碼
+  - 去除不必要的換行和縮排
+  - 減少 30-50% 的代碼體積
+  - 不影響功能，只移除空白
+  - 無需配置，自動應用
+- **Const/Let 支持 JSAction**: `Const` 和 `Let` 現在接受 `JSAction` 類型參數
+  - 可以直接傳入函數調用：`js.Const("x", js.Call("Math.random"))`
+  - 可以傳入自定義 JSAction：`js.Const("y", JSAction{Code: "x * 2"})`
+  - 向後兼容字符串參數
+  - 更靈活的代碼組合
 - 新示例：`examples/07_trycatch_usage.go` - 展示所有 Try-Catch-Finally 和 Do/AsyncDo 用法
+- 新示例：`examples/08_minified_js.go` - 展示最小化效果和 JSAction 支持
 - 新文檔：`docs/TRY_CATCH_FINALLY.md` - 完整使用指南
 - 新文檔：`docs/TRY_CATCH_QUICK_REF.md` - 快速參考手冊
 - 新文檔：`docs/CHANGES_TRY_CATCH.md` - API 重新設計說明
+- 新文檔：`docs/DESIGN_RATIONALE.md` - 設計理念說明
+- 新文檔：`docs/OPTIMIZATION.md` - 代碼優化說明
 
 ### Changed
+- **所有 JavaScript 代碼生成函數現在輸出最小化代碼**
+  - `Fn` / `AsyncFn` - 最小化函數體
+  - `Try` / `Catch` / `Finally` - 最小化錯誤處理
+  - `Do` / `AsyncDo` - 最小化 IIFE
+- `Const` 和 `Let` 函數簽名改為 `(varName string, value any)`
 - Try-Catch-Finally 不再自動包裝在 async IIFE 中
 - 需要 async/await 時，使用 AsyncFn 或 AsyncDo 包裝
 - 更新 `examples/03_javascript_dsl.go` 使用新的 Try API
 - 更新 `examples/05_foreach_usage.go` 使用新的 Try API
-- 更新 README 加入 Try-Catch-Finally 和 Do/AsyncDo 說明
+- 更新 README 加入 Try-Catch-Finally、Do/AsyncDo 和優化說明
 
 ### Deprecated
 - `TryCatch` 函數仍可用但建議使用新的流暢 API（Try + AsyncFn/AsyncDo）

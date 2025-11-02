@@ -50,7 +50,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						),
 						Button(Props{
 							"class": "btn btn-primary",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.Try(
 									js.Const("x", "Math.random()"),
 									JSAction{Code: "if (x < 0.5) throw new Error('數字太小')"},
@@ -83,7 +83,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						),
 						Button(Props{
 							"class": "btn btn-success mb-3",
-							"onClick": js.AsyncFn(nil,
+							"onClick": js.AsyncDo(nil,
 								js.Const("status", "document.getElementById('status2')"),
 								js.Try(
 									JSAction{Code: "status.innerHTML = '⏳ 處理中...'"},
@@ -114,7 +114,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 					Div(Props{"class": "card-body"},
 						P(Props{"class": "text-muted"}, "使用 AsyncDo 創建立即執行的 async IIFE"),
 						Pre(Props{"class": "bg-light p-3 rounded"},
-							Code(`js.AsyncDo(
+							Code(`js.AsyncDo(nil,
     js.Try(
         js.Const("data", "await fetch('/api')"),
     ).Catch(
@@ -124,7 +124,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						),
 						Button(Props{
 							"class": "btn btn-warning",
-							"onClick": js.AsyncDo(
+							"onClick": js.AsyncDo(nil,
 								js.Const("status", "document.getElementById('status3')"),
 								js.Try(
 									JSAction{Code: "status.innerHTML = '📂 載入中...'"},
@@ -153,7 +153,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 					Div(Props{"class": "card-body"},
 						P(Props{"class": "text-muted"}, "使用 Do 創建獨立作用域"),
 						Pre(Props{"class": "bg-light p-3 rounded"},
-							Code(`js.Do(
+							Code(`js.Do(nil,
     js.Const("x", "1"),
     js.Const("y", "2"),
     js.Log("'x + y = ' + (x + y)"),
@@ -161,7 +161,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						),
 						Button(Props{
 							"class": "btn btn-info mb-3",
-							"onClick": js.Do(
+							"onClick": js.Do(nil,
 								js.Const("timestamp", "Date.now()"),
 								js.Const("message", "'點擊時間: ' + new Date(timestamp).toLocaleTimeString()"),
 								js.Alert("message"),
@@ -195,7 +195,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						),
 						Button(Props{
 							"class": "btn btn-info mb-3",
-							"onClick": js.AsyncFn(nil,
+							"onClick": js.AsyncDo(nil,
 								js.Const("container", "document.getElementById('apiResult')"),
 								js.Try(
 									JSAction{Code: "container.innerHTML = '<div class=\"spinner-border spinner-border-sm\"></div> 載入中...'"},
@@ -247,7 +247,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						),
 						Button(Props{
 							"class": "btn btn-danger mb-3",
-							"onClick": js.AsyncFn(nil,
+							"onClick": js.AsyncDo(nil,
 								js.Const("log", "document.getElementById('log5')"),
 								js.Try(
 									JSAction{Code: "log.innerHTML += '<div>⏳ 開始請求 1...</div>'"},
@@ -278,7 +278,7 @@ func tryCatchExampleHandler(w http.ResponseWriter, r *http.Request) {
 						}, "執行多個請求"),
 						Button(Props{
 							"class": "btn btn-secondary mb-3 ms-2",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								JSAction{Code: "document.getElementById('log5').innerHTML = ''"},
 							),
 						}, "清空日誌"),
@@ -316,13 +316,13 @@ js.AsyncFn(nil,
 						H6(Props{"class": "mt-3"}, "Do / AsyncDo："),
 						Pre(Props{"class": "bg-light p-3 rounded"},
 							Code(`// Do - 立即執行普通函數
-js.Do(
+js.Do(nil,
     js.Const("x", "1"),
     js.Log("x"),
 )
 
 // AsyncDo - 立即執行異步函數
-js.AsyncDo(
+js.AsyncDo(nil,
     js.Const("data", "await fetch('/api')"),
     js.Log("data"),
 )`),

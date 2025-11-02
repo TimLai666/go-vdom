@@ -89,20 +89,23 @@ func (e ElemList) Ref() string {
 func Fn(params []string, actions ...JSAction) JSAction {
 	var sb strings.Builder
 
-	// 創建一個匿名函數
+	// 創建一個匿名函數（最小化）
 	paramsStr := ""
 	if params != nil {
 		paramsStr = strings.Join(params, ", ")
 	}
-	sb.WriteString(fmt.Sprintf("(%s) => {\n", paramsStr))
+	sb.WriteString(fmt.Sprintf("(%s)=>{", paramsStr))
 
 	// 添加函數體
-	for _, a := range actions {
-		line := strings.TrimSpace(a.Code)
-		if !strings.HasSuffix(line, ";") {
-			line += ";"
+	for i, action := range actions {
+		if i > 0 {
+			sb.WriteString(";")
 		}
-		sb.WriteString("  " + line + "\n")
+		code := strings.TrimSpace(action.Code)
+		if strings.HasSuffix(code, ";") {
+			code = strings.TrimSuffix(code, ";")
+		}
+		sb.WriteString(code)
 	}
 
 	sb.WriteString("}")
@@ -114,20 +117,23 @@ func Fn(params []string, actions ...JSAction) JSAction {
 func AsyncFn(params []string, actions ...JSAction) JSAction {
 	var sb strings.Builder
 
-	// 創建一個異步匿名函數
+	// 創建一個異步匿名函數（最小化）
 	paramsStr := ""
 	if params != nil {
 		paramsStr = strings.Join(params, ", ")
 	}
-	sb.WriteString(fmt.Sprintf("async (%s) => {\n", paramsStr))
+	sb.WriteString(fmt.Sprintf("async (%s)=>{", paramsStr))
 
 	// 添加函數體
-	for _, a := range actions {
-		line := strings.TrimSpace(a.Code)
-		if !strings.HasSuffix(line, ";") {
-			line += ";"
+	for i, action := range actions {
+		if i > 0 {
+			sb.WriteString(";")
 		}
-		sb.WriteString("  " + line + "\n")
+		code := strings.TrimSpace(action.Code)
+		if strings.HasSuffix(code, ";") {
+			code = strings.TrimSuffix(code, ";")
+		}
+		sb.WriteString(code)
 	}
 
 	sb.WriteString("}")
@@ -294,12 +300,30 @@ func escapeJS(s string) string {
 	return s
 }
 
-func Let(varName string, value string) JSAction {
-	return JSAction{Code: fmt.Sprintf("let %s = %s", varName, value)}
+func Let(varName string, value any) JSAction {
+	valueStr := ""
+	switch v := value.(type) {
+	case string:
+		valueStr = v
+	case JSAction:
+		valueStr = v.Code
+	default:
+		valueStr = fmt.Sprintf("%v", v)
+	}
+	return JSAction{Code: fmt.Sprintf("let %s=%s", varName, valueStr)}
 }
 
-func Const(varName string, value string) JSAction {
-	return JSAction{Code: fmt.Sprintf("const %s = %s", varName, value)}
+func Const(varName string, value any) JSAction {
+	valueStr := ""
+	switch v := value.(type) {
+	case string:
+		valueStr = v
+	case JSAction:
+		valueStr = v.Code
+	default:
+		valueStr = fmt.Sprintf("%v", v)
+	}
+	return JSAction{Code: fmt.Sprintf("const %s=%s", varName, valueStr)}
 }
 
 // FetchOption 代表一個 fetch 請求的選項
@@ -572,29 +596,35 @@ func (tb *tryBuilder) build() JSAction {
 
 	var sb strings.Builder
 
-	// try 區塊
-	sb.WriteString("try {\n")
-	for _, action := range tb.tryActions {
+	// try 區塊（最小化）
+	sb.WriteString("try{")
+	for i, action := range tb.tryActions {
 		line := strings.TrimSpace(action.Code)
 		if line != "" {
-			if !strings.HasSuffix(line, ";") {
-				line += ";"
+			if i > 0 {
+				sb.WriteString(";")
 			}
-			sb.WriteString("  " + line + "\n")
+			if strings.HasSuffix(line, ";") {
+				line = strings.TrimSuffix(line, ";")
+			}
+			sb.WriteString(line)
 		}
 	}
 	sb.WriteString("}")
 
 	// catch 區塊
 	if len(tb.catchActions) > 0 {
-		sb.WriteString(" catch (error) {\n")
-		for _, action := range tb.catchActions {
+		sb.WriteString("catch(error){")
+		for i, action := range tb.catchActions {
 			line := strings.TrimSpace(action.Code)
 			if line != "" {
-				if !strings.HasSuffix(line, ";") {
-					line += ";"
+				if i > 0 {
+					sb.WriteString(";")
 				}
-				sb.WriteString("  " + line + "\n")
+				if strings.HasSuffix(line, ";") {
+					line = strings.TrimSuffix(line, ";")
+				}
+				sb.WriteString(line)
 			}
 		}
 		sb.WriteString("}")
@@ -602,14 +632,17 @@ func (tb *tryBuilder) build() JSAction {
 
 	// finally 區塊
 	if len(tb.finallyActions) > 0 {
-		sb.WriteString(" finally {\n")
-		for _, action := range tb.finallyActions {
+		sb.WriteString("finally{")
+		for i, action := range tb.finallyActions {
 			line := strings.TrimSpace(action.Code)
 			if line != "" {
-				if !strings.HasSuffix(line, ";") {
-					line += ";"
+				if i > 0 {
+					sb.WriteString(";")
 				}
-				sb.WriteString("  " + line + "\n")
+				if strings.HasSuffix(line, ";") {
+					line = strings.TrimSuffix(line, ";")
+				}
+				sb.WriteString(line)
 			}
 		}
 		sb.WriteString("}")
@@ -624,70 +657,128 @@ func (tb *tryBuilder) End() JSAction {
 	return tb.build()
 }
 
-// Do 創建一個立即執行函數表達式（IIFE）
-// 用於創建獨立的作用域或立即執行一組語句
+// Do 創建一個立即執行的函數表達式（IIFE）
+// 用於封裝代碼塊並立即執行
+//
+// params: 參數列表，傳入 nil 表示無參數
 //
 // 用法：
 //
-//	js.Do(
-//	    js.Const("x", "1"),
+//	js.Do(nil,
+//	    js.Const("x", "5"),
 //	    js.Log("x"),
-//	)
+//	)  // 生成：(() => { const x = 5; console.log(x); })()
 //
-// 生成：(() => { const x = 1; console.log(x); })()
-func Do(actions ...JSAction) JSAction {
+//	js.Do([]string{"event"},
+//	    js.CallMethod("event", "preventDefault"),
+//	)  // 生成：((event) => { event.preventDefault(); })()
+//
+// 生成：(() => { ... })()
+func Do(params []string, actions ...JSAction) JSAction {
 	if len(actions) == 0 {
-		return JSAction{Code: "(() => {})()"}
+		paramsStr := ""
+		if params != nil {
+			paramsStr = strings.Join(params, ",")
+		}
+		return JSAction{Code: fmt.Sprintf("((%s)=>{})()", paramsStr)}
 	}
 
 	var sb strings.Builder
-	sb.WriteString("(() => {\n")
+	sb.WriteString("((")
+	if params != nil {
+		sb.WriteString(strings.Join(params, ","))
+	}
+	sb.WriteString(")=>{")
 
-	for _, action := range actions {
+	for i, action := range actions {
 		line := strings.TrimSpace(action.Code)
 		if line != "" {
-			if !strings.HasSuffix(line, ";") {
-				line += ";"
+			if i > 0 {
+				sb.WriteString(";")
 			}
-			sb.WriteString("  " + line + "\n")
+			if strings.HasSuffix(line, ";") {
+				line = strings.TrimSuffix(line, ";")
+			}
+			sb.WriteString(line)
 		}
 	}
 
-	sb.WriteString("})()")
+	sb.WriteString("})(")
+	// 如果有參數，在調用時傳入外部作用域的變量
+	// 在事件處理器中，外部作用域的事件對象總是叫 'event'
+	if params != nil && len(params) > 0 {
+		// 傳入與參數數量相同的 'event'（對於事件處理器來說通常只有一個）
+		for i := range params {
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString("event")
+		}
+	}
+	sb.WriteString(")")
 	return JSAction{Code: sb.String()}
 }
 
 // AsyncDo 創建一個立即執行的異步函數表達式（async IIFE）
 // 用於在非 async 上下文中執行 async/await 代碼
 //
+// params: 參數列表，傳入 nil 表示無參數
+//
 // 用法：
 //
-//	js.AsyncDo(
+//	js.AsyncDo(nil,
 //	    js.Const("response", "await fetch('/api')"),
 //	    js.Const("data", "await response.json()"),
 //	    js.Log("data"),
-//	)
+//	)  // 生成：(async () => { const response = await fetch('/api'); ... })()
 //
-// 生成：(async () => { const response = await fetch('/api'); ... })()
-func AsyncDo(actions ...JSAction) JSAction {
+//	js.AsyncDo([]string{"event"},
+//	    js.Const("value", "event.target.value"),
+//	)  // 生成：(async (event) => { const value = event.target.value; })()
+//
+// 生成：(async () => { ... })()
+func AsyncDo(params []string, actions ...JSAction) JSAction {
 	if len(actions) == 0 {
-		return JSAction{Code: "(async () => {})()"}
+		paramsStr := ""
+		if params != nil {
+			paramsStr = strings.Join(params, ",")
+		}
+		return JSAction{Code: fmt.Sprintf("(async(%s)=>{})()", paramsStr)}
 	}
 
 	var sb strings.Builder
-	sb.WriteString("(async () => {\n")
+	sb.WriteString("(async(")
+	if params != nil {
+		sb.WriteString(strings.Join(params, ","))
+	}
+	sb.WriteString(")=>{")
 
-	for _, action := range actions {
+	for i, action := range actions {
 		line := strings.TrimSpace(action.Code)
 		if line != "" {
-			if !strings.HasSuffix(line, ";") {
-				line += ";"
+			if i > 0 {
+				sb.WriteString(";")
 			}
-			sb.WriteString("  " + line + "\n")
+			if strings.HasSuffix(line, ";") {
+				line = strings.TrimSuffix(line, ";")
+			}
+			sb.WriteString(line)
 		}
 	}
 
-	sb.WriteString("})()")
+	sb.WriteString("})(")
+	// 如果有參數，在調用時傳入外部作用域的變量
+	// 在事件處理器中，外部作用域的事件對象總是叫 'event'
+	if params != nil && len(params) > 0 {
+		// 傳入與參數數量相同的 'event'（對於事件處理器來說通常只有一個）
+		for i := range params {
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString("event")
+		}
+	}
+	sb.WriteString(")")
 	return JSAction{Code: sb.String()}
 }
 

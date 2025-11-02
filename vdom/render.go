@@ -4,9 +4,7 @@ package vdom
 import (
 	"fmt"
 	"html"
-	"math/rand"
 	"strings"
-	"time"
 )
 
 // Render 將虛擬DOM節點轉換為HTML字符串
@@ -24,8 +22,6 @@ func Render(v VNode) string {
 
 	// 收集 onDOMReady（如果有），但不要直接作為屬性輸出
 	var onDOMReady string
-	// 收集要注入到頁面的 handler 註冊片段（對應於 props 中的 JSAction 或命名 handler）
-	var injectedHandlers []string
 
 	for k, rawVal := range v.Props {
 		// 當屬性名是 onDOMReady 時，保留其 JS 函數內容以便在 DOMContentLoaded 時呼叫，並跳過將其作為 HTML 屬性輸出
@@ -47,37 +43,19 @@ func Render(v VNode) string {
 			eventName := strings.ToLower(k[2:])
 			switch t := rawVal.(type) {
 			case JSAction:
-				// 為此內聯 JSAction 產生一個唯一 id，並把 handler 注入到 injectedHandlers
-				handlerID := fmt.Sprintf("h-%d-%d", time.Now().UnixNano(), rand.Intn(999999))
-				// 在元素上寫入 data-gvd-handler 屬性來引用 handlerID 與事件類型
-				sb.WriteString(fmt.Sprintf(" data-gvd-handler=\"%s|%s\"", handlerID, eventName))
-				// 安全處理：避免內嵌 </script> 破壞文檔結構
-				safeCode := strings.ReplaceAll(t.Code, "</script>", "</scr\" + \"ipt>")
-
-				// 智能檢測：如果 Code 已經是函數定義，直接調用；否則包裝成 function
-				trimmedCode := strings.TrimSpace(safeCode)
-				var handlerFn string
-
-				// 檢測是否為箭頭函數 (以 "(" 開頭且包含 "=>")
-				// 或者是 function 關鍵字開頭
-				isArrowFunction := strings.HasPrefix(trimmedCode, "(") && strings.Contains(trimmedCode, "=>")
-				isFunctionKeyword := strings.HasPrefix(trimmedCode, "function")
-
-				if isArrowFunction || isFunctionKeyword {
-					// 已經是函數定義，包裝一層以便接收 evt 和 el，然後直接調用用戶函數
-					handlerFn = fmt.Sprintf("function(evt,el){(%s)(evt,el);}", trimmedCode)
-				} else {
-					// 不是函數定義，包裝成 function(evt, el) { ... }
-					handlerFn = fmt.Sprintf("function(evt,el){%s}", safeCode)
-				}
-
-				// 把 handler 註冊片段加入 injectedHandlers
-				reg := fmt.Sprintf("window.__gvd.handlers['%s']={fn:%s,eventType:'%s'};", handlerID, handlerFn, eventName)
-				injectedHandlers = append(injectedHandlers, reg)
+				// JSAction 直接作為內聯事件處理器
+				// 用戶應使用 js.Do() 或 js.AsyncDo() 來創建 IIFE
+				// 安全處理：避免內嵌引號破壞屬性結構
+				safeCode := strings.ReplaceAll(t.Code, "\"", "&quot;")
+				safeCode = strings.ReplaceAll(safeCode, "\n", " ")
+				safeCode = strings.ReplaceAll(safeCode, "\r", " ")
+				sb.WriteString(fmt.Sprintf(" %s=\"%s\"", k, safeCode))
 			case string:
-				// 當作命名的全域函式參考（named handler），在 client 端 runtime 會解析並呼叫
-				namedID := fmt.Sprintf("named:%s", t)
-				sb.WriteString(fmt.Sprintf(" data-gvd-handler=\"%s|%s\"", namedID, eventName))
+				// 字符串直接作為內聯事件處理器
+				escaped := html.EscapeString(t)
+				escaped = strings.ReplaceAll(escaped, "\n", " ")
+				escaped = strings.ReplaceAll(escaped, "\r", " ")
+				sb.WriteString(fmt.Sprintf(" %s=\"%s\"", k, escaped))
 			case ServerHandlerRef:
 				// 伺服器端 handler 引用，產生 data-gvd-server-handler 屬性
 				sb.WriteString(fmt.Sprintf(" data-gvd-server-handler=\"%s|%s\"", t.ID, eventName))
@@ -131,37 +109,16 @@ func Render(v VNode) string {
 
 	sb.WriteString(fmt.Sprintf("</%s>", v.Tag))
 
-	// 如果有注入的 handler registry 腳本，或 onDOMReady，注入對應的 <script>
-	if len(injectedHandlers) > 0 || onDOMReady != "" {
-		var scripts []string
-
-		// 如果有要註冊的 handler，先產生一段 registry 初始化腳本
-		if len(injectedHandlers) > 0 {
-			var regBuilder strings.Builder
-			regBuilder.WriteString("(function(){window.__gvd=window.__gvd||{};window.__gvd.handlers=window.__gvd.handlers||{};")
-			for _, s := range injectedHandlers {
-				regBuilder.WriteString(s)
-			}
-			regBuilder.WriteString("})();")
-			scripts = append(scripts, regBuilder.String())
-		}
-
-		// 處理 onDOMReady（如果有）
-		if onDOMReady != "" {
-			// 以簡單方式避免原始 onDOMReady 中出現 "</script>" 導致 HTML 結構中斷
-			safeScript := strings.ReplaceAll(onDOMReady, "</script>", "</scr\" + \"ipt>")
-			// onDOMReady 應由 jsdsl.Fn 產生函數表達式，直接在 DOMContentLoaded 時呼叫
-			// 使用立即執行函數來確保只執行一次
-			onReadyWrapper := "(function(){var fn=" + safeScript + ";if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fn);}else{fn();}})();"
-			scripts = append(scripts, onReadyWrapper)
-		}
-
-		// 注入所有 script 片段
-		for _, sc := range scripts {
-			sb.WriteString("<script>")
-			sb.WriteString(sc)
-			sb.WriteString("</script>")
-		}
+	// 如果有 onDOMReady，注入對應的 <script>
+	if onDOMReady != "" {
+		// 以簡單方式避免原始 onDOMReady 中出現 "</script>" 導致 HTML 結構中斷
+		safeScript := strings.ReplaceAll(onDOMReady, "</script>", "</scr\" + \"ipt>")
+		// onDOMReady 應由 jsdsl.Fn 產生函數表達式，直接在 DOMContentLoaded 時呼叫
+		// 使用立即執行函數來確保只執行一次
+		onReadyWrapper := "(function(){var fn=" + safeScript + ";if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fn);}else{fn();}})();"
+		sb.WriteString("<script>")
+		sb.WriteString(onReadyWrapper)
+		sb.WriteString("</script>")
 	}
 
 	return sb.String()

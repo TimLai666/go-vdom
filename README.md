@@ -11,6 +11,7 @@
 - 🧩 **組件系統**: 支持可重用的 UI 組件，類似於現代前端框架
 - 🔀 **控制流**: 內建 `If/Then/Else`、`Repeat` 和 `For` 等控制結構
 - 📝 **JavaScript DSL**: 完整的 JavaScript 代碼生成器，支持同步/異步函數、事件處理、API 調用
+- ⚡ **代碼最小化**: 自動最小化生成的 JavaScript，減少 30-50% 體積
 - 🎨 **UI 組件庫**: 提供常見的 UI 組件（按鈕、輸入框、下拉選單等）
 - 🖥️ **服務器端渲染**: 直接在 Go HTTP 服務器中生成完整的 HTML 文檔
 - 🎯 **類型安全**: 利用 Go 的類型系統確保代碼正確性
@@ -26,6 +27,34 @@
 ```bash
 go get github.com/TimLai666/go-vdom
 ```
+
+## ⚠️ v1.2.1 重要更新
+
+**事件處理器變更**：從 v1.2.1 開始，事件處理器必須使用 `js.Do()` 或 `js.AsyncDo()`，不再支援 `js.Fn()` 或 `js.AsyncFn()`。
+
+```go
+// ❌ 舊方式 (不再有效)
+"onClick": js.Fn(nil, js.Alert("'Hello'")),
+
+// ✅ 新方式 (正確)
+"onClick": js.Do(nil, js.Alert("'Hello'")),                    // 同步事件（不使用 event）
+"onClick": js.Do([]string{"event"}, ...),                       // 使用 event 對象時必須聲明
+"onClick": js.AsyncDo(nil, js.Alert("'Hello'")),               // 異步事件（不使用 event）
+"onClick": js.AsyncDo([]string{"event"}, ...),                 // 異步且使用 event
+```
+
+⚠️ **重要**：
+- 當需要使用 `event` 對象時（如 `event.target`、`event.preventDefault()`），必須聲明為參數
+- 參數名可以自定義：`[]string{"event"}`、`[]string{"e"}`、`[]string{"evt"}` 都可以
+- 參數名要與代碼中使用的變量名一致
+
+詳見：
+- [EVENT_HANDLER_CHANGES.md](docs/EVENT_HANDLER_CHANGES.md) - 完整遷移指南
+- [EVENT_HANDLER_QUICK_REF.md](docs/EVENT_HANDLER_QUICK_REF.md) - 快速參考
+- [DO_ASYNCDO_PARAMS.md](docs/DO_ASYNCDO_PARAMS.md) - 參數使用詳解
+- [EVENT_PARAM_ANY_NAME.md](docs/EVENT_PARAM_ANY_NAME.md) - 參數名稱靈活性
+- [examples/09_event_handlers.go](examples/09_event_handlers.go) - 實例演示
+- [examples/10_do_with_params.go](examples/10_do_with_params.go) - 參數使用示例
 
 ## 快速開始
 
@@ -48,7 +77,7 @@ func main() {
             Div(Props{"class": "container"},
                 H1("Hello, go-vdom!"),
                 Button(Props{
-                    "onClick": js.AsyncFn(nil,
+                    "onClick": js.AsyncDo(nil,
                         js.Const("response", "await fetch('/api/data')"),
                         js.Const("data", "await response.json()"),
                         js.Alert("'Data loaded: ' + JSON.stringify(data)"),
@@ -195,10 +224,11 @@ js.AsyncDo(
 - **[API 參考](docs/API_REFERENCE.md)** - JavaScript DSL 完整 API
 - **[快速參考](docs/QUICK_REFERENCE.md)** - 語法速查表
 - **[Try-Catch-Finally 指南](docs/TRY_CATCH_FINALLY.md)** - 錯誤處理完整說明
+- **[代碼優化指南](docs/OPTIMIZATION.md)** - 最小化和性能優化
 
 ## 重要更新 (v1.2.0)
 
-### 新增 Try-Catch-Finally 與 Do/AsyncDo
+### 1. Try-Catch-Finally 與 Do/AsyncDo
 
 全新設計的錯誤處理和 IIFE 創建 API：
 
@@ -250,6 +280,49 @@ js.AsyncDo(
 - ✅ 錯誤對象統一命名為 `error`
 
 詳細說明請參考 [Try-Catch-Finally 指南](docs/TRY_CATCH_FINALLY.md)
+
+### 2. JavaScript 代碼最小化
+
+所有生成的 JavaScript 代碼自動最小化：
+
+```go
+js.AsyncFn(nil,
+    js.Const("x", "1"),
+    js.Const("y", "2"),
+    js.Log("x+y"),
+)
+
+// 生成：async()=>{const x=1;const y=2;console.log(x+y)}
+// 而非：async () => {\n  const x = 1;\n  const y = 2;\n  console.log(x+y);\n}
+```
+
+**優勢：**
+- ✅ 減少 30-50% 的代碼體積
+- ✅ 加快頁面載入速度
+- ✅ 降低帶寬消耗
+- ✅ 無需配置，自動應用
+
+### 3. Const/Let 支持 JSAction
+
+`Const` 和 `Let` 現在可以接受 `JSAction` 類型：
+
+```go
+// 傳入字符串（舊方式，仍然支持）
+js.Const("x", "1")
+
+// 傳入 JSAction（新方式）
+js.Const("random", js.Call("Math.random"))
+js.Const("doubled", JSAction{Code: "x * 2"})
+js.Const("data", js.Ident("response.data"))
+```
+
+**優勢：**
+- ✅ 更靈活的值賦值
+- ✅ 更好的代碼組合
+- ✅ 減少字符串拼接
+- ✅ 向後兼容
+
+詳細說明請參考 [代碼優化指南](docs/OPTIMIZATION.md)
 
 ### AsyncFn - 異步函數支持
 

@@ -48,7 +48,7 @@ func main() {
 						Button(Props{
 							"id":    "btn1",
 							"class": "btn btn-primary me-2",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.El("#text1").SetText("'文本已改變！'"),
 								js.El("#text1").AddClass("text-success"),
 								js.El("#text1").AddClass("fw-bold"),
@@ -57,7 +57,7 @@ func main() {
 						Button(Props{
 							"id":    "btn2",
 							"class": "btn btn-secondary me-2",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.El("#text1").SetHTML("'<em>HTML 已更新</em>'"),
 								js.El("#text1").RemoveClass("text-success"),
 								js.El("#text1").RemoveClass("fw-bold"),
@@ -66,7 +66,7 @@ func main() {
 						Button(Props{
 							"id":    "btn3",
 							"class": "btn btn-warning",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.El("#text1").SetText("'原始文本'"),
 								js.El("#text1").RemoveClass("text-success"),
 								js.El("#text1").RemoveClass("fw-bold"),
@@ -93,7 +93,7 @@ func main() {
 							Props{"class": "d-flex gap-2 mb-3"},
 							Button(Props{
 								"class": "btn btn-success",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.Const("currentValue", "parseInt(document.getElementById('counter').innerText)"),
 									js.Const("newValue", "currentValue + 1"),
 									js.El("#counter").SetText("newValue.toString()"),
@@ -102,7 +102,7 @@ func main() {
 							}, "增加 +1"),
 							Button(Props{
 								"class": "btn btn-danger",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.Const("currentValue", "parseInt(document.getElementById('counter').innerText)"),
 									js.Const("newValue", "currentValue - 1"),
 									js.El("#counter").SetText("newValue.toString()"),
@@ -111,7 +111,7 @@ func main() {
 							}, "減少 -1"),
 							Button(Props{
 								"class": "btn btn-secondary",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.El("#counter").SetText("'0'"),
 									js.Log("'計數器已重置'"),
 								),
@@ -136,20 +136,20 @@ func main() {
 						P("打開瀏覽器控制台查看日誌輸出："),
 						Button(Props{
 							"class": "btn btn-info me-2",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.Log("'這是一條控制台日誌'"),
 								js.Log("'當前時間:', new Date().toLocaleString()"),
 							),
 						}, "輸出日誌"),
 						Button(Props{
 							"class": "btn btn-warning me-2",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.Alert("'這是一個警告框！'"),
 							),
 						}, "顯示警告框"),
 						Button(Props{
 							"class": "btn btn-secondary",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.Const("userName", "prompt('請輸入您的名字:')"),
 								JSAction{Code: "if (userName) { alert('您好, ' + userName + '!'); }"},
 							),
@@ -168,8 +168,8 @@ func main() {
 						Props{"class": "card-body"},
 						Form(Props{
 							"id": "demoForm",
-							"onSubmit": js.Fn([]string{"evt"},
-								js.CallMethod("evt", "preventDefault"),
+							"onSubmit": js.Do([]string{"event"},
+								js.CallMethod("event", "preventDefault"),
 								js.Log("'表單提交事件觸發'"),
 								js.Const("nameValue", "document.getElementById('nameInput').value"),
 								js.Const("emailValue", "document.getElementById('emailInput').value"),
@@ -245,7 +245,7 @@ func main() {
 						}),
 						Button(Props{
 							"class": "btn btn-success me-2",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.Const("itemText", "document.getElementById('itemInput').value"),
 								JSAction{Code: "if (!itemText.trim()) { alert('請輸入項目名稱'); return; }"},
 								js.Const("newItem", "document.createElement('div')"),
@@ -259,7 +259,7 @@ func main() {
 						}, "添加項目"),
 						Button(Props{
 							"class": "btn btn-danger",
-							"onClick": js.Fn(nil,
+							"onClick": js.Do(nil,
 								js.El("#itemsContainer").SetHTML("''"),
 								js.Log("'清空所有項目'"),
 							),
@@ -283,7 +283,7 @@ func main() {
 						P("模擬異步操作和錯誤處理："),
 						Button(Props{
 							"class": "btn btn-primary me-2",
-							"onClick": js.AsyncFn(nil,
+							"onClick": js.AsyncDo(nil,
 								js.Try(
 									js.Log("'開始異步操作...'"),
 									js.El("#asyncResult").SetHTML("'<div class=\"spinner-border spinner-border-sm\"></div> 處理中...'"),

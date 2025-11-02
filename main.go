@@ -174,7 +174,7 @@ func main() {
 					Button(Props{
 						"id":    "fetchButton",
 						"class": "btn btn-primary mb-3",
-						"onClick": js.AsyncFn(nil,
+						"onClick": js.AsyncDo(nil,
 							js.Log("'開始獲取數據...'"),
 							js.TryCatch(
 								[]JSAction{
@@ -224,7 +224,7 @@ func main() {
 						"id":     "postForm",
 						"class":  "mb-3",
 						"action": "#",
-						"onSubmit": js.AsyncFn([]string{"evt"},
+						"onSubmit": js.AsyncDo([]string{"evt"},
 							js.CallMethod("evt", "preventDefault"),
 							js.Log("'表單提交事件觸發'"),
 							js.TryCatch(

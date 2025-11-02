@@ -158,7 +158,7 @@ func main() {
 							),
 							Button(Props{
 								"class": "btn btn-primary mb-2",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.Const("arr", "['A', 'B', 'C']"),
 									js.ForEachJS("arr", "item",
 										js.Log("'項目: ' + item"),
@@ -187,7 +187,7 @@ js.ForEachWithIndexJS("numbers", "num", "idx",
 							),
 							Button(Props{
 								"class": "btn btn-success mb-2",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.Const("numbers", "[10, 20, 30, 40, 50]"),
 									js.ForEachWithIndexJS("numbers", "num", "idx",
 										js.Log("'[' + idx + '] = ' + num"),
@@ -218,7 +218,7 @@ js.ForEachWithIndexJS("numbers", "num", "idx",
 							),
 							Button(Props{
 								"class": "btn btn-danger mb-3",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.Const("container", "document.getElementById('dynamicContainer')"),
 									JSAction{Code: "container.innerHTML = ''"},
 									js.Const("colors", "['primary', 'secondary', 'success', 'danger', 'warning', 'info']"),
@@ -258,7 +258,7 @@ js.ForEachWithIndexJS("numbers", "num", "idx",
 							),
 							Button(Props{
 								"class": "btn btn-primary mb-3",
-								"onClick": js.AsyncFn(nil,
+								"onClick": js.AsyncDo(nil,
 									js.Const("container", "document.getElementById('apiContainer')"),
 									JSAction{Code: "container.innerHTML = '<div class=\"spinner-border\" role=\"status\"></div> 載入中...'"},
 									js.Try(
@@ -313,7 +313,7 @@ js.ForEachWithIndexJS("numbers", "num", "idx",
 							),
 							Button(Props{
 								"class": "btn btn-success",
-								"onClick": js.Fn(nil,
+								"onClick": js.Do(nil,
 									js.ForEachElement("document.querySelectorAll('.item')", func(el js.Elem) JSAction {
 										return JSAction{Code: el.Ref() + ".classList.toggle('bg-warning');" + el.Ref() + ".classList.toggle('bg-secondary')"}
 									}),

@@ -279,7 +279,7 @@ func main() {
     "visible": true,                // bool
     "count":   42,                  // int
     "price":   19.99,               // float64
-    "onClick": js.Fn(nil, ...),    // JSAction
+    "onClick": js.Do(nil,...),         // JSAction
 }`,
 						),
 					),
