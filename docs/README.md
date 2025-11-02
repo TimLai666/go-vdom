@@ -7,6 +7,7 @@
 ### 🚀 快速開始
 
 **[快速入門指南 (QUICK_START.md)](QUICK_START.md)**
+
 - 5 分鐘快速上手
 - 基本概念介紹
 - 簡單示例
@@ -15,6 +16,7 @@
 ### 📖 核心文檔
 
 **[完整技術文檔 (DOCUMENTATION.md)](DOCUMENTATION.md)**
+
 - 深入的技術細節
 - 架構設計說明
 - 完整的功能介紹
@@ -25,6 +27,7 @@
 ### 🔧 API 參考
 
 **[JavaScript DSL API 參考 (API_REFERENCE.md)](API_REFERENCE.md)**
+
 - 完整的 JavaScript DSL API 列表
 - `Fn()` 和 `AsyncFn()` 使用指南
 - `TryCatch()` 錯誤處理
@@ -37,6 +40,7 @@
 ### ⚡ 快速參考
 
 **[語法速查表 (QUICK_REFERENCE.md)](QUICK_REFERENCE.md)**
+
 - 常用語法快速查詢
 - HTML 元素列表
 - Props 用法
@@ -109,7 +113,7 @@
 
 ## 🔥 重點功能
 
-### AsyncFn - 異步函數 (v1.1.0 新增)
+### AsyncFn - 異步函數
 
 解決 "await is only valid in async functions" 錯誤：
 
@@ -133,7 +137,7 @@ Button(Props{
 
 詳見：[API 參考 - AsyncFn](API_REFERENCE.md#asyncfnparams-string-actions-jsaction-jsaction)
 
-### Props 類型系統 (v1.1.0 更新)
+### Props 類型系統
 
 支持任意類型的值：
 
@@ -173,16 +177,17 @@ js.TryCatch(
 
 ## 💡 常見問題速查
 
-| 問題 | 參考文檔 |
-|------|---------|
-| 如何開始使用 go-vdom？ | [快速入門](QUICK_START.md) |
-| await 語法錯誤 | [API 參考 - AsyncFn](API_REFERENCE.md#asyncfnparams-string-actions-jsaction-jsaction) |
-| 如何創建組件？ | [完整文檔 - 組件系統](DOCUMENTATION.md#組件系統) |
-| 如何處理表單？ | [API 參考 - 事件處理](API_REFERENCE.md#事件處理) |
-| 如何發送 API 請求？ | [API 參考 - Fetch API](API_REFERENCE.md#fetch-api-輔助函數) |
-| 如何條件渲染？ | [快速參考 - 控制流](QUICK_REFERENCE.md#控制流) |
-| Props 支持哪些類型？ | [完整文檔 - Props 類型系統](DOCUMENTATION.md#props-類型系統) |
-| 如何優化性能？ | [完整文檔 - 性能優化](DOCUMENTATION.md#性能優化) |
+| 問題                   | 參考文檔                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 如何開始使用 go-vdom？ | [快速入門](QUICK_START.md)                                                                                       |
+| await 語法錯誤         | [API 參考 - AsyncFn](API_REFERENCE.md#asyncfnparams-string-actions-jsaction-jsaction)                            |
+| 如何創建組件？         | [完整文檔 - 組件系統](DOCUMENTATION.md#組件系統)                                                                 |
+| 如何處理表單？         | [API 參考 - 事件處理](API_REFERENCE.md#事件處理)                                                                 |
+| 如何發送 API 請求？    | [API 參考 - Fetch API](API_REFERENCE.md#fetch-api-輔助函數)                                                      |
+| 如何條件渲染？         | [快速參考 - 控制流](QUICK_REFERENCE.md#控制流)                                                                   |
+| Props 支持哪些類型？   | [完整文檔 - Props 類型系統](DOCUMENTATION.md#props-類型系統)                                                     |
+| 如何優化性能？         | [完整文檔 - 性能優化](DOCUMENTATION.md#性能優化)                                                                 |
+| 如何處理錯誤？         | [API 參考 - TryCatch](API_REFERENCE.md#trycatchbaseaction-jsaction-catchfn-jsaction-finallyfn-jsaction-jsaction) |
 
 ---
 
@@ -202,8 +207,3 @@ js.TryCatch(
 1. 在 [GitHub Issues](https://github.com/TimLai666/go-vdom/issues) 報告問題
 2. 提交 Pull Request 改進文檔
 3. 建議新增內容或示例
-
----
-
-**版本**: v1.1.0  
-**最後更新**: 2025-01-24

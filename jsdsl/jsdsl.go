@@ -704,27 +704,16 @@ func Do(params []string, actions ...JSAction) JSAction {
 	}
 
 	sb.WriteString("})(")
-	// 智能判斷：如果參數名看起來是事件相關的，自動傳入 'event'
-	// 這使得 Do/AsyncDo 既可用於事件處理器，也可用於其他 IIFE 場景
+	// 如果有參數，自動傳入 'event'
+	// 這使得 Do/AsyncDo 可用於事件處理器場景
 	if params != nil && len(params) > 0 {
-		isEventParam := false
-		// 檢查第一個參數是否為常見的事件參數名
-		if len(params[0]) > 0 {
-			paramName := strings.ToLower(params[0])
-			// 常見的事件參數名：event, e, evt, ev
-			isEventParam = paramName == "event" || paramName == "e" || paramName == "evt" || paramName == "ev"
-		}
-
-		if isEventParam {
-			// 事件處理器場景：傳入外部作用域的 event
-			for i := range params {
-				if i > 0 {
-					sb.WriteString(",")
-				}
-				sb.WriteString("event")
+		// 事件處理器場景：傳入外部作用域的 event
+		for i := range params {
+			if i > 0 {
+				sb.WriteString(",")
 			}
+			sb.WriteString("event")
 		}
-		// 否則不傳入任何參數，生成純 IIFE
 	}
 	sb.WriteString(")")
 	return JSAction{Code: sb.String()}
@@ -778,27 +767,16 @@ func AsyncDo(params []string, actions ...JSAction) JSAction {
 	}
 
 	sb.WriteString("})(")
-	// 智能判斷：如果參數名看起來是事件相關的，自動傳入 'event'
-	// 這使得 AsyncDo 既可用於事件處理器，也可用於其他 IIFE 場景
+	// 如果有參數，自動傳入 'event'
+	// 這使得 AsyncDo 可用於事件處理器場景
 	if params != nil && len(params) > 0 {
-		isEventParam := false
-		// 檢查第一個參數是否為常見的事件參數名
-		if len(params[0]) > 0 {
-			paramName := strings.ToLower(params[0])
-			// 常見的事件參數名：event, e, evt, ev
-			isEventParam = paramName == "event" || paramName == "e" || paramName == "evt" || paramName == "ev"
-		}
-
-		if isEventParam {
-			// 事件處理器場景：傳入外部作用域的 event
-			for i := range params {
-				if i > 0 {
-					sb.WriteString(",")
-				}
-				sb.WriteString("event")
+		// 事件處理器場景：傳入外部作用域的 event
+		for i := range params {
+			if i > 0 {
+				sb.WriteString(",")
 			}
+			sb.WriteString("event")
 		}
-		// 否則不傳入任何參數，生成純 IIFE
 	}
 	sb.WriteString(")")
 	return JSAction{Code: sb.String()}

@@ -28,9 +28,9 @@
 go get github.com/TimLai666/go-vdom
 ```
 
-## ⚠️ v1.2.1 重要更新
+## ⚠️ 重要說明
 
-**事件處理器變更**：從 v1.2.1 開始，事件處理器必須使用 `js.Do()` 或 `js.AsyncDo()`，不再支援 `js.Fn()` 或 `js.AsyncFn()`。
+**事件處理器**：事件處理器必須使用 `js.Do()` 或 `js.AsyncDo()`，不要使用 `js.Fn()` 或 `js.AsyncFn()`。
 
 ```go
 // ❌ 舊方式 (不再有效)
@@ -44,15 +44,15 @@ go get github.com/TimLai666/go-vdom
 ```
 
 ⚠️ **重要**：
+
 - 當需要使用 `event` 對象時（如 `event.target`、`event.preventDefault()`），必須聲明為參數
-- 參數名可以自定義：`[]string{"event"}`、`[]string{"e"}`、`[]string{"evt"}` 都可以
-- 參數名要與代碼中使用的變量名一致
+- 參數名可以任意命名：`[]string{"event"}`、`[]string{"e"}`、`[]string{"evt"}`、`[]string{"myEvent"}` 等都可以
+- 只要宣告了參數，就會自動注入 event 對象
 
 詳見：
-- [EVENT_HANDLER_CHANGES.md](docs/EVENT_HANDLER_CHANGES.md) - 完整遷移指南
-- [EVENT_HANDLER_QUICK_REF.md](docs/EVENT_HANDLER_QUICK_REF.md) - 快速參考
-- [DO_ASYNCDO_PARAMS.md](docs/DO_ASYNCDO_PARAMS.md) - 參數使用詳解
-- [EVENT_PARAM_ANY_NAME.md](docs/EVENT_PARAM_ANY_NAME.md) - 參數名稱靈活性
+
+- [API 參考文檔](docs/API_REFERENCE.md) - 完整 API 說明
+- [快速入門指南](docs/QUICK_START.md) - 基礎教學
 - [examples/09_event_handlers.go](examples/09_event_handlers.go) - 實例演示
 - [examples/10_do_with_params.go](examples/10_do_with_params.go) - 參數使用示例
 
@@ -64,7 +64,7 @@ package main
 import (
     "fmt"
     "net/http"
-    
+
     js "github.com/TimLai666/go-vdom/jsdsl"
     . "github.com/TimLai666/go-vdom/vdom"
 )
@@ -85,10 +85,10 @@ func main() {
                 }, "Load Data"),
             ),
         )
-        
+
         fmt.Fprint(w, Render(doc))
     })
-    
+
     http.ListenAndServe(":8080", nil)
 }
 ```
@@ -136,7 +136,7 @@ go-vdom/
 
 ```go
 // 創建元素
-Div(Props{"class": "container"}, 
+Div(Props{"class": "container"},
     H1("標題"),
     P("段落內容"),
 )
@@ -273,6 +273,7 @@ js.AsyncDo(
 ```
 
 **設計理念：**
+
 - ✅ Try 生成純粹的 try-catch-finally，不包裝
 - ✅ 需要 async 時，用 AsyncFn 或 AsyncDo 包裝
 - ✅ Do/AsyncDo 專門用於創建 IIFE
@@ -297,6 +298,7 @@ js.AsyncFn(nil,
 ```
 
 **優勢：**
+
 - ✅ 減少 30-50% 的代碼體積
 - ✅ 加快頁面載入速度
 - ✅ 降低帶寬消耗
@@ -317,6 +319,7 @@ js.Const("data", js.Ident("response.data"))
 ```
 
 **優勢：**
+
 - ✅ 更靈活的值賦值
 - ✅ 更好的代碼組合
 - ✅ 減少字符串拼接
@@ -386,15 +389,17 @@ go run examples/04_template_serialization.go  # http://localhost:8083
 ## 最佳實踐
 
 1. **使用 AsyncFn 處理異步操作**
+
    ```go
    // ✅ 正確
    js.AsyncFn(nil, js.Const("data", "await fetch('/api')"))
-   
+
    // ❌ 錯誤（會導致 "await is only valid in async functions" 錯誤）
    js.Fn(nil, js.Const("data", "await fetch('/api')"))
    ```
 
 2. **始終使用 TryCatch 包裝異步操作**
+
    ```go
    js.TryCatch(
        js.AsyncFn(nil, /* 異步操作 */),
@@ -404,6 +409,7 @@ go run examples/04_template_serialization.go  # http://localhost:8083
    ```
 
 3. **JavaScript 字符串需要單引號**
+
    ```go
    js.Log("'This is a string'")    // ✅ 正確
    js.Log("This is a string")      // ❌ 錯誤
@@ -437,6 +443,5 @@ MIT License - 詳見 [LICENSE](LICENSE) 文件
 
 ---
 
-**版本**: v1.1.0  
-**作者**: TimLai666  
+**作者**: TimLai666
 **倉庫**: https://github.com/TimLai666/go-vdom
