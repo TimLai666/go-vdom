@@ -1,13 +1,37 @@
 // tags.go
 package vdom
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/TimLai666/go-vdom/runtime"
+)
 
 // 基本標籤函數
 
 // Text 創建一個文字節點
 func Text(s string) VNode {
 	return VNode{Content: s}
+}
+
+// ForEach 提供簡潔的列表渲染語法（後端渲染）
+// 用法：Ul(ForEach(items, func(item string) VNode { return Li(item) }))
+func ForEach[T any](items []T, renderFunc func(item T) VNode) []VNode {
+	result := make([]VNode, len(items))
+	for i, item := range items {
+		result[i] = renderFunc(item)
+	}
+	return result
+}
+
+// ForEachWithIndex 提供帶索引的列表渲染（後端渲染）
+// 用法：Ul(ForEachWithIndex(items, func(item string, i int) VNode { return Li(fmt.Sprintf("%d. %s", i+1, item)) }))
+func ForEachWithIndex[T any](items []T, renderFunc func(item T, index int) VNode) []VNode {
+	result := make([]VNode, len(items))
+	for i, item := range items {
+		result[i] = renderFunc(item, i)
+	}
+	return result
 }
 
 // 常用 HTML 標籤函數
@@ -83,6 +107,9 @@ func Document(title string, links []LinkInfo, scripts []ScriptInfo, metas []Prop
 		}
 		headElements = append(headElements, Link(props))
 	}
+
+	// 自動注入 go-vdom runtime 腳本（必須在其他腳本之前加載）
+	headElements = append(headElements, Script(Props{}, runtime.ClientRuntime()))
 
 	// 添加腳本
 	for _, script := range scripts {

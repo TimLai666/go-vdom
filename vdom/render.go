@@ -4,6 +4,7 @@ package vdom
 import (
 	"fmt"
 	"html"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -47,13 +48,31 @@ func Render(v VNode) string {
 			switch t := rawVal.(type) {
 			case JSAction:
 				// 為此內聯 JSAction 產生一個唯一 id，並把 handler 注入到 injectedHandlers
-				handlerID := fmt.Sprintf("h-%d", time.Now().UnixNano())
+				handlerID := fmt.Sprintf("h-%d-%d", time.Now().UnixNano(), rand.Intn(999999))
 				// 在元素上寫入 data-gvd-handler 屬性來引用 handlerID 與事件類型
 				sb.WriteString(fmt.Sprintf(" data-gvd-handler=\"%s|%s\"", handlerID, eventName))
 				// 安全處理：避免內嵌 </script> 破壞文檔結構
 				safeCode := strings.ReplaceAll(t.Code, "</script>", "</scr\" + \"ipt>")
-				// 把 handler 註冊片段加入 injectedHandlers（不在這裡重複初始化全域物件，由統一的 registry 腳本負責）
-				reg := fmt.Sprintf("window.__gvd.handlers['%s']={fn:function(evt,el){%s},eventType:'%s'};", handlerID, safeCode, eventName)
+
+				// 智能檢測：如果 Code 已經是函數定義，直接調用；否則包裝成 function
+				trimmedCode := strings.TrimSpace(safeCode)
+				var handlerFn string
+
+				// 檢測是否為箭頭函數 (以 "(" 開頭且包含 "=>")
+				// 或者是 function 關鍵字開頭
+				isArrowFunction := strings.HasPrefix(trimmedCode, "(") && strings.Contains(trimmedCode, "=>")
+				isFunctionKeyword := strings.HasPrefix(trimmedCode, "function")
+
+				if isArrowFunction || isFunctionKeyword {
+					// 已經是函數定義，包裝一層以便接收 evt 和 el，然後直接調用用戶函數
+					handlerFn = fmt.Sprintf("function(evt,el){(%s)(evt,el);}", trimmedCode)
+				} else {
+					// 不是函數定義，包裝成 function(evt, el) { ... }
+					handlerFn = fmt.Sprintf("function(evt,el){%s}", safeCode)
+				}
+
+				// 把 handler 註冊片段加入 injectedHandlers
+				reg := fmt.Sprintf("window.__gvd.handlers['%s']={fn:%s,eventType:'%s'};", handlerID, handlerFn, eventName)
 				injectedHandlers = append(injectedHandlers, reg)
 			case string:
 				// 當作命名的全域函式參考（named handler），在 client 端 runtime 會解析並呼叫

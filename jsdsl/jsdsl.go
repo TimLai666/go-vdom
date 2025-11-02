@@ -109,6 +109,31 @@ func Fn(params []string, actions ...JSAction) JSAction {
 	return JSAction{Code: sb.String()}
 }
 
+// AsyncFn 創建一個異步函數，支援 await 語法
+// 如果不需要參數，可以傳入 nil 作為 params 參數
+func AsyncFn(params []string, actions ...JSAction) JSAction {
+	var sb strings.Builder
+
+	// 創建一個異步匿名函數
+	paramsStr := ""
+	if params != nil {
+		paramsStr = strings.Join(params, ", ")
+	}
+	sb.WriteString(fmt.Sprintf("async (%s) => {\n", paramsStr))
+
+	// 添加函數體
+	for _, a := range actions {
+		line := strings.TrimSpace(a.Code)
+		if !strings.HasSuffix(line, ";") {
+			line += ";"
+		}
+		sb.WriteString("  " + line + "\n")
+	}
+
+	sb.WriteString("}")
+	return JSAction{Code: sb.String()}
+}
+
 // Call 調用一個函數，傳入參數
 func Call(fnExpr any, args ...any) JSAction {
 	var processedArgs []string
@@ -193,7 +218,53 @@ func (el Elem) InnerHTML() string {
 	return fmt.Sprintf("%s.innerHTML", el.Ref())
 }
 
-func ForEach(arrayExpr string, fn func(el Elem) JSAction) JSAction {
+// ForEachJS 遍歷任意 JavaScript 數組或可迭代對象（前端渲染）
+// 參數：
+// - arrayExpr: 數組表達式（如 "myArray", "[1,2,3]", "data.items"）
+// - itemVar: 項目變數名稱（如 "item", "user"）
+// - actions: 對每個項目執行的動作
+// 用法：js.ForEachJS("items", "item", js.Log("item"))
+func ForEachJS(arrayExpr string, itemVar string, actions ...JSAction) JSAction {
+	var sb strings.Builder
+	for _, a := range actions {
+		line := strings.TrimSpace(a.Code)
+		if !strings.HasSuffix(line, ";") {
+			line += ";"
+		}
+		sb.WriteString(line + "\n")
+	}
+
+	return JSAction{
+		Code: fmt.Sprintf(`%s.forEach(function(%s) {
+%s});`, arrayExpr, itemVar, indent(sb.String(), "  ")),
+	}
+}
+
+// ForEachWithIndexJS 遍歷數組並提供索引（前端渲染）
+// 參數：
+// - arrayExpr: 數組表達式
+// - itemVar: 項目變數名稱
+// - indexVar: 索引變數名稱
+// - actions: 對每個項目執行的動作
+func ForEachWithIndexJS(arrayExpr string, itemVar string, indexVar string, actions ...JSAction) JSAction {
+	var sb strings.Builder
+	for _, a := range actions {
+		line := strings.TrimSpace(a.Code)
+		if !strings.HasSuffix(line, ";") {
+			line += ";"
+		}
+		sb.WriteString(line + "\n")
+	}
+
+	return JSAction{
+		Code: fmt.Sprintf(`%s.forEach(function(%s, %s) {
+%s});`, arrayExpr, itemVar, indexVar, indent(sb.String(), "  ")),
+	}
+}
+
+// ForEachElement 遍歷 DOM 元素列表（保留向後兼容）
+// 這是專門用於 DOM 元素操作的版本
+func ForEachElement(arrayExpr string, fn func(el Elem) JSAction) JSAction {
 	el := "el"
 	return JSAction{
 		Code: fmt.Sprintf(`%s.forEach(function(%s) {
@@ -203,7 +274,7 @@ func ForEach(arrayExpr string, fn func(el Elem) JSAction) JSAction {
 }
 
 func QueryEach(list ElemList, fn func(el Elem) JSAction) JSAction {
-	return ForEach(list.Ref(), fn)
+	return ForEachElement(list.Ref(), fn)
 }
 
 func indent(code string, prefix string) string {

@@ -69,13 +69,46 @@ func Repeat(count int, renderFunc func(index int) vdom.VNode) []vdom.VNode {
 	return result
 }
 
-// For 循環渲染
+// ForEach 遍歷渲染
 // 對數據集合中的每一項應用渲染函數
-func For[T any](items []T, renderFunc func(item T, index int) vdom.VNode) []vdom.VNode {
+func ForEach[T any](items []T, renderFunc func(item T, index int) vdom.VNode) []vdom.VNode {
 	result := make([]vdom.VNode, len(items))
 	for i, item := range items {
 		result[i] = renderFunc(item, i)
 	}
+	return result
+}
+
+// For 傳統循環渲染
+// 類似於 for i := start; 條件; i += step 的循環
+// 參數：
+// - start: 起始值
+// - end: 結束值（不包含）
+// - step: 步進值（可以是負數用於倒序）
+// 用法：
+//
+//	For(0, 10, 1, func(i int) VNode { return Div(fmt.Sprintf("項目 %d", i)) })  // 0-9
+//	For(10, 0, -1, func(i int) VNode { return Div(fmt.Sprintf("項目 %d", i)) }) // 10-1 倒序
+//	For(0, 100, 10, func(i int) VNode { return Div(fmt.Sprintf("項目 %d", i)) }) // 0, 10, 20, ..., 90
+func For(start, end, step int, renderFunc func(i int) vdom.VNode) []vdom.VNode {
+	if step == 0 {
+		return []vdom.VNode{}
+	}
+
+	var result []vdom.VNode
+
+	if step > 0 {
+		// 正向循環
+		for i := start; i < end; i += step {
+			result = append(result, renderFunc(i))
+		}
+	} else {
+		// 反向循環
+		for i := start; i > end; i += step {
+			result = append(result, renderFunc(i))
+		}
+	}
+
 	return result
 }
 
@@ -112,9 +145,9 @@ type KeyedNode struct {
 	Node vdom.VNode
 }
 
-// KeyedFor 帶鍵值的循環渲染
+// KeyedForEach 帶鍵值的循環渲染
 // 為列表中的每個項目創建帶有唯一鍵的節點
-func KeyedFor[T any](items []T, keyFunc func(item T, index int) string, renderFunc func(item T, index int) vdom.VNode) []KeyedNode {
+func KeyedForEach[T any](items []T, keyFunc func(item T, index int) string, renderFunc func(item T, index int) vdom.VNode) []KeyedNode {
 	result := make([]KeyedNode, len(items))
 	for i, item := range items {
 		key := keyFunc(item, i)

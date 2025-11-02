@@ -19,15 +19,15 @@ type PropsDef map[string]string
 
 // Component 創建一個新的組件函數，支援預設 props
 //   - template: 組件模板 VNode
-//   - onDOMReady: (可選) 指向 JSAction 的指標（建議先用 jsdsl.Fn 建立一個 JSAction 變數，然後傳該變數的地址）
+//   - onDOMReadyCallback: (可選) 指向 JSAction 的指標（建議先用 jsdsl.Fn 建立一個 JSAction 變數，然後傳該變數的地址）
 //     如果提供且非 nil，會在建立 node 後注入到 node.Props["onDOMReady"]
 //   - defaultProps: 可選的預設 PropsDef
 //
 // 使用範例：
 // act := jsdsl.Fn(nil, JSAction{Code: "/* ... */"})
 // Component(template, &act, PropsDef{"id":"", ...})
-// Component(template, nil, PropsDef{"id":"", ...}) // 傳 nil 表示不注入 onDOMReady
-func Component(template VNode, onDOMReady *JSAction, defaultProps ...PropsDef) func(props Props, children ...VNode) VNode {
+// Component(template, nil, PropsDef{"id":"", ...}) // 傳 nil 表示不注入 onDOMReadyCallback
+func Component(template VNode, onDOMReadyCallback *JSAction, defaultProps ...PropsDef) func(props Props, children ...VNode) VNode {
 	return func(p Props, children ...VNode) VNode {
 		mergedProps := make(Props)
 
@@ -73,15 +73,15 @@ func Component(template VNode, onDOMReady *JSAction, defaultProps ...PropsDef) f
 		// 使用模板與合併後的 props 產生 VNode (先進行模板插值)
 		node := interpolate(template, mergedProps, children)
 
-		// 若提供了 onDOMReady（指標）且其內容非空，且使用者未透過 props 顯式覆寫 onDOMReady，則將其注入為 node.Props["onDOMReady"]
-		if onDOMReady != nil && strings.TrimSpace(onDOMReady.Code) != "" {
+		// 若提供了 onDOMReadyCallback（指標）且其內容非空，且使用者未透過 props 顯式覆寫 onDOMReadyCallback，則將其注入為 node.Props["onDOMReadyCallback"]
+		if onDOMReadyCallback != nil && strings.TrimSpace(onDOMReadyCallback.Code) != "" {
 			if node.Props == nil {
 				node.Props = make(Props)
 			}
 			// 只在使用者沒有明確提供 onDOMReady 的情況下注入（避免覆寫）
 			if _, exists := node.Props["onDOMReady"]; !exists {
 				// 將 JSAction 值放入 Props，並對其中的 {{...}} 模板進行插值
-				interpolatedCode := interpolateString(onDOMReady.Code, mergedProps)
+				interpolatedCode := interpolateString(onDOMReadyCallback.Code, mergedProps)
 				node.Props["onDOMReady"] = JSAction{Code: interpolatedCode}
 			}
 		}

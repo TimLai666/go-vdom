@@ -7,10 +7,9 @@ import (
 	"net/http"
 
 	comp "github.com/TimLai666/go-vdom/components"
-	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
-	. "github.com/TimLai666/go-vdom/vdom"
-
 	control "github.com/TimLai666/go-vdom/control"
+	js "github.com/TimLai666/go-vdom/jsdsl"
+	. "github.com/TimLai666/go-vdom/vdom"
 )
 
 // 定義一個簡單的數據結構用於 API 響應
@@ -138,14 +137,36 @@ func main() {
 					),
 
 					Div(Props{"class": "mt-4"},
-						H4("For 測試"),
-						Ul(control.For(items, func(item string, i int) VNode {
+						H4("ForEach 測試"),
+						Ul(control.ForEach(items, func(item string, i int) VNode {
 							return Li(fmt.Sprintf("第%d個: %s", i+1, item))
 						})),
 					),
+
+					Div(Props{"class": "mt-4"},
+						H4("For 循環測試"),
+						P("使用 control.For 生成 1-10 的數字："),
+						Div(Props{"class": "d-flex gap-2 mb-3"},
+							control.For(1, 11, 1, func(i int) VNode {
+								return Span(Props{"class": "badge bg-primary"}, fmt.Sprintf("%d", i))
+							}),
+						),
+						P("倒序 10-1："),
+						Div(Props{"class": "d-flex gap-2 mb-3"},
+							control.For(10, 0, -1, func(i int) VNode {
+								return Span(Props{"class": "badge bg-success"}, fmt.Sprintf("%d", i))
+							}),
+						),
+						P("步進 2（偶數）："),
+						Div(Props{"class": "d-flex gap-2"},
+							control.For(0, 20, 2, func(i int) VNode {
+								return Span(Props{"class": "badge bg-info"}, fmt.Sprintf("%d", i))
+							}),
+						),
+					),
 				),
 
-				// 添加 Fetch API 示例區塊 - GET 請求
+				// 添加 Fetch API 示例區塊 - GET 請求 (使用 DSL)
 				Div(
 					Props{"class": "mt-4"},
 					H4("Fetch GET API 測試"),
@@ -153,41 +174,40 @@ func main() {
 					Button(Props{
 						"id":    "fetchButton",
 						"class": "btn btn-primary mb-3",
-						"onClick": jsdsl.Fn(nil, JSAction{Code: `
-							// Fetch GET handler moved to button onClick
-							fetch('/api/data', {
-								method: 'GET',
-								headers: { 'Content-Type': 'application/json' },
-								credentials: 'same-origin'
-							})
-							.then(function(response){
-								if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
-								return response.json();
-							})
-							.then(function(apiData){
-								console.log('存儲的 API 數據:' + JSON.stringify(apiData));
-								const container = document.getElementById('dataContainer');
-								if (!container) return;
-								container.innerHTML = '';
-								const ul = document.createElement('ul');
-								ul.classList.add('list-group');
-								apiData.forEach(function(item){
-									const li = document.createElement('li');
-									li.classList.add('list-group-item');
-									li.innerHTML = '<strong>' + item.name + '</strong>: ' + item.message;
-									ul.appendChild(li);
-								});
-								container.appendChild(ul);
-								console.log('API 數據項目數量: ' + apiData.length);
-							})
-							.catch(function(error){
-								console.log('獲取數據時出錯:' + error.message);
-								const container = document.getElementById('dataContainer');
-								if (container) {
-									container.innerHTML = '<div class="alert alert-danger">獲取數據時出錯: ' + error.message + '</div>';
-								}
-							});
-						`}),
+						"onClick": js.AsyncFn(nil,
+							js.Log("'開始獲取數據...'"),
+							js.TryCatch(
+								js.AsyncFn(nil,
+									js.Const("response", "await fetch('/api/data', { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' })"),
+									js.Log("'收到響應: ' + response.status"),
+									JSAction{Code: "if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText)"},
+									js.Const("apiData", "await response.json()"),
+									js.Log("'API 數據:', apiData"),
+									js.Const("container", "document.getElementById('dataContainer')"),
+									JSAction{Code: `if (!container) {
+										console.error('找不到 dataContainer 元素');
+										return;
+									}`},
+									JSAction{Code: "container.innerHTML = ''"},
+									js.Const("ul", "document.createElement('ul')"),
+									JSAction{Code: "ul.classList.add('list-group')"},
+									js.ForEachJS("apiData", "item",
+										js.Const("li", "document.createElement('li')"),
+										JSAction{Code: "li.classList.add('list-group-item')"},
+										JSAction{Code: "li.innerHTML = '<strong>' + item.name + '</strong>: ' + item.message"},
+										JSAction{Code: "ul.appendChild(li)"},
+									),
+									JSAction{Code: "container.appendChild(ul)"},
+									js.Log("'成功顯示 ' + apiData.length + ' 條數據'"),
+								),
+								js.Ptr(js.Fn(nil,
+									js.Log("'獲取數據時出錯:', e"),
+									js.Const("container", "document.getElementById('dataContainer')"),
+									JSAction{Code: "if (container) { container.innerHTML = '<div class=\"alert alert-danger\">獲取數據時出錯: ' + e.message + '</div>' }"},
+								)),
+								nil,
+							),
+						),
 					}, "獲取數據"),
 					Div(Props{
 						"id":    "dataContainer",
@@ -195,7 +215,7 @@ func main() {
 					}, "數據將顯示在這裡..."),
 				),
 
-				// 添加 Fetch POST API 示例區塊
+				// 添加 Fetch POST API 示例區塊 (使用 DSL)
 				Div(
 					Props{"class": "mt-4"},
 					H4("Fetch POST API 測試"),
@@ -204,38 +224,32 @@ func main() {
 						"id":     "postForm",
 						"class":  "mb-3",
 						"action": "#",
-						"onSubmit": jsdsl.Fn([]string{"evt"}, JSAction{Code: `
-							// Form submit handler moved into form onSubmit
-							evt.preventDefault();
-							const nameValue = document.getElementById('nameInput') ? document.getElementById('nameInput').value : '';
-							const messageValue = document.getElementById('messageInput') ? document.getElementById('messageInput').value : '';
-							fetch('/api/data', {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								credentials: 'same-origin',
-								body: JSON.stringify({ name: nameValue, message: messageValue })
-							})
-							.then(function(response){
-								if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
-								return response.json();
-							})
-							.then(function(postResponse){
-								console.log('POST 請求結果:' + JSON.stringify(postResponse));
-								const form = document.getElementById('postForm');
-								if (form) form.reset();
-								const respContainer = document.getElementById('postResponseContainer');
-								if (respContainer) {
-									respContainer.innerHTML = '<div class="alert alert-success">表單提交成功！回應包含 ' + postResponse.length + ' 個項目</div>';
-								}
-							})
-							.catch(function(error){
-								console.log('提交表單時出錯:' + error.message);
-								const respContainer = document.getElementById('postResponseContainer');
-								if (respContainer) {
-									respContainer.innerHTML = '<div class="alert alert-danger">提交表單時出錯: ' + error.message + '</div>';
-								}
-							});
-						`}),
+						"onSubmit": js.AsyncFn([]string{"evt"},
+							js.CallMethod("evt", "preventDefault"),
+							js.Log("'表單提交事件觸發'"),
+							js.TryCatch(
+								js.AsyncFn(nil,
+									js.Const("nameValue", "document.getElementById('nameInput') ? document.getElementById('nameInput').value : ''"),
+									js.Const("messageValue", "document.getElementById('messageInput') ? document.getElementById('messageInput').value : ''"),
+									js.Log("'表單數據:', { name: nameValue, message: messageValue }"),
+									js.Const("response", "await fetch('/api/data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ name: nameValue, message: messageValue }) })"),
+									js.Log("'POST 響應:', response.status"),
+									JSAction{Code: "if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText)"},
+									js.Const("postResponse", "await response.json()"),
+									js.Log("'POST 成功:', postResponse"),
+									js.Const("form", "document.getElementById('postForm')"),
+									JSAction{Code: "if (form) form.reset()"},
+									js.Const("respContainer", "document.getElementById('postResponseContainer')"),
+									JSAction{Code: "if (respContainer) { respContainer.innerHTML = '<div class=\"alert alert-success\">表單提交成功！回應包含 ' + postResponse.length + ' 個項目</div>' }"},
+								),
+								js.Ptr(js.Fn(nil,
+									js.Log("'提交表單錯誤:', e"),
+									js.Const("respContainer", "document.getElementById('postResponseContainer')"),
+									JSAction{Code: "if (respContainer) { respContainer.innerHTML = '<div class=\"alert alert-danger\">提交表單時出錯: ' + e.message + '</div>' }"},
+								)),
+								nil,
+							),
+						),
 					},
 						Div(Props{"class": "mb-3"},
 							Label(Props{"for": "nameInput"}, "姓名"),
