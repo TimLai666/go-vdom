@@ -283,8 +283,8 @@ func main() {
 						P("模擬異步操作和錯誤處理："),
 						Button(Props{
 							"class": "btn btn-primary me-2",
-							"onClick": js.TryCatch(
-								js.Fn(nil,
+							"onClick": js.AsyncFn(nil,
+								js.Try(
 									js.Log("'開始異步操作...'"),
 									js.El("#asyncResult").SetHTML("'<div class=\"spinner-border spinner-border-sm\"></div> 處理中...'"),
 									js.Const("delay", "new Promise(resolve => setTimeout(resolve, 2000))"),
@@ -293,12 +293,10 @@ func main() {
 									JSAction{Code: "if (randomNum < 0.5) throw new Error('隨機錯誤發生 (運氣不好)')"},
 									js.El("#asyncResult").SetHTML("'<div class=\"alert alert-success\">操作成功完成！</div>'"),
 									js.Log("'異步操作完成'"),
-								),
-								js.Ptr(js.Fn(nil,
-									js.Log("'捕獲錯誤:', e"),
-									js.El("#asyncResult").SetHTML("'<div class=\"alert alert-danger\">錯誤: ' + e.message + '</div>'"),
-								)),
-								nil,
+								).Catch(
+									js.Log("'捕獲錯誤:', error"),
+									js.El("#asyncResult").SetHTML("'<div class=\"alert alert-danger\">錯誤: ' + error.message + '</div>'"),
+								).End(),
 							),
 						}, "執行異步操作"),
 						Div(Props{"id": "asyncResult", "class": "mt-3"}),

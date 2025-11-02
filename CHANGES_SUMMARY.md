@@ -615,6 +615,55 @@ control.For(0, 20, 2, func(i int) VNode {
 
 ---
 
+## ⚠️ 重要注意事項
+
+### TryCatch 與 AsyncFn 的正確用法
+
+**問題：** TryCatch 內部不應該使用 AsyncFn 或 Fn 包裝
+
+TryCatch 已經創建了 async 函數包裝，如果內部再用 AsyncFn/Fn，會導致函數定義但不執行。
+
+**❌ 錯誤示例：**
+```go
+js.TryCatch(
+    js.AsyncFn(nil,  // ❌ 錯誤！只會定義函數，不會執行
+        js.Const("data", "await fetch('/api')"),
+    ),
+    js.Ptr(js.Fn(nil, ...)),  // ❌ 錯誤！
+    nil,
+)
+```
+
+**✅ 正確做法 1：外層 AsyncFn + 原生 try-catch**
+```go
+js.AsyncFn(nil,
+    JSAction{Code: `try {
+  const response = await fetch('/api/data');
+  const data = await response.json();
+  console.log(data);
+} catch (e) {
+  console.log('錯誤:', e.message);
+}`},
+)
+```
+
+**✅ 正確做法 2：TryCatch 用於同步代碼**
+```go
+js.TryCatch(
+    JSAction{Code: "doSomething()"},  // 直接寫語句
+    js.Ptr(JSAction{Code: "console.log(e)"}),  // 直接寫語句
+    nil,
+)
+```
+
+**規則：**
+- ✅ 外層事件處理器用 `AsyncFn`
+- ✅ 內部用原生 JavaScript `try-catch` 語法
+- ❌ 不要在 TryCatch 內部使用 AsyncFn 或 Fn
+- ✅ TryCatch 適用於不需要 await 的同步代碼
+
+---
+
 ## 下一步
 
 1. ✅ 代碼已修復，編譯通過
@@ -626,5 +675,6 @@ control.For(0, 20, 2, func(i int) VNode {
    - `go run examples/06_control_loops.go` - control.For 和 control.ForEach 示例（http://localhost:8085）
 5. ⏭️ 閱讀 `docs/README.md` 了解新文檔結構
 6. ⏭️ 閱讀 `docs/API_REFERENCE.md` 學習 AsyncFn 和 ForEach 用法
-7. ⏭️ 使用新的 ForEach 和 control.For 語法替換複雜的列表渲染代碼
-8. ⏭️ 將代碼中的 `control.For` 改為 `control.ForEach`（如果是遍歷集合）
+7. ⏭️ **重要：** 學習 TryCatch 與 AsyncFn 的正確用法（見上方注意事項）
+8. ⏭️ 使用新的 ForEach 和 control.For 語法替換複雜的列表渲染代碼
+9. ⏭️ 將代碼中的 `control.For` 改為 `control.ForEach`（如果是遍歷集合）

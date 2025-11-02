@@ -304,60 +304,83 @@ js.El("#button").OnClick(
 
 ## 異步操作
 
-### `TryCatch(baseAction JSAction, catchFn *JSAction, finallyFn *JSAction) JSAction`
+### `TryCatch(tryActions []JSAction, catchActions []JSAction, finallyActions []JSAction) JSAction`
 
 生成一個自動執行的異步函數，包含 try/catch/finally 邏輯。
 
 **參數：**
-- `baseAction`: 主要執行的異步操作（通常使用 `AsyncFn` 創建）
-- `catchFn`: 可選的錯誤處理函數（使用 `js.Ptr(js.Fn(...))` 包裝）
-- `finallyFn`: 可選的最終執行函數
+- `tryActions`: try 區塊中執行的動作列表
+- `catchActions`: catch 區塊中執行的動作列表（可選，錯誤對象為 `e`）
+- `finallyActions`: finally 區塊中執行的動作列表（可選）
 
-**注意：** `catchFn` 和 `finallyFn` 至少需要提供一個。
+**注意：** `catchActions` 和 `finallyActions` 至少需要提供一個。
+
+**特點：**
+- ✅ 自動創建 async 函數包裝，支持 `await` 語法
+- ✅ 立即執行該函數
+- ✅ 接受動作列表，自動處理語句格式
+- ✅ 錯誤對象自動命名為 `e`
 
 **示例：**
 ```go
-js.TryCatch(
-    // Try block - 使用 AsyncFn 支持 await
-    js.AsyncFn(nil,
-        js.Const("response", "await fetch('/api/data')"),
-        js.Const("data", "await response.json()"),
-        js.Log("data"),
+// 外層使用 AsyncFn，內部使用 TryCatch
+js.AsyncFn(nil,
+    js.Log("'開始操作...'"),
+    js.TryCatch(
+        // Try 區塊 - 傳入動作列表
+        []JSAction{
+            js.Const("response", "await fetch('/api/data')"),
+            js.Log("'收到響應'"),
+            JSAction{Code: "if (!response.ok) throw new Error('請求失敗')"},
+            js.Const("data", "await response.json()"),
+            js.Log("'數據:', data"),
+        },
+        // Catch 區塊
+        []JSAction{
+            js.Log("'錯誤:', e.message"),
+            js.Alert("'發生錯誤: ' + e.message"),
+        },
+        // Finally 區塊（可選）
+        []JSAction{
+            js.Log("'請求完成'"),
+        },
     ),
-    // Catch block - 使用 Ptr 包裝普通 Fn
-    js.Ptr(js.Fn(nil,
-        js.Log("'錯誤:', e.message"),
-        js.Alert("'發生錯誤'"),
-    )),
-    // Finally block (可選)
-    js.Ptr(js.Fn(nil,
-        js.Log("'請求完成'"),
-    )),
 )
 ```
 
 **生成的 JavaScript：**
 ```javascript
-(async () => { 
-  try { 
-    async () => {
+async () => {
+  console.log('開始操作...');
+  (async () => {
+    try {
       const response = await fetch('/api/data');
+      console.log('收到響應');
+      if (!response.ok) throw new Error('請求失敗');
       const data = await response.json();
-      console.log(data);
-    }
-  } 
-  catch (e) { 
-    () => {
+      console.log('數據:', data);
+    } catch (e) {
       console.log('錯誤:', e.message);
-      alert('發生錯誤');
-    }
-  } 
-  finally { 
-    () => {
+      alert('發生錯誤: ' + e.message);
+    } finally {
       console.log('請求完成');
     }
-  } 
-})()
+  })();
+}
+```
+
+**簡單示例（只有 try-catch）：**
+```go
+js.TryCatch(
+    []JSAction{
+        js.Const("result", "await dangerousOperation()"),
+        js.Log("'成功:', result"),
+    },
+    []JSAction{
+        js.Log("'失敗:', e.message"),
+    },
+    nil, // 不需要 finally
+)
 ```
 
 ---
@@ -634,16 +657,16 @@ Props{
     "onSubmit": js.AsyncFn([]string{"event"},
         js.CallMethod("event", "preventDefault"),
         js.TryCatch(
-            js.AsyncFn(nil,
+            []JSAction{
                 js.Const("formData", "new FormData(event.target)"),
                 js.Const("response", "await fetch('/api/submit', { method: 'POST', body: formData })"),
                 JSAction{Code: "if (!response.ok) throw new Error('提交失敗')"},
                 js.Const("result", "await response.json()"),
                 js.Alert("'提交成功: ' + result.message"),
-            ),
-            js.Ptr(js.Fn(nil,
+            },
+            []JSAction{
                 js.Alert("'錯誤: ' + e.message"),
-            )),
+            },
             nil,
         ),
     ),
@@ -658,14 +681,14 @@ Props{
         js.Const("container", "document.getElementById('content')"),
         JSAction{Code: "container.innerHTML = '載入中...'"},
         js.TryCatch(
-            js.AsyncFn(nil,
+            []JSAction{
                 js.Const("response", "await fetch('/api/content')"),
                 js.Const("html", "await response.text()"),
                 JSAction{Code: "container.innerHTML = html"},
-            ),
-            js.Ptr(js.Fn(nil,
+            },
+            []JSAction{
                 JSAction{Code: "container.innerHTML = '載入失敗'"},
-            )),
+            },
             nil,
         ),
     ),
@@ -781,8 +804,10 @@ const (
    - 外層點擊事件等也需要使用 `AsyncFn`
 
 2. **錯誤處理**
-   - 使用 `TryCatch` 包裝所有異步操作
+   - 使用 `TryCatch` 包裝異步操作，傳入動作列表
+   - TryCatch 自動創建 async 函數包裝，支持 await
    - 始終提供 catch 處理器
+   - 可選提供 finally 處理器
 
 3. **字符串引用**
    - JavaScript 字符串需要使用單引號：`"'text'"`

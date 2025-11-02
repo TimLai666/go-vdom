@@ -177,7 +177,7 @@ func main() {
 						"onClick": js.AsyncFn(nil,
 							js.Log("'開始獲取數據...'"),
 							js.TryCatch(
-								js.AsyncFn(nil,
+								[]JSAction{
 									js.Const("response", "await fetch('/api/data', { method: 'GET', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' })"),
 									js.Log("'收到響應: ' + response.status"),
 									JSAction{Code: "if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText)"},
@@ -191,20 +191,20 @@ func main() {
 									JSAction{Code: "container.innerHTML = ''"},
 									js.Const("ul", "document.createElement('ul')"),
 									JSAction{Code: "ul.classList.add('list-group')"},
-									js.ForEachJS("apiData", "item",
-										js.Const("li", "document.createElement('li')"),
-										JSAction{Code: "li.classList.add('list-group-item')"},
-										JSAction{Code: "li.innerHTML = '<strong>' + item.name + '</strong>: ' + item.message"},
-										JSAction{Code: "ul.appendChild(li)"},
-									),
+									JSAction{Code: `apiData.forEach(function(item) {
+										const li = document.createElement('li');
+										li.classList.add('list-group-item');
+										li.innerHTML = '<strong>' + item.name + '</strong>: ' + item.message;
+										ul.appendChild(li);
+									})`},
 									JSAction{Code: "container.appendChild(ul)"},
 									js.Log("'成功顯示 ' + apiData.length + ' 條數據'"),
-								),
-								js.Ptr(js.Fn(nil,
+								},
+								[]JSAction{
 									js.Log("'獲取數據時出錯:', e"),
 									js.Const("container", "document.getElementById('dataContainer')"),
 									JSAction{Code: "if (container) { container.innerHTML = '<div class=\"alert alert-danger\">獲取數據時出錯: ' + e.message + '</div>' }"},
-								)),
+								},
 								nil,
 							),
 						),
@@ -228,7 +228,7 @@ func main() {
 							js.CallMethod("evt", "preventDefault"),
 							js.Log("'表單提交事件觸發'"),
 							js.TryCatch(
-								js.AsyncFn(nil,
+								[]JSAction{
 									js.Const("nameValue", "document.getElementById('nameInput') ? document.getElementById('nameInput').value : ''"),
 									js.Const("messageValue", "document.getElementById('messageInput') ? document.getElementById('messageInput').value : ''"),
 									js.Log("'表單數據:', { name: nameValue, message: messageValue }"),
@@ -241,12 +241,12 @@ func main() {
 									JSAction{Code: "if (form) form.reset()"},
 									js.Const("respContainer", "document.getElementById('postResponseContainer')"),
 									JSAction{Code: "if (respContainer) { respContainer.innerHTML = '<div class=\"alert alert-success\">表單提交成功！回應包含 ' + postResponse.length + ' 個項目</div>' }"},
-								),
-								js.Ptr(js.Fn(nil,
+								},
+								[]JSAction{
 									js.Log("'提交表單錯誤:', e"),
 									js.Const("respContainer", "document.getElementById('postResponseContainer')"),
 									JSAction{Code: "if (respContainer) { respContainer.innerHTML = '<div class=\"alert alert-danger\">提交表單時出錯: ' + e.message + '</div>' }"},
-								)),
+								},
 								nil,
 							),
 						),

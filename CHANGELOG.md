@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2024
+
+### Added
+- **Try-Catch-Finally 流暢 API**: 全新設計，生成純粹的 try-catch-finally 語句
+  - `js.Try(...).Catch(...).End()` - Try-Catch 模式
+  - `js.Try(...).Catch(...).Finally(...)` - 完整錯誤處理
+  - `js.Try(...).Finally(...)` - Try-Finally 模式
+  - Try 不再自動包裝在 IIFE 中，更加靈活
+  - 錯誤對象統一命名為 `error`（而非 `e`）
+- **Do / AsyncDo**: 專門用於創建立即執行函數（IIFE）
+  - `js.Do(...)` - 創建立即執行的普通函數
+  - `js.AsyncDo(...)` - 創建立即執行的異步函數
+  - 職責分離：Try 負責錯誤處理，Do/AsyncDo 負責 IIFE
+- 新示例：`examples/07_trycatch_usage.go` - 展示所有 Try-Catch-Finally 和 Do/AsyncDo 用法
+- 新文檔：`docs/TRY_CATCH_FINALLY.md` - 完整使用指南
+- 新文檔：`docs/TRY_CATCH_QUICK_REF.md` - 快速參考手冊
+- 新文檔：`docs/CHANGES_TRY_CATCH.md` - API 重新設計說明
+
+### Changed
+- Try-Catch-Finally 不再自動包裝在 async IIFE 中
+- 需要 async/await 時，使用 AsyncFn 或 AsyncDo 包裝
+- 更新 `examples/03_javascript_dsl.go` 使用新的 Try API
+- 更新 `examples/05_foreach_usage.go` 使用新的 Try API
+- 更新 README 加入 Try-Catch-Finally 和 Do/AsyncDo 說明
+
+### Deprecated
+- `TryCatch` 函數仍可用但建議使用新的流暢 API（Try + AsyncFn/AsyncDo）
+
 ## [1.1.0] - 2025-01-24
 
 ### Added
@@ -16,7 +44,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ✅ 完全兼容現有的 `Fn()` API
   - ✅ 支持參數傳遞和函數體定義
   - 📝 任何包含 `await` 語句的函數都應使用 `AsyncFn` 而非 `Fn`
-  - 📝 與 `TryCatch` 完美配合處理異步錯誤
+  - 📝 與重新設計的 `TryCatch` 完美配合處理異步錯誤
+
+- **🔄 TryCatch 重新設計** (`jsdsl/jsdsl.go`)
+  - ✅ 重新設計 `TryCatch(tryActions, catchActions, finallyActions)` - 接受動作列表而非函數包裝
+  - ✅ 自動創建 async 函數包裝，完全支持 await 語法
+  - ✅ 解決了之前 TryCatch 內部無法使用 AsyncFn 的問題
+  - ✅ 更符合直覺的 API 設計
+  - ✅ 立即執行，錯誤對象自動命名為 `e`
+  - 📝 新用法：
+    ```go
+    js.TryCatch(
+        []JSAction{
+            js.Const("data", "await fetch('/api')"),
+            js.Log("data"),
+        },
+        []JSAction{
+            js.Log("'錯誤:', e.message"),
+        },
+        nil,
+    )
+    ```
+  - 📝 舊的包裝式 API 已廢棄，請使用新的列表式 API
 
 - **🔄 ForEach 列表渲染改進**
   - **後端渲染** (`vdom/tags.go`)
@@ -52,6 +101,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - 提供詳細的對比表格和選擇指南
 
 ### Changed
+- **🔧 TryCatch API 重大改進**: 從函數包裝改為動作列表
+  - ⚠️ **破壞性變更**：舊的 `TryCatch(baseAction, catchFn, finallyFn)` 已移除
+  - ✅ 新的 `TryCatch(tryActions, catchActions, finallyActions)` 更直觀
+  - ✅ 不再需要 `js.Ptr()` 包裝
+  - ✅ 內部可以直接使用任何 JSAction，包括包含 await 的語句
+  - ✅ 自動處理異步邏輯
+  - 📝 遷移指南：將原本的 `js.AsyncFn(nil, ...actions)` 改為 `[]JSAction{...actions}`
+
 - **🎯 Props 類型系統重大改進**: 從 `map[string]string` 改為 `map[string]interface{}`
   - ✅ 支持任意類型的值（string, bool, int, float64, JSAction 等）
   - ✅ 自動根據類型轉換，無需手動轉換

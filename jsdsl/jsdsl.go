@@ -501,53 +501,280 @@ func buildFetch(url string, responseType ResponseType, then interface{}, catch i
 	return JSAction{Code: codeBuilder.String()}
 }
 
-// TryCatch 生成一個自動執行的 async 函數，含 try/catch/finally 邏輯
-//   - baseAction: 由 jsdsl.Fn 產生的函數表達式，放在 try { ... } 中
-//   - catchFn: 可選，由 jsdsl.Fn 產生的函數表達式，放在 catch (e) { ... } 中；
-//     若提供，會在異常發生時執行（可訪問 error 對象為 `e`）
-//   - finallyFn: 可選，由 jsdsl.Fn 產生的函數表達式，放在 finally { ... } 中
+// tryBuilder 用於構建 try-catch-finally 語句的流暢 API
+type tryBuilder struct {
+	tryActions     []JSAction
+	catchActions   []JSAction
+	finallyActions []JSAction
+}
+
+// Try 創建一個 try-catch-finally 語句的構建器（不包裝在自執行函數中）
+// 如果 try 區塊中需要使用 await，請將整個 Try 語句包在 AsyncFn 或 AsyncDo 中
 //
-// 要求：catchFn 與 finallyFn 不能同時為 nil（至少提供一個處理路徑）
+// 用法：
 //
-// 生成的代碼形如：(async () => { try { <baseAction> } catch (e) { <catchFn> } finally { <finallyFn> } })()
-// 會立即執行該函數表達式。
-func TryCatch(baseAction JSAction, catchFn *JSAction, finallyFn *JSAction) JSAction {
+//	// 同步 try-catch:
+//	js.Try(
+//	    js.Const("x", "1"),
+//	    js.Log("x"),
+//	).Catch(
+//	    js.Log("error.message"),
+//	).End()
+//
+//	// 異步 try-catch（包在 AsyncFn 中）:
+//	Button(Props{
+//	    "onClick": js.AsyncFn(nil,
+//	        js.Try(
+//	            js.Const("data", "await fetch('/api')"),
+//	        ).Catch(
+//	            js.Log("error.message"),
+//	        ).End(),
+//	    ),
+//	})
+//
+//	// 或使用 AsyncDo 立即執行:
+//	js.AsyncDo(
+//	    js.Try(
+//	        js.Const("data", "await fetch('/api')"),
+//	    ).Catch(
+//	        js.Log("error.message"),
+//	    ).End(),
+//	)
+func Try(actions ...JSAction) *tryBuilder {
+	return &tryBuilder{
+		tryActions: actions,
+	}
+}
+
+// Catch 添加 catch 區塊，接收錯誤處理動作（錯誤對象為 error）
+// 可以繼續鏈式調用 Finally()
+func (tb *tryBuilder) Catch(actions ...JSAction) *tryBuilder {
+	tb.catchActions = actions
+	return tb
+}
+
+// Finally 添加 finally 區塊，接收清理動作
+// 返回最終的 JSAction
+func (tb *tryBuilder) Finally(actions ...JSAction) JSAction {
+	tb.finallyActions = actions
+	return tb.build()
+}
+
+// build 生成最終的 JavaScript 代碼（純 try-catch-finally，不包裝在函數中）
+func (tb *tryBuilder) build() JSAction {
 	// 驗證輸入
-	if strings.TrimSpace(baseAction.Code) == "" {
-		// 沒有有意義的 try 主體，返回空 JSAction
+	if len(tb.tryActions) == 0 {
 		return JSAction{Code: ""}
 	}
-	if (catchFn == nil || strings.TrimSpace(catchFn.Code) == "") && (finallyFn == nil || strings.TrimSpace(finallyFn.Code) == "") {
-		panic("TryCatch requires at least one of catchFn or finallyFn to be non-nil")
+	if len(tb.catchActions) == 0 && len(tb.finallyActions) == 0 {
+		panic("Try requires at least Catch() or Finally()")
 	}
-
-	// 準備 base 代碼（由 jsdsl.Fn 產生，期望是函數表達式或代碼片段）
-	baseCode := strings.TrimSpace(baseAction.Code)
 
 	var sb strings.Builder
-	// 生成自調用的 async 函數包裝
-	sb.WriteString("(async () => { try { ")
-	sb.WriteString(baseCode)
-	sb.WriteString(" } ")
 
-	// catch 部分（如果提供）
-	if catchFn != nil && strings.TrimSpace(catchFn.Code) != "" {
-		sb.WriteString("catch (e) { ")
-		catchCode := strings.TrimSpace(catchFn.Code)
-		sb.WriteString(catchCode)
-		sb.WriteString(" } ")
+	// try 區塊
+	sb.WriteString("try {\n")
+	for _, action := range tb.tryActions {
+		line := strings.TrimSpace(action.Code)
+		if line != "" {
+			if !strings.HasSuffix(line, ";") {
+				line += ";"
+			}
+			sb.WriteString("  " + line + "\n")
+		}
+	}
+	sb.WriteString("}")
+
+	// catch 區塊
+	if len(tb.catchActions) > 0 {
+		sb.WriteString(" catch (error) {\n")
+		for _, action := range tb.catchActions {
+			line := strings.TrimSpace(action.Code)
+			if line != "" {
+				if !strings.HasSuffix(line, ";") {
+					line += ";"
+				}
+				sb.WriteString("  " + line + "\n")
+			}
+		}
+		sb.WriteString("}")
 	}
 
-	// finally 部分（如果提供）
-	if finallyFn != nil && strings.TrimSpace(finallyFn.Code) != "" {
-		sb.WriteString("finally { ")
-		finallyCode := strings.TrimSpace(finallyFn.Code)
-		sb.WriteString(finallyCode)
-		sb.WriteString(" } ")
+	// finally 區塊
+	if len(tb.finallyActions) > 0 {
+		sb.WriteString(" finally {\n")
+		for _, action := range tb.finallyActions {
+			line := strings.TrimSpace(action.Code)
+			if line != "" {
+				if !strings.HasSuffix(line, ";") {
+					line += ";"
+				}
+				sb.WriteString("  " + line + "\n")
+			}
+		}
+		sb.WriteString("}")
+	}
+
+	return JSAction{Code: sb.String()}
+}
+
+// End 結束 try-catch-finally 構建，返回 JSAction
+// 當只需要 try-catch（不需要 finally）時調用此方法
+func (tb *tryBuilder) End() JSAction {
+	return tb.build()
+}
+
+// Do 創建一個立即執行函數表達式（IIFE）
+// 用於創建獨立的作用域或立即執行一組語句
+//
+// 用法：
+//
+//	js.Do(
+//	    js.Const("x", "1"),
+//	    js.Log("x"),
+//	)
+//
+// 生成：(() => { const x = 1; console.log(x); })()
+func Do(actions ...JSAction) JSAction {
+	if len(actions) == 0 {
+		return JSAction{Code: "(() => {})()"}
+	}
+
+	var sb strings.Builder
+	sb.WriteString("(() => {\n")
+
+	for _, action := range actions {
+		line := strings.TrimSpace(action.Code)
+		if line != "" {
+			if !strings.HasSuffix(line, ";") {
+				line += ";"
+			}
+			sb.WriteString("  " + line + "\n")
+		}
+	}
+
+	sb.WriteString("})()")
+	return JSAction{Code: sb.String()}
+}
+
+// AsyncDo 創建一個立即執行的異步函數表達式（async IIFE）
+// 用於在非 async 上下文中執行 async/await 代碼
+//
+// 用法：
+//
+//	js.AsyncDo(
+//	    js.Const("response", "await fetch('/api')"),
+//	    js.Const("data", "await response.json()"),
+//	    js.Log("data"),
+//	)
+//
+// 生成：(async () => { const response = await fetch('/api'); ... })()
+func AsyncDo(actions ...JSAction) JSAction {
+	if len(actions) == 0 {
+		return JSAction{Code: "(async () => {})()"}
+	}
+
+	var sb strings.Builder
+	sb.WriteString("(async () => {\n")
+
+	for _, action := range actions {
+		line := strings.TrimSpace(action.Code)
+		if line != "" {
+			if !strings.HasSuffix(line, ";") {
+				line += ";"
+			}
+			sb.WriteString("  " + line + "\n")
+		}
+	}
+
+	sb.WriteString("})()")
+	return JSAction{Code: sb.String()}
+}
+
+// TryCatch 生成一個自動執行的 async 函數，含 try/catch/finally 邏輯
+// 參數：
+//   - tryActions: try 區塊中執行的動作列表
+//   - catchActions: catch 區塊中執行的動作列表（可選，錯誤對象為 e）
+//   - finallyActions: finally 區塊中執行的動作列表（可選）
+//
+// 要求：catchActions 與 finallyActions 不能同時為空
+//
+// 生成的代碼形如：(async () => { try { ...statements } catch (e) { ...statements } finally { ...statements } })()
+// 會立即執行該函數表達式，支持 await 語法。
+//
+// 用法：
+//
+//	js.TryCatch(
+//	    []JSAction{
+//	        js.Const("response", "await fetch('/api')"),
+//	        js.Const("data", "await response.json()"),
+//	    },
+//	    []JSAction{
+//	        js.Log("'錯誤:', e.message"),
+//	    },
+//	    nil,
+//	)
+//
+// 推薦使用新的流暢 API: js.Try(...).Catch(...) 或 js.Try(...).Catch(...).Finally(...)
+func TryCatch(tryActions []JSAction, catchActions []JSAction, finallyActions []JSAction) JSAction {
+	// 驗證輸入
+	if len(tryActions) == 0 {
+		return JSAction{Code: ""}
+	}
+	if len(catchActions) == 0 && len(finallyActions) == 0 {
+		panic("TryCatch requires at least catchActions or finallyActions")
+	}
+
+	var sb strings.Builder
+
+	// 生成自調用的 async 函數包裝
+	sb.WriteString("(async () => {\n")
+
+	// try 區塊
+	sb.WriteString("  try {\n")
+	for _, action := range tryActions {
+		line := strings.TrimSpace(action.Code)
+		if line != "" {
+			if !strings.HasSuffix(line, ";") {
+				line += ";"
+			}
+			sb.WriteString("    " + line + "\n")
+		}
+	}
+	sb.WriteString("  }")
+
+	// catch 區塊
+	if len(catchActions) > 0 {
+		sb.WriteString(" catch (e) {\n")
+		for _, action := range catchActions {
+			line := strings.TrimSpace(action.Code)
+			if line != "" {
+				if !strings.HasSuffix(line, ";") {
+					line += ";"
+				}
+				sb.WriteString("    " + line + "\n")
+			}
+		}
+		sb.WriteString("  }")
+	}
+
+	// finally 區塊
+	if len(finallyActions) > 0 {
+		sb.WriteString(" finally {\n")
+		for _, action := range finallyActions {
+			line := strings.TrimSpace(action.Code)
+			if line != "" {
+				if !strings.HasSuffix(line, ";") {
+					line += ";"
+				}
+				sb.WriteString("    " + line + "\n")
+			}
+		}
+		sb.WriteString("  }")
 	}
 
 	// 立即執行該函數
-	sb.WriteString("})()")
+	sb.WriteString("\n})()")
 
 	return JSAction{Code: sb.String()}
 }

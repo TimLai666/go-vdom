@@ -164,15 +164,25 @@ js.AsyncFn(nil,
     js.Log("data"),
 )
 
-// 錯誤處理
-js.TryCatch(
-    js.AsyncFn(nil,
-        js.Const("data", "await fetchData()"),
+// 錯誤處理 - 流暢 API（Try 生成純粹的 try-catch-finally）
+js.AsyncFn(nil,
+    js.Try(
+        js.Const("response", "await fetch('/api/data')"),
+        js.Const("data", "await response.json()"),
+    ).Catch(
+        js.Log("'錯誤: ' + error.message"),
+    ).Finally(
+        js.Log("'清理完成'"),
     ),
-    js.Ptr(js.Fn(nil,
-        js.Log("'Error:', e.message"),
-    )),
-    nil,
+)
+
+// 或使用 AsyncDo 立即執行
+js.AsyncDo(
+    js.Try(
+        js.Const("data", "await fetch('/api')"),
+    ).Catch(
+        js.Log("'錯誤: ' + error.message"),
+    ).End(),
 )
 ```
 
@@ -184,12 +194,66 @@ js.TryCatch(
 - **[完整文檔](docs/DOCUMENTATION.md)** - 深入技術文檔
 - **[API 參考](docs/API_REFERENCE.md)** - JavaScript DSL 完整 API
 - **[快速參考](docs/QUICK_REFERENCE.md)** - 語法速查表
+- **[Try-Catch-Finally 指南](docs/TRY_CATCH_FINALLY.md)** - 錯誤處理完整說明
 
-## 重要更新 (v1.1.0)
+## 重要更新 (v1.2.0)
 
-### 新增 AsyncFn - 異步函數支持
+### 新增 Try-Catch-Finally 與 Do/AsyncDo
 
-現在可以使用 `AsyncFn` 創建支持 `await` 的異步函數：
+全新設計的錯誤處理和 IIFE 創建 API：
+
+**Try-Catch-Finally** - 生成純粹的 try-catch-finally 語句（不包裝在函數中）：
+
+```go
+// 在 AsyncFn 中使用（支持 await）
+js.AsyncFn(nil,
+    js.Try(
+        js.Const("data", "await fetch('/api')"),
+    ).Catch(
+        js.Log("'錯誤: ' + error.message"),
+    ).End(),
+)
+
+// Try-Catch-Finally
+js.AsyncFn(nil,
+    js.Try(
+        js.Const("data", "await fetch('/api')"),
+    ).Catch(
+        js.Log("'錯誤: ' + error.message"),
+    ).Finally(
+        js.Log("'清理完成'"),
+    ),
+)
+```
+
+**Do / AsyncDo** - 創建立即執行函數（IIFE）：
+
+```go
+// Do - 普通 IIFE
+js.Do(
+    js.Const("x", "1"),
+    js.Log("x"),
+)
+
+// AsyncDo - 異步 IIFE
+js.AsyncDo(
+    js.Const("data", "await fetch('/api')"),
+    js.Log("data"),
+)
+```
+
+**設計理念：**
+- ✅ Try 生成純粹的 try-catch-finally，不包裝
+- ✅ 需要 async 時，用 AsyncFn 或 AsyncDo 包裝
+- ✅ Do/AsyncDo 專門用於創建 IIFE
+- ✅ 職責分離清晰，更靈活
+- ✅ 錯誤對象統一命名為 `error`
+
+詳細說明請參考 [Try-Catch-Finally 指南](docs/TRY_CATCH_FINALLY.md)
+
+### AsyncFn - 異步函數支持
+
+可以使用 `AsyncFn` 創建支持 `await` 的異步函數：
 
 ```go
 Button(Props{
