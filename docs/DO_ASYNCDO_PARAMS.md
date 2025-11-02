@@ -4,6 +4,8 @@
 
 從 v1.2.1 開始，`js.Do()` 和 `js.AsyncDo()` 的簽名與 `js.Fn()` 和 `js.AsyncFn()` 保持一致，第一個參數為參數列表 `[]string`。
 
+**重要更新**：Do/AsyncDo 現在具有智能參數檢測功能，可以自動判斷是否為事件處理器場景，讓同一個 API 支持多種用途。
+
 ## API 簽名
 
 ```go
@@ -18,11 +20,27 @@ func Fn(params []string, actions ...JSAction) JSAction
 func AsyncFn(params []string, actions ...JSAction) JSAction
 ```
 
+## 智能參數檢測
+
+Do/AsyncDo 會根據參數名自動判斷使用場景：
+
+### 事件處理器模式
+當參數名為常見的事件參數名時（`event`、`e`、`evt`、`ev`，不區分大小寫），自動傳入外部作用域的 `event` 對象：
+- `js.Do([]string{"event"}, ...)` → `((event)=>{...})(event)`
+- `js.Do([]string{"e"}, ...)` → `((e)=>{...})(event)`
+
+### 通用 IIFE 模式
+當參數名為其他名稱時，生成純 IIFE，不傳入任何參數：
+- `js.Do([]string{"x"}, ...)` → `((x)=>{...})()`
+- `js.Do([]string{"data"}, ...)` → `((data)=>{...})()`
+
+這使得 Do/AsyncDo 既可以用於事件處理器，也可以用於創建獨立作用域、模塊化代碼等其他場景。
+
 ## 使用方式
 
-### 1. 無參數（最常見）
+### 1. 無參數
 
-大多數事件處理器不需要顯式參數，傳入 `nil`：
+不需要任何參數時，傳入 `nil`：
 
 ```go
 Button(Props{
@@ -77,16 +95,19 @@ onclick="((e)=>{const target=e.target;alert('點擊了')})(event)"
 - IIFE `(()=>{...})()` 創建了新的作用域
 - 在新作用域內，外部的 `event` 對象不可訪問
 - 必須通過參數傳遞：`((event)=>{...})(event)`
-- 參數名可以自定義（如 `e`、`evt`），但調用時傳入的始終是外部作用域的 `event`
+- 參數名為 `event`/`e`/`evt`/`ev` 時，自動傳入外部的 `event`
 - 第一個 `event`/`e`/`evt` 是參數名，調用時的 `event` 是傳入的值
+- 智能檢測基於參數名，讓 API 同時支持事件處理器和通用 IIFE 場景
 
-### 3. 帶自定義參數（進階用法）
+### 3. 通用 IIFE（非事件場景）
 
-如果需要定義接受參數的 IIFE（較少見）：
+當參數名不是事件相關時，生成純 IIFE，適用於創建獨立作用域、模塊化代碼等：
 
 ```go
-// 定義帶參數的 IIFE 並立即調用
+// 創建獨立作用域，參數作為佔位符
 js.Do([]string{"x", "y"},
+    js.Const("x", "10"),
+    js.Const("y", "20"),
     js.Const("sum", "x + y"),
     js.Log("sum"),
 )
@@ -94,10 +115,14 @@ js.Do([]string{"x", "y"},
 
 生成：
 ```javascript
-((x,y)=>{const sum=x+y;console.log(sum)})()
+((x,y)=>{const x=10;const y=20;const sum=x+y;console.log(sum)})()
 ```
 
-**使用場景**：這種用法在事件處理器中不常見，因為 HTML 事件不會傳遞自定義參數。主要用於需要立即執行且接受參數的代碼塊。
+**關鍵點**：
+- 參數名為 `x`、`y`、`data` 等非事件名稱時，不會自動傳入 `event`
+- 參數只是佔位符，在 IIFE 內部需要自己賦值
+- 主要用於創建獨立作用域，避免變量污染全局空間
+- 可用於模塊化代碼、初始化腳本等場景
 
 ## 與 Fn/AsyncFn 的對比
 
@@ -136,7 +161,9 @@ js.Do([]string{"myEvent"}, js.Const("id", "myEvent.target.id"))
 ((myEvent)=>{...})(event)
 ```
 
-**注意**：調用時傳入的始終是 `event`（HTML 事件處理器的標準名稱）。
+**注意**：
+- 事件參數名（event/e/evt/ev）：調用時傳入 `event`
+- 其他參數名：不傳入任何參數，生成純 IIFE
 
 ### 按鈕點擊（不使用 event）
 ```go
@@ -263,12 +290,18 @@ go build ./...
 A: 因為 IIFE 創建了新的作用域。外部的 `event` 對象在新作用域內不可訪問，必須通過參數傳遞進去。
 
 **Q: 參數名一定要叫 'event' 嗎？**  
-A: 不一定！你可以使用任何名字（`e`、`evt`、`myEvent` 等），只要與代碼中使用的變量名一致即可。調用時傳入的始終是外部作用域的 `event`。
+A: 不一定！你可以使用 `event`、`e`、`evt`、`ev`（不區分大小寫），它們都會被識別為事件參數並自動傳入 `event`。使用其他名稱（如 `x`、`data`）則生成通用 IIFE。
 
 **Q: 什麼時候傳 nil，什麼時候傳 []string？**  
 A: 
-- 傳 `nil`：當你的代碼不使用 `event` 對象時（如簡單的 alert）
-- 傳 `[]string{"event"}`（或 `[]string{"e"}`）：當你需要訪問 `event.target`、`event.preventDefault()` 等時
+- 傳 `nil`：不需要任何參數時（如簡單的 alert、console.log）
+- 傳 `[]string{"event"}`/`[]string{"e"}`：事件處理器中需要使用 event 對象時
+- 傳 `[]string{"x", "y"}` 等：需要創建獨立作用域的通用 IIFE 時
+
+**Q: 如何判斷是否會傳入 event？**  
+A: 檢查第一個參數名（不區分大小寫）：
+- `event`、`e`、`evt`、`ev` → 自動傳入 event
+- 其他任何名稱 → 不傳入參數，生成純 IIFE
 
 **Q: 什麼時候需要傳 []string？**  
 A: 當你需要定義接受特定參數的 IIFE 時。這種情況較少見，主要用於需要參數化的立即執行代碼。
@@ -284,12 +317,19 @@ A:
 
 **Q: 推薦使用哪個參數名？**  
 A: 
-- `event` - 最清晰明確，與外部作用域名稱一致（推薦用於複雜邏輯）
-- `e` - 最簡短，常見於 JavaScript 社區（推薦用於簡單邏輯）
-- `evt` - 折衷方案，清晰且簡短
+- **事件處理器**：
+  - `event` - 最清晰明確（推薦用於複雜邏輯）
+  - `e` - 最簡短，JavaScript 慣例（推薦用於簡單邏輯）
+  - `evt` - 折衷方案
+- **通用 IIFE**：
+  - 使用有意義的名稱，如 `x`, `y`, `data`, `config` 等
+  - 避免使用事件相關的名稱（除非確實是事件處理器）
 
 **Q: 如果忘記聲明 event 參數會怎樣？**  
 A: 會出現運行時錯誤：`Cannot read properties of undefined (reading 'preventDefault')` 或類似的錯誤，因為 IIFE 內部的 `event` 是 `undefined`。
+
+**Q: 為什麼要設計智能檢測而不是總是傳入 event？**  
+A: 因為 Do/AsyncDo 不僅用於事件處理器，還可用於創建獨立作用域、模塊化代碼、初始化腳本等多種場景。智能檢測讓同一個 API 支持多種用途，更加通用和靈活。
 
 ## 示例
 
@@ -297,8 +337,20 @@ A: 會出現運行時錯誤：`Cannot read properties of undefined (reading 'pre
 - [examples/09_event_handlers.go](../examples/09_event_handlers.go) - 事件處理器示例
 - [examples/10_do_with_params.go](../examples/10_do_with_params.go) - 參數使用示例
 
+## 使用場景總結
+
+| 場景 | 參數 | 生成代碼 | 用途 |
+|------|------|---------|------|
+| 簡單操作 | `nil` | `(()=>{...})()` | alert、console.log |
+| 事件處理器 | `[]string{"event"}` | `((event)=>{...})(event)` | onClick、onSubmit 等 |
+| 事件處理器（簡短） | `[]string{"e"}` | `((e)=>{...})(event)` | 簡單的事件邏輯 |
+| 獨立作用域 | `[]string{"x", "y"}` | `((x,y)=>{...})()` | 避免全局污染 |
+| 模塊初始化 | `[]string{"module"}` | `((module)=>{...})()` | 模塊化代碼 |
+
 ## 相關文檔
 
 - [EVENT_HANDLER_CHANGES.md](EVENT_HANDLER_CHANGES.md) - 事件處理器變更說明
 - [EVENT_HANDLER_QUICK_REF.md](EVENT_HANDLER_QUICK_REF.md) - 快速參考
+- [examples/10_do_with_params.go](../examples/10_do_with_params.go) - 參數使用示例
+- [test_do_generic.go](../test_do_generic.go) - 通用性測試示例
 - [V1.2.1_SUMMARY.md](V1.2.1_SUMMARY.md) - 版本摘要
