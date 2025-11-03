@@ -49,12 +49,12 @@ var Modal = Component(
 				left: 0;
 				width: 100%;
 				height: 100%;
-				display: ${'{{open}}' === 'true' ? 'block' : 'none'};
+				display: ${{{open}} === true ? 'block' : 'none'};
 				z-index: {{zIndex}};
 				overflow-x: hidden;
 				overflow-y: auto;
 				animation: modalOverlayFadeIn 0.3s ease;
-				pointer-events: ${'{{open}}' === 'true' ? 'auto' : 'none'};
+				pointer-events: ${{{open}} === true ? 'auto' : 'none'};
 
 				@keyframes modalOverlayFadeIn {
 					0% { opacity: 0; }
@@ -84,16 +84,16 @@ var Modal = Component(
 			Props{
 				"style": `
 					position: relative;
-					width: ${'{{size}}' === 'xs' ? '300px' : '{{size}}' === 'sm' ? '400px' : '{{size}}' === 'md' ? '500px' : '{{size}}' === 'lg' ? '700px' : '{{size}}' === 'xl' ? '900px' : '100%'};
+					width: ${{{size}} === 'xs' ? '300px' : {{size}} === 'sm' ? '400px' : {{size}} === 'md' ? '500px' : {{size}} === 'lg' ? '700px' : {{size}} === 'xl' ? '900px' : '100%'};
 					max-width: calc(100% - 2rem);
-					margin: ${'{{centered}}' === 'true' ? '3.75rem auto' : '1rem auto'};
+					margin: ${{{centered}} === true ? '3.75rem auto' : '1rem auto'};
 					background: #ffffff;
-					border-radius: ${'{{radius}}' === 'none' ? '0' : '{{radius}}' === 'sm' ? '0.25rem' : '{{radius}}' === 'lg' ? '0.75rem' : '0.5rem'};
-					box-shadow: ${'{{elevation}}' === '0' ? 'none' : '{{elevation}}' === '1' ? '0 1px 3px rgba(0,0,0,0.1)' : '{{elevation}}' === '2' ? '0 4px 6px rgba(0,0,0,0.1)' : '{{elevation}}' === '3' ? '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)' : '{{elevation}}' === '4' ? '0 20px 30px -10px rgba(0,0,0,0.15)' : '0 25px 40px -15px rgba(0,0,0,0.2)'};
+					border-radius: ${{{radius}} === 'none' ? '0' : {{radius}} === 'sm' ? '0.25rem' : {{radius}} === 'lg' ? '0.75rem' : '0.5rem'};
+					box-shadow: ${{{elevation}} === '0' ? 'none' : {{elevation}} === '1' ? '0 1px 3px rgba(0,0,0,0.1)' : {{elevation}} === '2' ? '0 4px 6px rgba(0,0,0,0.1)' : {{elevation}} === '3' ? '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)' : {{elevation}} === '4' ? '0 20px 30px -10px rgba(0,0,0,0.15)' : '0 25px 40px -15px rgba(0,0,0,0.2)'};
 					display: flex;
 					flex-direction: column;
 					max-height: calc(100vh - 7.5rem);
-					animation: ${'{{animation}}' === 'slide' ? 'modalSlideIn' : '{{animation}}' === 'zoom' ? 'modalZoomIn' : 'modalFadeIn'} 0.3s ease;
+					animation: ${{{animation}} === 'slide' ? 'modalSlideIn' : {{animation}} === 'zoom' ? 'modalZoomIn' : 'modalFadeIn'} 0.3s ease;
 
 					@keyframes modalFadeIn {
 						0% { opacity: 0; transform: translate(0, -20px); }
@@ -114,7 +114,7 @@ var Modal = Component(
 			Div(
 				Props{
 					"style": `
-						display: ${'{{hideHeader}}' === 'true' || '{{title}}'.trim() === '' ? 'none' : 'flex'};
+						display: ${{{hideHeader}} === true || {{title}}.trim() === '' ? 'none' : 'flex'};
 						padding: 1rem 1.5rem;
 						border-bottom: 1px solid #f1f5f9;
 						align-items: center;
@@ -135,7 +135,7 @@ var Modal = Component(
 				Button(
 					Props{
 						"style": `
-							display: ${'{{closeButton}}' === 'false' ? 'none' : 'block'};
+							display: ${{{closeButton}} === false ? 'none' : 'block'};
 							background: transparent;
 							border: none;
 							font-size: 1.5rem;
@@ -156,7 +156,7 @@ var Modal = Component(
 				Props{
 					"style": `
 						padding: 1.5rem;
-						overflow-y: ${'{{scrollable}}' === 'true' ? 'auto' : 'visible'};
+						overflow-y: ${{{scrollable}} === true ? 'auto' : 'visible'};
 					`,
 				},
 				"{{children}}",
@@ -164,7 +164,7 @@ var Modal = Component(
 			Div(
 				Props{
 					"style": `
-						display: ${'{{hideFooter}}' === 'true' || '{{footer}}'.trim() === '' ? 'none' : 'flex'};
+						display: ${{{hideFooter}} === true || {{footer}}.trim() === '' ? 'none' : 'flex'};
 						padding: 1rem 1.5rem;
 						border-top: 1px solid #f1f5f9;
 						align-items: center;
@@ -188,7 +188,7 @@ function closeModal() {
 }
 
 function handleKeydown(event) {
-	if (event.key === 'Escape' && '{{closeOnEsc}}' === 'true') {
+	if (event.key === 'Escape' && {{closeOnEsc}} === true) {
 		closeModal();
 	}
 }
@@ -207,7 +207,7 @@ if (closeBtn) {
 	closeBtn.addEventListener('click', closeModal);
 }
 
-if ('{{closeOnOverlayClick}}' === 'true') {
+if ({{closeOnOverlayClick}} === true) {
 	overlay.addEventListener('click', function(e) {
 		if (e.target === overlay) {
 			closeModal();
@@ -221,10 +221,10 @@ modal.addEventListener('DOMNodeRemoved', function() {
 	document.removeEventListener('keydown', handleKeydown);
 });
 
-if ('{{open}}' === 'true') {
+if ({{open}} === true) {
 	modal.style.display = 'block';
 
-	switch('{{animation}}') {
+	switch({{animation}}) {
 		case 'fade':
 			content.style.opacity = '0';
 			content.style.transform = 'translate(0, -20px)';

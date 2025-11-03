@@ -44,21 +44,21 @@ var Card = Component(
 				width: 100%;
 				max-width: {{maxWidth}};
 				box-sizing: border-box;
-				box-shadow: ${'{{elevation}}' === '0' ? 'none' : '{{elevation}}' === '1' ? '0 1px 3px rgba(0,0,0,0.05)' : '{{elevation}}' === '2' ? '0 4px 16px rgba(0,0,0,0.08)' : '{{elevation}}' === '3' ? '0 8px 24px rgba(0,0,0,0.10)' : '{{elevation}}' === '4' ? '0 12px 32px rgba(0,0,0,0.12)' : '0 16px 40px rgba(0,0,0,0.14)'};
+				box-shadow: ${{{elevation}} === '0' ? 'none' : {{elevation}} === '1' ? '0 1px 3px rgba(0,0,0,0.05)' : {{elevation}} === '2' ? '0 4px 16px rgba(0,0,0,0.08)' : {{elevation}} === '3' ? '0 8px 24px rgba(0,0,0,0.10)' : {{elevation}} === '4' ? '0 12px 32px rgba(0,0,0,0.12)' : '0 16px 40px rgba(0,0,0,0.14)'};
 				transition: all 0.2s ease;
 				overflow: hidden;
 				display: flex;
 				flex-direction: column;
 				gap: {{contentGap}};
 				border-top: 3px solid {{accentColor}};
-				cursor: ${'{{hoverable}}' === 'false' ? 'default' : 'pointer'};
+				cursor: ${{{hoverable}} === false ? 'default' : 'pointer'};
 			`,
 		},
 		Div(
 			Props{
 				"class": "card-header",
 				"style": `
-					display: ${'{{title}}'.trim() ? 'block' : 'none'};
+					display: ${{{title}}.trim() ? 'block' : 'none'};
 					margin: 0 0 0.5rem 0;
 					padding-bottom: 0.75rem;
 					border-bottom: 1px solid rgba(0,0,0,0.06);
@@ -97,7 +97,7 @@ var Card = Component(
 			const card = document.querySelector('.modern-card');
 			if (!card) return;
 
-			const isHoverable = card.dataset.hoverable !== 'false';
+			const isHoverable = card.dataset.hoverable === 'true';
 			const elevation = parseInt(card.dataset.elevation) || 2;
 
 			if (isHoverable) {

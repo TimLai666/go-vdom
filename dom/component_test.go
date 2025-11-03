@@ -16,12 +16,12 @@ func TestSerializeComplexType(t *testing.T) {
 		{
 			name:     "nil value",
 			input:    nil,
-			expected: "",
+			expected: "null",
 		},
 		{
 			name:     "string value",
 			input:    "hello",
-			expected: "hello",
+			expected: `"hello"`, // JSON format
 		},
 		{
 			name:     "bool true",

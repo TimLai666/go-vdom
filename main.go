@@ -289,7 +289,7 @@ func main() {
 								"id":          "nameInput",
 								"label":       "用戶名稱",
 								"placeholder": "請輸入您的用戶名",
-								"required":    "true",
+								"required":    true,
 								"helpText":    "用戶名應為 3-16 個字符",
 							}),
 							// 下拉選單
@@ -298,7 +298,7 @@ func main() {
 								"label":    "選擇國家",
 								"options":  "台灣,中國,日本,美國,韓國",
 								"helpText": "請選擇您的所在國家",
-								"required": "true",
+								"required": true,
 							}),
 							// 單選按鈕組
 							comp.RadioGroup(Props{
@@ -318,7 +318,7 @@ func main() {
 								"id":       "terms",
 								"name":     "terms",
 								"label":    "我同意服務條款和隱私政策",
-								"required": "true",
+								"required": true,
 								"helpText": "您必須同意條款才能繼續",
 							}),
 							// 勾選框組

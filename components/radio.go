@@ -42,7 +42,7 @@ var RadioGroup = Component(
 		Div(
 			Props{
 				"style": `
-				display: ${'{{label}}'.trim() ? 'block' : 'none'};
+				display: ${{{label}}.trim() ? 'block' : 'none'};
 				margin-bottom: 0.75rem;
 				font-weight: 500;
 				font-size: 0.9375rem;
@@ -55,7 +55,7 @@ var RadioGroup = Component(
 			Props{
 				"style": `
 				display: flex;
-				flex-direction: ${'{{direction}}' === 'horizontal' ? 'row' : 'column'};
+				flex-direction: ${{{direction}} === 'horizontal' ? 'row' : 'column'};
 				gap: 0.75rem;
 			`,
 			},
@@ -64,7 +64,7 @@ var RadioGroup = Component(
 		Div(
 			Props{
 				"style": `
-				display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
+				display: ${{{helpText}}.trim() ? 'block' : 'none'};
 				font-size: 0.875rem;
 				margin-top: 0.375rem;
 				color: #64748b;
@@ -77,12 +77,12 @@ var RadioGroup = Component(
 		const container = document.getElementById('radio-group-{{id}}');
 		if (!container) return;
 
-		const options = '{{options}}'.split(',').map(s => s.trim()).filter(Boolean);
-		const defaultValue = '{{defaultValue}}'.trim();
-		const name = '{{name}}' || '{{id}}';
-		const disabled = '{{disabled}}' === 'true';
-		const color = '{{color}}';
-		const colorRgb = '{{colorRgb}}';
+		const options = {{options}}.split(',').map(s => s.trim()).filter(Boolean);
+		const defaultValue = {{defaultValue}}.trim();
+		const name = {{name}} || {{id}};
+		const disabled = {{disabled}} === true;
+		const color = {{color}};
+		const colorRgb = {{colorRgb}};
 
 		options.forEach(function(option, index) {
 			const id = 'radio-{{id}}-' + index;
@@ -327,8 +327,8 @@ var Radio = Component(
 		const dot = circle.querySelector('.radio-dot');
 		if (!circle || !dot) return;
 
-		const color = '{{color}}';
-		const colorRgb = '{{colorRgb}}';
+		const color = {{color}};
+		const colorRgb = {{colorRgb}};
 
 		function updateState() {
 			if (input.checked) {

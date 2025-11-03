@@ -43,7 +43,7 @@ var Switch = Component(
 				"style": `
 					display: flex;
 					align-items: center;
-					flex-direction: ${'{{labelPosition}}' === 'left' ? 'row' : 'row'};
+					flex-direction: ${{{labelPosition}} === 'left' ? 'row' : 'row'};
 					gap: 0.75rem;
 				`,
 			},
@@ -51,12 +51,12 @@ var Switch = Component(
 				Props{
 					"for": "{{id}}",
 					"style": `
-						display: ${'{{label}}'.trim() ? 'inline-flex' : 'none'};
+						display: ${{{label}}.trim() ? 'inline-flex' : 'none'};
 						align-items: center;
 						cursor: pointer;
 						user-select: none;
-						order: ${'{{labelPosition}}' === 'left' ? '0' : '1'};
-						font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
+						order: ${{{labelPosition}} === 'left' ? '0' : '1'};
+						font-size: ${{{size}} === 'sm' ? '0.875rem' : {{size}} === 'lg' ? '1rem' : '0.9375rem'};
 						color: #374151;
 					`,
 				},
@@ -99,14 +99,14 @@ var Switch = Component(
 						"data-off-color": "{{offColor}}",
 						"style": `
 							display: inline-block;
-							width: ${'{{size}}' === 'sm' ? '2.25rem' : '{{size}}' === 'lg' ? '3.25rem' : '2.75rem'};
-							height: ${'{{size}}' === 'sm' ? '1.25rem' : '{{size}}' === 'lg' ? '1.75rem' : '1.5rem'};
+							width: ${{{size}} === 'sm' ? '2.25rem' : {{size}} === 'lg' ? '3.25rem' : '2.75rem'};
+							height: ${{{size}} === 'sm' ? '1.25rem' : {{size}} === 'lg' ? '1.75rem' : '1.5rem'};
 							background-color: {{offColor}};
 							border-radius: 9999px;
 							transition: all 0.2s ease;
 							position: relative;
-							cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : 'pointer'};
-							opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
+							cursor: ${{{disabled}} === true ? 'not-allowed' : 'pointer'};
+							opacity: ${{{disabled}} === true ? '0.6' : '1'};
 						`,
 					},
 					Span(
@@ -114,8 +114,8 @@ var Switch = Component(
 							"class": "switch-thumb",
 							"style": `
 								display: block;
-								width: calc(${'{{size}}' === 'sm' ? '1.25rem' : '{{size}}' === 'lg' ? '1.75rem' : '1.5rem'} - 4px);
-								height: calc(${'{{size}}' === 'sm' ? '1.25rem' : '{{size}}' === 'lg' ? '1.75rem' : '1.5rem'} - 4px);
+								width: calc(${{{size}} === 'sm' ? '1.25rem' : {{size}} === 'lg' ? '1.75rem' : '1.5rem'} - 4px);
+								height: calc(${{{size}} === 'sm' ? '1.25rem' : {{size}} === 'lg' ? '1.75rem' : '1.5rem'} - 4px);
 								background-color: white;
 								border-radius: 50%;
 								transition: all 0.2s ease;
@@ -132,7 +132,7 @@ var Switch = Component(
 		Div(
 			Props{
 				"style": `
-					display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
+					display: ${{{helpText}}.trim() ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: #64748b;
@@ -142,16 +142,16 @@ var Switch = Component(
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
-		const input = document.getElementById('{{id}}');
+		const input = document.getElementById({{id}});
 		if (!input) return;
 
 		const track = input.nextElementSibling;
 		const thumb = track.querySelector('.switch-thumb');
 		if (!track || !thumb) return;
 
-		const onColor = track.getAttribute('data-on-color') || '{{onColor}}';
-		const offColor = track.getAttribute('data-off-color') || '{{offColor}}';
-		const size = '{{size}}';
+		const onColor = track.getAttribute('data-on-color') || {{onColor}};
+		const offColor = track.getAttribute('data-off-color') || {{offColor}};
+		const size = {{size}};
 		const trackWidth = size === 'sm' ? '2.25rem' : size === 'lg' ? '3.25rem' : '2.75rem';
 		const trackHeight = size === 'sm' ? '1.25rem' : size === 'lg' ? '1.75rem' : '1.5rem';
 
@@ -177,8 +177,8 @@ var Switch = Component(
 		}
 
 		// 初始化
-		input.checked = '{{checked}}' === 'true';
-		input.disabled = '{{disabled}}' === 'true';
+		input.checked = {{checked}};
+		input.disabled = {{disabled}};
 		updateState();
 
 		// 點擊 track 切換狀態
@@ -195,7 +195,7 @@ var Switch = Component(
 		input.addEventListener('change', function() {
 			updateState();
 			this.dispatchEvent(new CustomEvent('switch:change', {
-				detail: { id: '{{id}}', checked: this.checked },
+				detail: { id: {{id}}, checked: this.checked },
 				bubbles: true
 			}));
 		});

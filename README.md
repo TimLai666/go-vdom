@@ -28,6 +28,102 @@
 go get github.com/TimLai666/go-vdom
 ```
 
+## 開發工具
+
+### Template Linter
+
+項目包含一個自動化的模板檢查工具，用於檢測模板中的常見錯誤模式：
+
+```bash
+# 建立 linter
+cd tools/template-linter
+go build
+
+# 運行 linter
+./template-linter ../../
+
+# 顯示修復建議
+./template-linter -fix ../../
+```
+
+**檢測的問題：**
+
+- ✅ `${...}` 表達式中被引號包裹的模板變量
+- ✅ 字串與布林值的比較（應使用布林比較）
+- ✅ `${...}` 表達式中的字串拼接
+- ✅ 模板變量的不當引號使用
+
+### Git Hooks
+
+安裝 pre-commit hook 以在提交前自動檢查：
+
+```bash
+# 安裝 hooks
+chmod +x .githooks/install.sh
+./.githooks/install.sh
+```
+
+Pre-commit hook 會自動執行：
+
+- Code formatting (`go fmt`)
+- Static analysis (`go vet`)
+- Template linting
+
+### 開發命令
+
+#### Linux/Mac (Makefile)
+
+```bash
+make test              # 運行所有測試
+make test-coverage     # 運行測試並生成覆蓋率報告
+make lint              # 運行 template linter
+make check             # 運行所有檢查（fmt, vet, lint, test）
+make build-examples    # 編譯所有範例
+make run-example EXAMPLE=forms_demo  # 運行特定範例
+make clean             # 清理構建文件
+make help              # 顯示所有可用命令
+```
+
+#### Windows (PowerShell)
+
+```powershell
+.\dev.ps1 test              # 運行所有測試
+.\dev.ps1 test-coverage     # 運行測試並生成覆蓋率報告
+.\dev.ps1 lint              # 運行 template linter
+.\dev.ps1 check             # 運行所有檢查（fmt, vet, lint, test）
+.\dev.ps1 build-examples    # 編譯所有範例
+.\dev.ps1 run-example forms_demo  # 運行特定範例
+.\dev.ps1 clean             # 清理構建文件
+.\dev.ps1 help              # 顯示所有可用命令
+```
+
+#### Windows (Batch)
+
+```batch
+dev.bat test              # 運行所有測試
+dev.bat test-coverage     # 運行測試並生成覆蓋率報告
+dev.bat lint              # 運行 template linter
+dev.bat check             # 運行所有檢查（fmt, vet, lint, test）
+dev.bat build-examples    # 編譯所有範例
+dev.bat run-example forms_demo  # 運行特定範例
+dev.bat clean             # 清理構建文件
+dev.bat help              # 顯示所有可用命令
+```
+
+**快速參考：** 查看 [QUICK_COMMANDS.md](QUICK_COMMANDS.md) 了解更多常用命令。
+
+### CI/CD
+
+項目使用 GitHub Actions 進行持續集成，每次 push 或 PR 時會自動：
+
+- 運行所有測試（多個 Go 版本）
+- 執行代碼檢查（fmt, vet, golangci-lint）
+- 運行 template linter
+- 構建所有範例
+- 執行安全掃描
+
+查看 `.github/workflows/ci.yml` 了解完整配置。
+
 ## ⚠️ 重要說明
 
 **事件處理器**：事件處理器必須使用 `js.Do()` 或 `js.AsyncDo()`，不要使用 `js.Fn()` 或 `js.AsyncFn()`。
@@ -415,6 +511,10 @@ go run examples/02_components.go           # http://localhost:8081
 go run examples/03_javascript_dsl.go       # http://localhost:8082
 go run examples/04_template_serialization.go  # http://localhost:8083
 go run examples/complex_props_demo.go      # http://localhost:8084 - 複雜 Props 示例
+
+# 或使用 Makefile
+make run                                    # 運行主示例
+make run-example EXAMPLE=forms_demo        # 運行特定範例
 ```
 
 ## 最佳實踐
@@ -467,6 +567,22 @@ go run examples/complex_props_demo.go      # http://localhost:8084 - 複雜 Prop
 ## 貢獻
 
 歡迎提交 Issue 和 Pull Request！
+
+### 開發流程
+
+1. Fork 並 clone 此倉庫
+2. 安裝開發工具：`make install-tools`
+3. 安裝 git hooks：`./.githooks/install.sh`
+4. 進行修改
+5. 運行檢查：`make check`
+6. 提交並創建 Pull Request
+
+### 代碼質量
+
+- 所有代碼必須通過 `go fmt` 和 `go vet`
+- 模板代碼必須通過 template linter
+- 新功能需要添加測試
+- 保持測試覆蓋率
 
 ## 許可證
 

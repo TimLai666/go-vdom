@@ -81,21 +81,20 @@ var textFieldInternal = Component(
 			"class": "textfield-container",
 			"style": `
 				margin-bottom: 1.25rem;
-				width: ${'{{fullWidth}}' === 'true' ? '100%' : 'auto'};
-				display: ${'{{labelPosition}}' === 'left' ? 'flex' : 'block'};
-				align-items: ${'{{labelPosition}}' === 'left' ? 'center' : 'flex-start'};
-				gap: ${'{{labelPosition}}' === 'left' ? '1rem' : '0'};
+				width: ${{{fullWidth}} === true ? '100%' : 'auto'};
+				display: ${{{labelPosition}} === 'left' ? 'flex' : 'block'};
+				align-items: ${{{labelPosition}} === 'left' ? 'center' : 'flex-start'};
+				gap: ${{{labelPosition}} === 'left' ? '1rem' : '0'};
 			`,
 		},
 		Label(
 			Props{
 				"for": "{{id}}", "class": "textfield-label", "style": `
-					display: ${'{{label}}' !== '' ? 'block' : 'none'};
-					margin-bottom: ${'{{labelPosition}}' === 'top' ? '0.375rem' : '0'};
-					font-weight: 500;
-					font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
+					display: ${{{label}} !== '' ? 'block' : 'none'};
+					margin-bottom: ${{{labelPosition}} === 'top' ? '0.375rem' : '0'};
+					font-size: ${{{size}} === 'sm' ? '0.875rem' : {{size}} === 'lg' ? '1rem' : '0.9375rem'};
 					color: #374151;
-					width: ${'{{labelPosition}}' === 'left' ? '120px' : 'auto'};
+					width: ${{{labelPosition}} === 'left' ? '120px' : 'auto'};
 					flex-shrink: 0;
 				`,
 			},
@@ -106,15 +105,15 @@ var textFieldInternal = Component(
 				"class": "textfield-wrapper",
 				"style": `
 					position: relative;
-					width: ${'{{labelPosition}}' === 'left' ? 'calc(100% - 120px - 1rem)' : '100%'};
-					flex: ${'{{labelPosition}}' === 'left' ? '1' : 'none'};
+					width: ${{{labelPosition}} === 'left' ? 'calc(100% - 120px - 1rem)' : '100%'};
+					flex: ${{{labelPosition}} === 'left' ? '1' : 'none'};
 				`,
 			},
 			Div(
 				Props{
 					"class": "textfield-icon-left",
 					"style": `
-						display: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'left' ? 'flex' : 'none' : 'none'};
+						display: ${{{hasIcon}} === true ? {{iconPosition}} === 'left' ? 'flex' : 'none' : 'none'};
 						position: absolute;
 						top: 50%;
 						left: 12px;
@@ -149,22 +148,22 @@ var textFieldInternal = Component(
 					"style": `
 						display: block;
 						width: 100%;
-						padding: ${'{{size}}' === 'sm' ? '0.5rem 0.75rem' : '{{size}}' === 'lg' ? '0.75rem 1rem' : '0.625rem 0.875rem'};
-						padding-left: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'left' ? '2.5rem' : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'} : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'}};
-						padding-right: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'right' ? '2.5rem' : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'} : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'}};
-						font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
+						padding: ${{{size}} === 'sm' ? '0.5rem 0.75rem' : {{size}} === 'lg' ? '0.75rem 1rem' : '0.625rem 0.875rem'};
+						padding-left: ${{{hasIcon}} === true ? {{iconPosition}} === 'left' ? '2.5rem' : {{size}} === 'sm' ? '0.75rem' : {{size}} === 'lg' ? '1rem' : '0.875rem' : {{size}} === 'sm' ? '0.75rem' : {{size}} === 'lg' ? '1rem' : '0.875rem'};
+						padding-right: ${{{hasIcon}} === true ? {{iconPosition}} === 'right' ? '2.5rem' : {{size}} === 'sm' ? '0.75rem' : {{size}} === 'lg' ? '1rem' : '0.875rem' : {{size}} === 'sm' ? '0.75rem' : {{size}} === 'lg' ? '1rem' : '0.875rem'};
+						font-size: ${{{size}} === 'sm' ? '0.875rem' : {{size}} === 'lg' ? '1rem' : '0.9375rem'};
 						line-height: 1.5;
 						color: #333;
-						background: ${'{{variant}}' === 'filled' ? '#f9fafb' : '#ffffff'};
-						border: ${'{{variant}}' === 'outlined' ? '1px solid #d1d5db' : '{{variant}}' === 'filled' ? '1px solid transparent' : 'none'};
-						border-bottom: ${'{{variant}}' === 'underlined' ? '1px solid #d1d5db' : ''};
-						border-radius: ${'{{variant}}' === 'underlined' ? '0' : '0.375rem'};
-						box-shadow: ${'{{variant}}' === 'outlined' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none'};
+						background: ${{{variant}} === 'filled' ? '#f9fafb' : '#ffffff'};
+						border: ${{{variant}} === 'outlined' ? '1px solid #d1d5db' : {{variant}} === 'filled' ? '1px solid transparent' : 'none'};
+						border-bottom: ${{{variant}} === 'underlined' ? '1px solid #d1d5db' : ''};
+						border-radius: ${{{variant}} === 'underlined' ? '0' : '0.375rem'};
+						box-shadow: ${{{variant}} === 'outlined' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none'};
 						transition: all 0.2s ease;
 						outline: none;
 						box-sizing: border-box;
-						cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : '{{readonly}}' === 'true' ? 'default' : 'text'};
-						opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
+						cursor: ${{{disabled}} === true ? 'not-allowed' : {{readonly}} === true ? 'default' : 'text'};
+						opacity: ${{{disabled}} === true ? '0.6' : '1'};
 					`,
 				},
 			),
@@ -172,7 +171,7 @@ var textFieldInternal = Component(
 				Props{
 					"class": "textfield-icon-right",
 					"style": `
-						display: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'right' ? 'flex' : 'none' : 'none'};
+						display: ${{{hasIcon}} === true ? {{iconPosition}} === 'right' ? 'flex' : 'none' : 'none'};
 						position: absolute;
 						top: 50%;
 						right: 12px;
@@ -189,20 +188,20 @@ var textFieldInternal = Component(
 		),
 		Div(
 			Props{"class": "textfield-help-text", "style": `
-					display: ${'{{hasError}}' === 'true' ? 'block' : '{{hasHelp}}' === 'true' ? 'block' : 'none'};
+					display: ${{{hasError}} === true ? 'block' : {{hasHelp}} === true ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
-					color: ${'{{hasError}}' === 'true' ? '#ef4444' : '#64748b'};
+					color: ${{{hasError}} === true ? '#ef4444' : '#64748b'};
 				`,
 			},
-			"${'{{hasError}}' === 'true' ? '{{errorText}}' : '{{helpText}}'}",
+			"${{{hasError}} === true ? {{errorText}} : {{helpText}}}",
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
-    const input = document.getElementById('{{id}}');
+    const input = document.getElementById({{id}});
     if (!input) return;
 
-    const color = input.getAttribute('data-color') || '{{color}}';
+    const color = input.getAttribute('data-color') || {{color}};
 
     // 計算RGB值用於陰影
     function hexToRgb(hex) {
@@ -222,11 +221,11 @@ var textFieldInternal = Component(
 
     const handleBlur = function() {
       if (!input.disabled && !input.readOnly) {
-        const variant = '{{variant}}';
-        if (variant === 'outlined') {
+        const variant = {{variant}};
+        if (variant === "outlined") {
           input.style.borderColor = '#d1d5db';
           input.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-        } else if (variant === 'underlined') {
+        } else if (variant === "underlined") {
           input.style.borderBottomColor = '#d1d5db';
           input.style.boxShadow = 'none';
         } else {
@@ -263,9 +262,9 @@ var textFieldInternal = Component(
     input.addEventListener('input', handleInput);
     input.addEventListener('change', handleChange);
 
-    // 設置禁用和唯讀狀態（使用字串比較，因為組件屬性是字串）
-    input.disabled = '{{disabled}}' === 'true';
-    input.readOnly = '{{readonly}}' === 'true';
+    // 設置禁用和唯讀狀態
+    input.disabled = {{disabled}};
+    input.readOnly = {{readonly}};
 
     // 更新樣式
     if (input.disabled) {
@@ -276,21 +275,9 @@ var textFieldInternal = Component(
     } else if (input.readOnly) {
       input.style.backgroundColor = '#f9fafb';
       input.style.cursor = 'default';
-      input.style.color = '#374151';
-      input.style.pointerEvents = 'auto';
-    } else {
-      const variant = '{{variant}}';
-      if (variant === 'filled') {
-        input.style.backgroundColor = '#f9fafb';
-      } else {
-        input.style.backgroundColor = '#ffffff';
-      }
-      input.style.color = '#333333';
-      input.style.cursor = 'text';
-      input.style.pointerEvents = 'auto';
     }
   } catch (err) {
-    console.error('Input init error for id={{id}}', err);
+    console.error('TextField init error for id=' + {{id}}, err);
   }`})),
 	PropsDef{
 		// 主要屬性

@@ -40,21 +40,21 @@ var Dropdown = Component(
 			"class": "dropdown-container",
 			"style": `
 				margin-bottom: 1.25rem;
-				width: ${'{{fullWidth}}' === 'true' ? '100%' : 'auto'};
-				display: ${'{{labelPosition}}' === 'left' ? 'flex' : 'block'};
-				align-items: ${'{{labelPosition}}' === 'left' ? 'center' : 'flex-start'};
-				gap: ${'{{labelPosition}}' === 'left' ? '1rem' : '0'};
+				width: ${{{fullWidth}} === true ? '100%' : 'auto'};
+				display: ${{{labelPosition}} === "left" ? 'flex' : 'block'};
+				align-items: ${{{labelPosition}} === "left" ? 'center' : 'flex-start'};
+				gap: ${{{labelPosition}} === "left" ? '1rem' : '0'};
 			`,
 		},
 		Label(
 			Props{
 				"for": "{{id}}", "class": "dropdown-label", "style": `
-					display: ${'{{label}}'.trim() ? 'block' : 'none'};
-					margin-bottom: ${'{{labelPosition}}' === 'top' ? '0.375rem' : '0'};
+					display: ${{{label}}.trim() ? 'block' : 'none'};
+					margin-bottom: ${{{labelPosition}} === "top" ? '0.375rem' : '0'};
 					font-weight: 500;
-					font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
+					font-size: ${{{size}} === "sm" ? '0.875rem' : {{size}} === "lg" ? '1rem' : '0.9375rem'};
 					color: #374151;
-					width: ${'{{labelPosition}}' === 'left' ? '120px' : 'auto'};
+					width: ${{{labelPosition}} === "left" ? '120px' : 'auto'};
 					flex-shrink: 0;
 				`,
 			},
@@ -65,8 +65,8 @@ var Dropdown = Component(
 				"class": "dropdown-wrapper",
 				"style": `
 					position: relative;
-					width: ${'{{labelPosition}}' === 'left' ? 'calc(100% - 120px - 1rem)' : '100%'};
-					flex: ${'{{labelPosition}}' === 'left' ? '1' : 'none'};
+					width: ${{{labelPosition}} === "left" ? 'calc(100% - 120px - 1rem)' : '100%'};
+					flex: ${{{labelPosition}} === "left" ? '1' : 'none'};
 				`,
 			},
 			Select(
@@ -80,8 +80,8 @@ var Dropdown = Component(
 					"style": `
 						display: block;
 						width: 100%;
-						padding: ${'{{size}}' === 'sm' ? '0.5rem 2.5rem 0.5rem 0.75rem' : '{{size}}' === 'lg' ? '0.75rem 2.75rem 0.75rem 1rem' : '0.625rem 2.5rem 0.625rem 0.875rem'};
-						font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
+						padding: ${{{size}} === "sm" ? '0.5rem 2.5rem 0.5rem 0.75rem' : {{size}} === "lg" ? '0.75rem 2.75rem 0.75rem 1rem' : '0.625rem 2.5rem 0.625rem 0.875rem'};
+						font-size: ${{{size}} === "sm" ? '0.875rem' : {{size}} === "lg" ? '1rem' : '0.9375rem'};
 						line-height: 1.5;
 						background: #ffffff;
 						color: #333;
@@ -89,7 +89,7 @@ var Dropdown = Component(
 						border-radius: 0.375rem;
 						box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 						transition: all 0.2s ease;
-						cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : 'pointer'};
+						cursor: ${{{disabled}} === true ? 'not-allowed' : 'pointer'};
 						outline: none;
 						box-sizing: border-box;
 						-webkit-appearance: none;
@@ -98,7 +98,7 @@ var Dropdown = Component(
 						background-repeat: no-repeat;
 						background-position: right 0.75rem center;
 						background-size: 1rem;
-						opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
+						opacity: ${{{disabled}} === true ? '0.6' : '1'};
 					`,
 				},
 				Option(
@@ -113,21 +113,21 @@ var Dropdown = Component(
 		),
 		Div(
 			Props{"class": "dropdown-help-text", "style": `
-					display: ${'{{errorText}}'.trim() ? 'block' : '{{helpText}}'.trim() ? 'block' : 'none'};
+					display: ${{{errorText}}.trim() ? 'block' : {{helpText}}.trim() ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
-					color: ${'{{errorText}}'.trim() ? '#ef4444' : '#64748b'};
+					color: ${{{errorText}}.trim() ? '#ef4444' : '#64748b'};
 				`,
 			},
-			"${'{{errorText}}'.trim() ? '{{errorText}}' : '{{helpText}}'}",
+			"${{{errorText}}.trim() ? {{errorText}} : {{helpText}}}",
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
-    const selectId = '{{id}}';
+    const selectId = {{id}};
     const select = document.getElementById(selectId);
     if (!select) return;
 
-    const color = select.getAttribute('data-color') || '{{color}}';
+    const color = select.getAttribute('data-color') || {{color}};
 
     // 計算RGB值用於陰影
     function hexToRgb(hex) {
@@ -146,14 +146,14 @@ var Dropdown = Component(
     // 添加預設選項
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = '{{placeholder}}';
+    placeholder.textContent = {{placeholder}};
     placeholder.disabled = true;
     placeholder.selected = true;
     select.appendChild(placeholder);
 
     // 解析選項
-    const options = '{{options}}'.split(',').filter(opt => opt.trim());
-    const defaultValue = '{{defaultValue}}';
+    const options = {{options}}.split(',').filter(opt => opt.trim());
+    const defaultValue = {{defaultValue}};
 
     // 創建選項
     options.forEach(option => {
@@ -191,7 +191,7 @@ var Dropdown = Component(
     });
 
     // 設置初始狀態
-    const disabled = '{{disabled}}' === 'true';
+    const disabled = {{disabled}} === true;
     if (disabled) {
         select.disabled = true;
         select.style.backgroundColor = '#f9fafb';
@@ -199,7 +199,7 @@ var Dropdown = Component(
         select.style.cursor = 'not-allowed';
     }
 } catch (err) {
-    console.error('Dropdown init error for id={{id}}', err);
+    console.error('Dropdown init error for id=' + {{id}}, err);
 }`})),
 	PropsDef{
 		// 主要屬性

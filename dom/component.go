@@ -4,7 +4,6 @@ package dom
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 	"sync/atomic"
@@ -61,7 +60,8 @@ func Component(template VNode, onDOMReadyCallback *JSAction, defaultProps ...Pro
 			// 只在使用者沒有明確提供 onDOMReady 的情況下注入（避免覆寫）
 			if _, exists := node.Props["onDOMReady"]; !exists {
 				// 將 JSAction 值放入 Props，並對其中的 {{...}} 模板進行插值
-				interpolatedCode := interpolateString(onDOMReadyCallback.Code, mergedProps)
+				// 使用 interpolateStringForJS 保持 JSON 格式
+				interpolatedCode := interpolateStringForJS(onDOMReadyCallback.Code, mergedProps)
 				node.Props["onDOMReady"] = JSAction{Code: interpolatedCode}
 			}
 		}
@@ -83,11 +83,21 @@ func interpolate(template VNode, p Props, children []VNode) VNode {
 			// 檢查是否為純模板引用（如 "{{key}}"）
 			trimmed := strings.TrimSpace(t)
 			if strings.HasPrefix(trimmed, "{{") && strings.HasSuffix(trimmed, "}}") && strings.Count(trimmed, "{{") == 1 {
-				// 純模板引用：取值並序列化為字符串（因為 HTML 屬性都是字符串）
+				// 純模板引用：取值並轉換為字符串
 				key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(trimmed, "{{"), "}}"))
 				if val, ok := p[key]; ok {
-					// 所有類型都序列化為字符串，以保持與 HTML 屬性的一致性
-					newProps[k] = serializeComplexType(val)
+					// 用於 HTML 屬性，需要去除 JSON 字符串的引號
+					jsonStr := serializeComplexType(val)
+					// 如果是 JSON 字符串格式（以 " 開頭和結尾），去除引號
+					if len(jsonStr) >= 2 && jsonStr[0] == '"' && jsonStr[len(jsonStr)-1] == '"' {
+						// 去除引號並反轉義
+						unquoted := jsonStr[1 : len(jsonStr)-1]
+						unquoted = strings.ReplaceAll(unquoted, `\"`, `"`)
+						unquoted = strings.ReplaceAll(unquoted, `\\`, `\`)
+						newProps[k] = unquoted
+					} else {
+						newProps[k] = jsonStr
+					}
 				} else {
 					newProps[k] = "" // 找不到則為空字串
 				}
@@ -97,7 +107,8 @@ func interpolate(template VNode, p Props, children []VNode) VNode {
 			}
 		case JSAction:
 			// 對 JSAction 的 Code 字串進行插值處理，保留為 JSAction
-			newProps[k] = JSAction{Code: interpolateString(t.Code, p)}
+			// 在 JavaScript 代碼中，保持 JSON 格式（字符串帶引號）
+			newProps[k] = JSAction{Code: interpolateStringForJS(t.Code, p)}
 		case bool, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 			// 保留原始類型的數字和布林值
 			newProps[k] = v
@@ -135,44 +146,84 @@ func interpolate(template VNode, p Props, children []VNode) VNode {
 
 // interpolateString 替換字符串中的變量
 // 支援額外處理少量常見的 JS-style ternary 表達式，例如：
-// ${'{{label}}'.trim() ? 'inline' : 'none'}
-// ${'{{direction}}' === 'horizontal' ? 'row' : 'column'}
-// 流程：先替換 {{...}}，再解析並評估簡單的 ${...} 三元式
+// ${{{label}}.trim() ? 'inline' : 'none'}
+// ${{{direction}} === 'horizontal' ? 'row' : 'column'}
+// 流程：先處理 ${...} 表達式（其中可能包含 {{...}}），再替換剩餘的 {{...}}
 func interpolateString(s string, p Props) string {
-	// 先替換 {{key}}
+	// 先處理 ${...} 表達式，支持嵌套三元運算符
+	// 在表達式內部的 {{...}} 會在 evaluateExpression 中處理
+	result := s
+	// 手動查找並處理 ${...} 表達式
+	for {
+		startIdx := strings.Index(result, "${")
+		if startIdx == -1 {
+			break
+		}
+
+		// 從 ${ 之後開始，找到匹配的 }
+		depth := 1
+		endIdx := -1
+		for i := startIdx + 2; i < len(result); i++ {
+			if result[i] == '{' {
+				depth++
+			} else if result[i] == '}' {
+				depth--
+				if depth == 0 {
+					endIdx = i
+					break
+				}
+			}
+		}
+
+		if endIdx == -1 {
+			// 沒有找到匹配的 }，跳過
+			break
+		}
+
+		// 提取 ${} 內的表達式
+		expr := result[startIdx+2 : endIdx]
+		// 在表達式中替換 {{...}}
+		exprWithValues := replaceTemplateVarsInExpression(expr, p)
+		evaluated := evaluateExpression(strings.TrimSpace(exprWithValues))
+
+		// 替換整個 ${...} 為評估結果
+		result = result[:startIdx] + evaluated + result[endIdx+1:]
+	}
+
+	// 再替換剩餘的 {{key}}（不在 ${...} 內的）
 	re := regexp.MustCompile(`\{\{(.+?)\}\}`)
-	res := re.ReplaceAllStringFunc(s, func(match string) string {
+	result = re.ReplaceAllStringFunc(result, func(match string) string {
 		key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(match, "{{"), "}}"))
 		if val, ok := p[key]; ok {
-			// p[key] 可能是各種型別
-			// 對於布林值，轉換為 "true" 或 "false"
-			// 對於其他類型，統一以 fmt.Sprint 轉字串
-			switch v := val.(type) {
-			case bool:
-				if v {
-					return "true"
-				}
-				return "false"
-			default:
-				// 對於複雜類型，嘗試序列化為 JSON 字符串
-				return serializeComplexType(val)
+			// 在字符串插值中（用於文本內容），需要去除 JSON 字符串的引號
+			jsonStr := serializeComplexType(val)
+			// 如果是 JSON 字符串格式（以 " 開頭和結尾），去除引號
+			if len(jsonStr) >= 2 && jsonStr[0] == '"' && jsonStr[len(jsonStr)-1] == '"' {
+				// 去除引號並反轉義
+				unquoted := jsonStr[1 : len(jsonStr)-1]
+				unquoted = strings.ReplaceAll(unquoted, `\"`, `"`)
+				unquoted = strings.ReplaceAll(unquoted, `\\`, `\`)
+				return unquoted
 			}
+			return jsonStr
 		}
 		return ""
 	})
 
-	// 處理 ${...} 表達式，支持嵌套三元運算符
-	// 使用遞歸方式處理嵌套
-	dollarBraceRe := regexp.MustCompile(`\$\{([^}]+)\}`)
-	for dollarBraceRe.MatchString(res) {
-		res = dollarBraceRe.ReplaceAllStringFunc(res, func(m string) string {
-			// 提取 ${} 內的表達式
-			expr := m[2 : len(m)-1] // 去掉 ${ 和 }
-			return evaluateExpression(strings.TrimSpace(expr))
-		})
-	}
+	return result
+}
 
-	return res
+// replaceTemplateVarsInExpression 在表達式中替換 {{...}} 為 JSON 值
+func replaceTemplateVarsInExpression(expr string, p Props) string {
+	re := regexp.MustCompile(`\{\{(.+?)\}\}`)
+	return re.ReplaceAllStringFunc(expr, func(match string) string {
+		key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(match, "{{"), "}}"))
+		if val, ok := p[key]; ok {
+			// 返回 JSON 格式（字符串帶引號）
+			return serializeComplexType(val)
+		}
+		return "null"
+	})
 }
 
 // evaluateExpression 評估簡單的條件表達式
@@ -181,6 +232,7 @@ func interpolateString(s string, p Props) string {
 // - 'X' === 'Y' ? 'A' : 'B'
 // - 'X' !== 'Y' ? 'A' : 'B'
 // - 嵌套三元: 'X' === 'Y' ? 'A' : 'Z' === 'W' ? 'B' : 'C'
+// - 括號分組: 'X' ? ('Y' ? 'A' : 'B') : 'C'
 func evaluateExpression(expr string) string {
 	expr = strings.TrimSpace(expr)
 
@@ -188,32 +240,57 @@ func evaluateExpression(expr string) string {
 	questionIdx := -1
 	colonIdx := -1
 	depth := 0
+	parenDepth := 0
 	inQuotes := false
+	quoteChar := byte(0)
 
 	for i := 0; i < len(expr); i++ {
-		if expr[i] == '\'' {
-			inQuotes = !inQuotes
+		ch := expr[i]
+
+		// 處理引號
+		if (ch == '\'' || ch == '"') && (i == 0 || expr[i-1] != '\\') {
+			if !inQuotes {
+				inQuotes = true
+				quoteChar = ch
+			} else if ch == quoteChar {
+				inQuotes = false
+				quoteChar = 0
+			}
 		}
+
 		if inQuotes {
 			continue
 		}
 
-		if expr[i] == '?' {
-			if questionIdx == -1 {
-				questionIdx = i
-			}
-			depth++
-		} else if expr[i] == ':' && depth > 0 {
-			depth--
-			if depth == 0 && colonIdx == -1 {
-				colonIdx = i
+		// 追蹤括號深度
+		if ch == '(' {
+			parenDepth++
+		} else if ch == ')' {
+			parenDepth--
+		}
+
+		// 只有在括號深度為 0 時才處理 ? 和 :
+		if parenDepth == 0 {
+			if ch == '?' {
+				if questionIdx == -1 {
+					questionIdx = i
+				}
+				depth++
+			} else if ch == ':' && depth > 0 {
+				depth--
+				if depth == 0 && colonIdx == -1 {
+					colonIdx = i
+				}
 			}
 		}
 	}
 
 	// 如果不是三元表達式，直接返回去除引號的值
 	if questionIdx == -1 || colonIdx == -1 {
-		if strings.HasPrefix(expr, "'") && strings.HasSuffix(expr, "'") {
+		if strings.HasPrefix(expr, "'") && strings.HasSuffix(expr, "'") && len(expr) >= 2 {
+			return expr[1 : len(expr)-1]
+		}
+		if strings.HasPrefix(expr, "\"") && strings.HasSuffix(expr, "\"") && len(expr) >= 2 {
 			return expr[1 : len(expr)-1]
 		}
 		return expr
@@ -223,6 +300,10 @@ func evaluateExpression(expr string) string {
 	condition := strings.TrimSpace(expr[:questionIdx])
 	trueValue := strings.TrimSpace(expr[questionIdx+1 : colonIdx])
 	falseValue := strings.TrimSpace(expr[colonIdx+1:])
+
+	// 移除 trueValue 和 falseValue 的外層括號
+	trueValue = stripOuterParentheses(trueValue)
+	falseValue = stripOuterParentheses(falseValue)
 
 	// 評估條件
 	if evaluateCondition(condition) {
@@ -235,9 +316,30 @@ func evaluateExpression(expr string) string {
 func evaluateCondition(condition string) bool {
 	condition = strings.TrimSpace(condition)
 
-	// 檢查 .trim() 語法: 'value'.trim()
-	trimRe := regexp.MustCompile(`^'([^']*)'\.trim\(\)$`)
-	if match := trimRe.FindStringSubmatch(condition); match != nil {
+	// 移除最外層的括號（如果存在）
+	condition = stripOuterParentheses(condition)
+
+	// 檢查 && 運算符
+	if idx := indexOfOperator(condition, "&&"); idx != -1 {
+		left := strings.TrimSpace(condition[:idx])
+		right := strings.TrimSpace(condition[idx+2:])
+		return evaluateCondition(left) && evaluateCondition(right)
+	}
+
+	// 檢查 || 運算符
+	if idx := indexOfOperator(condition, "||"); idx != -1 {
+		left := strings.TrimSpace(condition[:idx])
+		right := strings.TrimSpace(condition[idx+2:])
+		return evaluateCondition(left) || evaluateCondition(right)
+	}
+
+	// 檢查 .trim() 語法: 'value'.trim() 或 "value".trim()
+	trimReSingle := regexp.MustCompile(`^'([^']*)'\.trim\(\)$`)
+	if match := trimReSingle.FindStringSubmatch(condition); match != nil {
+		return strings.TrimSpace(match[1]) != ""
+	}
+	trimReDouble := regexp.MustCompile(`^"([^"]*)"\.trim\(\)$`)
+	if match := trimReDouble.FindStringSubmatch(condition); match != nil {
 		return strings.TrimSpace(match[1]) != ""
 	}
 
@@ -267,76 +369,166 @@ func evaluateCondition(condition string) bool {
 		return unquote(left) != unquote(right)
 	}
 
+	// 布林值字面量
+	if condition == "true" {
+		return true
+	}
+	if condition == "false" {
+		return false
+	}
+
 	// 默認：非空字符串為 true
 	unquoted := unquote(condition)
-	return unquoted != "" && unquoted != "false"
+	return unquoted != "" && unquoted != "false" && unquoted != "null"
 }
 
-// indexOfOperator 找到運算符的位置（不在引號內）
+// stripOuterParentheses 移除表達式最外層的括號
+func stripOuterParentheses(expr string) string {
+	expr = strings.TrimSpace(expr)
+	if len(expr) < 2 || expr[0] != '(' {
+		return expr
+	}
+
+	// 檢查是否整個表達式被一對括號包圍
+	depth := 0
+	for i := 0; i < len(expr); i++ {
+		if expr[i] == '(' {
+			depth++
+		} else if expr[i] == ')' {
+			depth--
+			// 如果在結尾之前深度就變成 0，說明不是被一對括號完全包圍
+			if depth == 0 && i < len(expr)-1 {
+				return expr
+			}
+		}
+	}
+
+	// 如果整個表達式被一對括號包圍，移除它們並遞歸檢查
+	if depth == 0 {
+		return stripOuterParentheses(expr[1 : len(expr)-1])
+	}
+
+	return expr
+}
+
+// indexOfOperator 找到運算符的位置（不在引號內且不在括號內）
 func indexOfOperator(s, op string) int {
 	inQuotes := false
+	quoteChar := byte(0)
+	parenDepth := 0
+
 	for i := 0; i <= len(s)-len(op); i++ {
-		if s[i] == '\'' {
-			inQuotes = !inQuotes
+		ch := s[i]
+
+		// 處理引號
+		if (ch == '\'' || ch == '"') && (i == 0 || s[i-1] != '\\') {
+			if !inQuotes {
+				inQuotes = true
+				quoteChar = ch
+			} else if ch == quoteChar {
+				inQuotes = false
+				quoteChar = 0
+			}
 		}
-		if !inQuotes && s[i:i+len(op)] == op {
+
+		if inQuotes {
+			continue
+		}
+
+		// 追蹤括號深度
+		if ch == '(' {
+			parenDepth++
+		} else if ch == ')' {
+			parenDepth--
+		}
+
+		// 只有在引號外且括號深度為 0 時才匹配運算符
+		if !inQuotes && parenDepth == 0 && s[i:i+len(op)] == op {
 			return i
 		}
 	}
 	return -1
 }
 
-// unquote 移除字符串兩端的引號
+// unquote 移除字符串兩端的引號（支持單引號和雙引號）
 func unquote(s string) string {
 	s = strings.TrimSpace(s)
 	if strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'") && len(s) >= 2 {
 		return s[1 : len(s)-1]
 	}
+	if strings.HasPrefix(s, "\"") && strings.HasSuffix(s, "\"") && len(s) >= 2 {
+		return s[1 : len(s)-1]
+	}
 	return s
 }
 
-// serializeComplexType 將複雜類型（slice、map、struct 等）序列化為 JSON 字符串
-// 如果無法序列化，則返回 fmt.Sprint 的結果
+// interpolateStringForJS 替換 JavaScript 代碼中的變量，保持 JSON 格式
+func interpolateStringForJS(s string, p Props) string {
+	// 先處理 ${...} 表達式
+	result := s
+	// 手動查找並處理 ${...} 表達式
+	for {
+		startIdx := strings.Index(result, "${")
+		if startIdx == -1 {
+			break
+		}
+
+		// 從 ${ 之後開始，找到匹配的 }
+		depth := 1
+		endIdx := -1
+		for i := startIdx + 2; i < len(result); i++ {
+			if result[i] == '{' {
+				depth++
+			} else if result[i] == '}' {
+				depth--
+				if depth == 0 {
+					endIdx = i
+					break
+				}
+			}
+		}
+
+		if endIdx == -1 {
+			// 沒有找到匹配的 }，跳過
+			break
+		}
+
+		// 提取 ${} 內的表達式
+		expr := result[startIdx+2 : endIdx]
+		// 在表達式中替換 {{...}}
+		exprWithValues := replaceTemplateVarsInExpression(expr, p)
+		evaluated := evaluateExpression(strings.TrimSpace(exprWithValues))
+
+		// 替換整個 ${...} 為評估結果
+		result = result[:startIdx] + evaluated + result[endIdx+1:]
+	}
+
+	// 再替換剩餘的 {{key}}（不在 ${...} 內的）
+	re := regexp.MustCompile(`\{\{(.+?)\}\}`)
+	result = re.ReplaceAllStringFunc(result, func(match string) string {
+		key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(match, "{{"), "}}"))
+		if val, ok := p[key]; ok {
+			// 在 JavaScript 代碼中，保持 JSON 格式（字符串帶引號）
+			return serializeComplexType(val)
+		}
+		return "null"
+	})
+
+	return result
+}
+
+// serializeComplexType 將所有值統一序列化為 JSON 格式
+// 這樣在 JavaScript 中可以直接使用：const value = {{prop}};
 func serializeComplexType(v interface{}) string {
 	if v == nil {
-		return ""
+		return "null"
 	}
 
-	// 檢查是否為複雜類型（需要 JSON 序列化）
-	rv := reflect.ValueOf(v)
-	kind := rv.Kind()
-
-	// 簡單類型直接返回字符串表示
-	switch kind {
-	case reflect.String:
-		return rv.String()
-	case reflect.Bool:
-		if rv.Bool() {
-			return "true"
-		}
-		return "false"
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return fmt.Sprintf("%d", rv.Int())
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return fmt.Sprintf("%d", rv.Uint())
-	case reflect.Float32, reflect.Float64:
-		return fmt.Sprintf("%g", rv.Float())
-	case reflect.Slice, reflect.Array, reflect.Map, reflect.Struct:
-		// 複雜類型：序列化為 JSON
-		jsonBytes, err := json.Marshal(v)
-		if err != nil {
-			// 序列化失敗，返回默認字符串表示
-			return fmt.Sprint(v)
-		}
-		return string(jsonBytes)
-	case reflect.Ptr:
-		// 指針類型：遞歸處理指向的值
-		if rv.IsNil() {
-			return ""
-		}
-		return serializeComplexType(rv.Elem().Interface())
-	default:
-		// 其他類型使用默認字符串表示
+	// 統一使用 JSON 序列化
+	jsonBytes, err := json.Marshal(v)
+	if err != nil {
+		// 序列化失敗，返回默認字符串表示
 		return fmt.Sprint(v)
 	}
+	return string(jsonBytes)
 }

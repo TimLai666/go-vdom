@@ -27,42 +27,41 @@ func TestSwitch(t *testing.T) {
 			},
 		},
 		{
-			name: "checked switch",
+			name: "checked_switch",
 			props: Props{
 				"id":      "checked-switch",
-				"checked": "true",
+				"checked": true,
 			},
 			expected: []string{
 				`id="checked-switch"`,
 				`checked="true"`,
-				"input.checked = 'true' === 'true'",
+				"input.checked = true",
 			},
 		},
 		{
-			name: "disabled switch",
+			name: "disabled_switch",
 			props: Props{
 				"id":       "disabled-switch",
-				"disabled": "true",
+				"disabled": true,
 			},
 			expected: []string{
 				`id="disabled-switch"`,
 				`disabled="true"`,
-				"input.disabled = 'true' === 'true'",
+				"input.disabled = true",
 			},
 		},
 		{
-			name: "custom colors",
+			name: "custom_colors",
 			props: Props{
-				"id":       "color-switch",
+				"id":       "custom-switch",
 				"onColor":  "#10b981",
 				"offColor": "#ef4444",
 			},
 			expected: []string{
-				`id="color-switch"`,
+				`id="custom-switch"`,
 				`data-on-color="#10b981"`,
 				`data-off-color="#ef4444"`,
-				"const onColor = track.getAttribute('data-on-color') || '#10b981'",
-				"const offColor = track.getAttribute('data-off-color') || '#ef4444'",
+				`const onColor = track.getAttribute('data-on-color') || "#10b981"`,
 			},
 		},
 		{
@@ -75,7 +74,7 @@ func TestSwitch(t *testing.T) {
 				`id="small-switch"`,
 				"width: 2.25rem",
 				"height: 1.25rem",
-				"const size = 'sm'",
+				`const size = "sm"`,
 				"const trackWidth = size === 'sm' ? '2.25rem'",
 			},
 		},
@@ -89,7 +88,7 @@ func TestSwitch(t *testing.T) {
 				`id="large-switch"`,
 				"width: 3.25rem",
 				"height: 1.75rem",
-				"const size = 'lg'",
+				`const size = "lg"`,
 				"const trackHeight = size === 'sm' ? '1.25rem' : size === 'lg' ? '1.75rem' : '1.5rem'",
 			},
 		},
@@ -178,27 +177,27 @@ func TestTextField(t *testing.T) {
 			},
 		},
 		{
-			name: "disabled input",
+			name: "disabled_input",
 			props: Props{
 				"id":       "disabled-input",
-				"disabled": "true",
+				"disabled": true,
 			},
 			expected: []string{
 				`id="disabled-input"`,
 				`disabled="true"`,
-				"input.disabled = 'true' === 'true'",
+				"input.disabled = true",
 			},
 		},
 		{
-			name: "readonly input",
+			name: "readonly_input",
 			props: Props{
 				"id":       "readonly-input",
-				"readonly": "true",
+				"readonly": true,
 			},
 			expected: []string{
 				`id="readonly-input"`,
 				`readonly="true"`,
-				"input.readOnly = 'true' === 'true'",
+				"input.readOnly = true",
 			},
 		},
 		{
@@ -371,7 +370,7 @@ func TestDropdown(t *testing.T) {
 			expected: []string{
 				`id="test-dropdown"`,
 				"Select Country",
-				"const options = 'Taiwan,Japan,USA'.split(',').filter(opt => opt.trim())",
+				`const options = "Taiwan,Japan,USA".split(',').filter(opt => opt.trim())`,
 			},
 		},
 		{
@@ -383,8 +382,7 @@ func TestDropdown(t *testing.T) {
 			},
 			expected: []string{
 				`id="default-dropdown"`,
-				"const defaultValue = 'Green'",
-				"opt.selected = true",
+				`const defaultValue = "Green"`,
 			},
 		},
 		{

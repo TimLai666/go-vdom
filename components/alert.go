@@ -31,31 +31,31 @@ var Alert = Component(
 			"id": "alert-{{id}}",
 			"style": `
 				position: relative;
-				padding: ${'{{compact}}' === 'true' ? '0.75rem 1rem' : '1rem 1.25rem'};
+				padding: ${{{compact}} === true ? '0.75rem 1rem' : '1rem 1.25rem'};
 				margin-bottom: 1rem;
 				width: 100%;
 				box-sizing: border-box;
-				border-radius: ${'{{rounded}}' === 'none' ? '0' : '{{rounded}}' === 'sm' ? '0.25rem' : '{{rounded}}' === 'lg' ? '0.75rem' : '0.5rem'};
-				background-color: ${'{{type}}' === 'success' ? '#f0fdf4' : '{{type}}' === 'warning' ? '#fffbeb' : '{{type}}' === 'error' ? '#fef2f2' : '#eef2ff'};
-				color: ${'{{type}}' === 'success' ? '#16a34a' : '{{type}}' === 'warning' ? '#d97706' : '{{type}}' === 'error' ? '#dc2626' : '#4f46e5'};
-				border: ${'{{bordered}}' === 'false' ? 'none' : '{{type}}' === 'success' ? '1px solid rgba(22, 163, 74, 0.2)' : '{{type}}' === 'warning' ? '1px solid rgba(217, 119, 6, 0.2)' : '{{type}}' === 'error' ? '1px solid rgba(220, 38, 38, 0.2)' : '1px solid rgba(79, 70, 229, 0.2)'};
+				border-radius: ${{{rounded}} === 'none' ? '0' : {{rounded}} === 'sm' ? '0.25rem' : {{rounded}} === 'lg' ? '0.75rem' : '0.5rem'};
+				background-color: ${{{type}} === 'success' ? '#f0fdf4' : {{type}} === 'warning' ? '#fffbeb' : {{type}} === 'error' ? '#fef2f2' : '#eef2ff'};
+				color: ${{{type}} === 'success' ? '#16a34a' : {{type}} === 'warning' ? '#d97706' : {{type}} === 'error' ? '#dc2626' : '#4f46e5'};
+				border: ${{{bordered}} === false ? 'none' : {{type}} === 'success' ? '1px solid rgba(22, 163, 74, 0.2)' : {{type}} === 'warning' ? '1px solid rgba(217, 119, 6, 0.2)' : {{type}} === 'error' ? '1px solid rgba(220, 38, 38, 0.2)' : '1px solid rgba(79, 70, 229, 0.2)'};
 				display: flex;
-				align-items: ${'{{compact}}' === 'true' ? 'center' : 'flex-start'};
-				box-shadow: ${'{{elevation}}' === '0' ? 'none' : '{{elevation}}' === '1' ? '0 1px 2px rgba(0,0,0,0.05)' : '{{elevation}}' === '2' ? '0 1px 3px rgba(0,0,0,0.1)' : '{{elevation}}' === '3' ? '0 4px 6px rgba(0,0,0,0.1)' : '0 10px 15px rgba(0,0,0,0.1)'};
+				align-items: ${{{compact}} === true ? 'center' : 'flex-start'};
+				box-shadow: ${{{elevation}} === '0' ? 'none' : {{elevation}} === '1' ? '0 1px 2px rgba(0,0,0,0.05)' : {{elevation}} === '2' ? '0 1px 3px rgba(0,0,0,0.1)' : {{elevation}} === '3' ? '0 4px 6px rgba(0,0,0,0.1)' : '0 10px 15px rgba(0,0,0,0.1)'};
 			`,
 		},
 		Div(
 			Props{
 				"style": `
-					display: ${'{{icon}}' === 'false' ? 'none' : 'block'};
+					display: ${{{icon}} === false ? 'none' : 'block'};
 					flex-shrink: 0;
 					margin-right: 0.75rem;
-					color: ${'{{type}}' === 'success' ? '#16a34a' : '{{type}}' === 'warning' ? '#d97706' : '{{type}}' === 'error' ? '#dc2626' : '#4f46e5'};
+					color: ${{{type}} === 'success' ? '#16a34a' : {{type}} === 'warning' ? '#d97706' : {{type}} === 'error' ? '#dc2626' : '#4f46e5'};
 					font-size: 1.25rem;
 					line-height: 1;
 				`,
 			},
-			"${'{{customIcon}}'.trim() ? '{{customIcon}}' : '{{type}}' === 'success' ? '&#10003;' : '{{type}}' === 'warning' ? '&#9888;' : '{{type}}' === 'error' ? '&#10005;' : '&#8505;'}",
+			"${{{customIcon}}.trim() ? {{customIcon}} : {{type}} === 'success' ? '&#10003;' : {{type}} === 'warning' ? '&#9888;' : {{type}} === 'error' ? '&#10005;' : '&#8505;}'}",
 		),
 		Div(
 			Props{
@@ -64,11 +64,11 @@ var Alert = Component(
 			Div(
 				Props{
 					"style": `
-						display: ${'{{title}}'.trim() ? 'block' : 'none'};
+						display: ${{{title}}.trim() ? 'block' : 'none'};
 						font-weight: 600;
 						margin-bottom: 0.35rem;
 						font-size: 1rem;
-						color: ${'{{type}}' === 'success' ? '#15803d' : '{{type}}' === 'warning' ? '#b45309' : '{{type}}' === 'error' ? '#b91c1c' : '#4338ca'};
+						color: ${{{type}} === 'success' ? '#15803d' : {{type}} === 'warning' ? '#b45309' : {{type}} === 'error' ? '#b91c1c' : '#4338ca'};
 					`,
 				},
 				"{{title}}",
@@ -79,13 +79,13 @@ var Alert = Component(
 			Props{
 				"id": "close-{{id}}",
 				"style": `
-					display: ${'{{closable}}' === 'true' ? 'block' : 'none'};
+					display: ${{{closable}} === true ? 'block' : 'none'};
 					background: transparent;
 					border: none;
 					font-size: 1.25rem;
 					line-height: 1;
 					cursor: pointer;
-					color: ${'{{type}}' === 'success' ? '#16a34a' : '{{type}}' === 'warning' ? '#d97706' : '{{type}}' === 'error' ? '#dc2626' : '#4f46e5'};
+					color: ${{{type}} === 'success' ? '#16a34a' : {{type}} === 'warning' ? '#d97706' : {{type}} === 'error' ? '#dc2626' : '#4f46e5'};
 					opacity: 0.7;
 					padding: 0;
 					margin-left: 0.5rem;

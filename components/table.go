@@ -58,7 +58,7 @@ var TableComponent = Component(
 				Props{
 					"class": "table-footer",
 					"style": `
-						display: ${'{{footer}}'.trim() ? 'table-footer-group' : 'none'};
+						display: ${{{footer}}.trim() ? 'table-footer-group' : 'none'};
 						background-color: {{headerBgColor}};
 						color: #1e293b;
 						vertical-align: bottom;
@@ -101,8 +101,8 @@ var TableComponent = Component(
 		if (!table) return;
 
 		const rows = table.querySelectorAll('tbody tr');
-		const isHoverable = table.dataset.hoverable === 'true';
-		const highlightColor = table.dataset.highlightColor;
+		const isHoverable = {{hoverable}} === true;
+		const highlightColor = {{highlightColor}};
 
 		rows.forEach(row => {
 			if (isHoverable) {
@@ -133,8 +133,8 @@ var TableComponent = Component(
 			// apply striped style for even rows if enabled
 			if (row.rowIndex % 2 === 0) {
 				row.classList.add('even-row');
-				if ('{{stripped}}' === 'true') {
-					row.style.backgroundColor = '{{evenRowBgColor}}';
+				if ({{stripped}} === true) {
+					row.style.backgroundColor = {{evenRowBgColor}};
 				}
 			}
 		});

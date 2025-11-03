@@ -27,7 +27,20 @@ import (
 //
 //	Btn(Props{"id": "submit-btn", "color": "#8b5cf6", "size": "lg"}, Text("點擊我"))
 //	Btn(Props{"id": "confirm-btn", "variant": "outlined", "icon": "&#10003;"}, Text("確認"))
-var Btn = Component(
+func Btn(props Props, children ...VNode) VNode {
+	// 預計算 borderValue 以避免在模板表達式中使用字串拼接
+	color := "#3b82f6" // 預設顏色
+	if c, ok := props["color"]; ok {
+		if colorStr, ok := c.(string); ok {
+			color = colorStr
+		}
+	}
+	props["borderValue"] = "1px solid " + color
+
+	return btnInternal(props, children...)
+}
+
+var btnInternal = Component(
 	Div(
 		Props{},
 		Button(
@@ -42,34 +55,34 @@ var Btn = Component(
 					justify-content: center;
 					gap: 0.5rem;
 					font-family: inherit;
-					font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1.125rem' : '0.95rem'};
+					font-size: ${{{size}} === "sm" ? '0.875rem' : {{size}} === "lg" ? '1.125rem' : '0.95rem'};
 					font-weight: {{weight}};
 					line-height: 1.5;
 					text-decoration: none;
 					vertical-align: middle;
-					cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : 'pointer'};
+					cursor: ${{{disabled}} === true ? 'not-allowed' : 'pointer'};
 					user-select: none;
-					padding: ${'{{size}}' === 'sm' ? '0.375rem 1rem' : '{{size}}' === 'lg' ? '0.625rem 1.5rem' : '0.5rem 1.25rem'};
-					border-radius: ${'{{rounded}}' === 'none' ? '0' : '{{rounded}}' === 'sm' ? '0.25rem' : '{{rounded}}' === 'lg' ? '0.75rem' : '{{rounded}}' === 'full' ? '9999px' : '0.5rem'};
+					padding: ${{{size}} === "sm" ? '0.375rem 1rem' : {{size}} === "lg" ? '0.625rem 1.5rem' : '0.5rem 1.25rem'};
+					border-radius: ${{{rounded}} === "none" ? '0' : {{rounded}} === "sm" ? '0.25rem' : {{rounded}} === "lg" ? '0.75rem' : {{rounded}} === "full" ? '9999px' : '0.5rem'};
 					transition: all 180ms ease-out;
 					position: relative;
 					overflow: hidden;
-					width: ${'{{fullWidth}}' === 'true' ? '100%' : 'auto'};
+					width: ${{{fullWidth}} === true ? '100%' : 'auto'};
 					height: auto;
 					letter-spacing: 0.01em;
-					box-shadow: ${'{{variant}}' === 'outlined' ? 'none' : '{{variant}}' === 'text' ? 'none' : '0 1px 3px rgba(0,0,0,0.1)'};
-					background: ${'{{variant}}' === 'outlined' ? 'transparent' : '{{variant}}' === 'text' ? 'transparent' : '{{color}}'};
-					color: ${'{{variant}}' === 'outlined' ? '{{color}}' : '{{variant}}' === 'text' ? '{{color}}' : '#ffffff'};
-					border: ${'{{variant}}' === 'outlined' ? '1px solid {{color}}' : '1px solid transparent'};
+					box-shadow: ${{{variant}} === "outlined" ? 'none' : {{variant}} === "text" ? 'none' : '0 1px 3px rgba(0,0,0,0.1)'};
+					background: ${{{variant}} === "outlined" ? 'transparent' : {{variant}} === "text" ? 'transparent' : {{color}}};
+					color: ${{{variant}} === "outlined" ? {{color}} : {{variant}} === "text" ? {{color}} : '#ffffff'};
+					border: ${{{variant}} === "outlined" ? {{borderValue}} : '1px solid transparent'};
 					text-align: center;
-					opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
+					opacity: ${{{disabled}} === true ? '0.6' : '1'};
 					text-transform: {{textTransform}};
 				`,
 			},
 			Span(
 				Props{
 					"style": `
-						display: ${'{{icon}}'.trim() !== '' && '{{iconPosition}}' !== 'right' ? 'inline' : 'none'};
+						display: ${{{icon}}.trim() !== '' && {{iconPosition}} !== "right" ? 'inline' : 'none'};
 						margin-right: 0.35rem;
 						margin-left: -0.15rem;
 					`,
@@ -80,7 +93,7 @@ var Btn = Component(
 			Span(
 				Props{
 					"style": `
-						display: ${'{{icon}}'.trim() !== '' && '{{iconPosition}}' === 'right' ? 'inline' : 'none'};
+						display: ${{{icon}}.trim() !== '' && {{iconPosition}} === "right" ? 'inline' : 'none'};
 						margin-left: 0.35rem;
 						margin-right: -0.15rem;
 					`,
@@ -129,9 +142,9 @@ var Btn = Component(
 		});
 
 		// 添加懸停效果 - 根據 variant 調整
-		const variant = '{{variant}}';
-		const color = '{{color}}';
-		const isDisabled = '{{disabled}}' === 'true';
+		const variant = {{variant}};
+		const color = {{color}};
+		const isDisabled = {{disabled}} === true;
 
 		if (!isDisabled) {
 			btn.addEventListener('mouseenter', function() {
