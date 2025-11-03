@@ -1,23 +1,32 @@
 # go-vdom 完整文檔
 
-## 目錄
+> 純 Go 語言實現的虛擬 DOM 庫，專注於服務器端 HTML 和 JavaScript 的生成
+
+**版本**: v1.1.0
+**更新日期**: 2025-01-24
+
+---
+
+## 📚 目錄
 
 1. [簡介](#簡介)
-2. [架構設計](#架構設計)
-3. [核心概念](#核心概念)
-4. [VDOM 模塊](#vdom-模塊)
-5. [Control 模塊](#control-模塊)
-6. [JavaScript DSL 模塊](#javascript-dsl-模塊)
-7. [Components 模塊](#components-模塊)
-8. [進階用法](#進階用法)
-9. [性能優化](#性能優化)
-10. [故障排除](#故障排除)
+2. [快速開始](#快速開始)
+3. [核心功能](#核心功能)
+4. [組件系統](#組件系統)
+5. [JavaScript DSL](#javascript-dsl)
+6. [模板表達式](#模板表達式)
+7. [控制流](#控制流)
+8. [模板序列化](#模板序列化)
+9. [API 參考](#api-參考)
+10. [最佳實踐](#最佳實踐)
 
 ---
 
 ## 簡介
 
-`go-vdom` 是一個純 Go 語言實現的虛擬 DOM 庫，專注於服務器端 HTML 和 JavaScript 的生成。它不同於傳統的前端虛擬 DOM 框架（如 React、Vue），而是提供了一套完整的 DSL，讓開發者能夠在 Go 中以聲明式、類型安全的方式構建網頁。
+### 什麼是 go-vdom？
+
+`go-vdom` 是一個純 Go 語言實現的虛擬 DOM 庫，讓您能夠在 Go 中以聲明式、類型安全的方式構建網頁。不同於傳統的前端虛擬 DOM 框架（如 React、Vue），go-vdom 專注於服務器端渲染。
 
 ### 設計理念
 
@@ -27,1776 +36,1252 @@
 - **組件化**: 支持可重用的組件系統
 - **服務器優先**: 專為服務器端渲染設計
 
-### 使用場景
+### 適用場景
 
-- ✅ 服務器端渲染（SSR）應用
-- ✅ 傳統 Web 應用（MPA）
-- ✅ 動態生成 HTML 郵件
-- ✅ 管理後台頁面
-- ✅ 靜態網站生成器
-- ❌ 單頁應用（SPA）的客戶端渲染
-- ❌ 實時響應式更新（建議使用 htmx 等搭配）
+✅ **推薦使用**
 
----
+- 服務器端渲染（SSR）應用
+- 傳統 Web 應用（MPA）
+- 動態生成 HTML 郵件
+- 管理後台頁面
+- 靜態網站生成器
 
-## 架構設計
+❌ **不推薦**
 
-### 整體架構
+- 單頁應用（SPA）的客戶端渲染
+- 實時響應式更新（建議使用 htmx 等搭配）
 
-```
-┌─────────────────────────────────────────┐
-│           Application Layer             │
-│      (Your Go HTTP Handlers)            │
-└──────────────────┬──────────────────────┘
-                   │
-┌──────────────────▼──────────────────────┐
-│         go-vdom Public API              │
-├─────────────────────────────────────────┤
-│  Components  │  Control  │  JSDSL       │
-├──────────────┼───────────┼──────────────┤
-│              VDOM Core                   │
-│  (VNode, Props, Rendering)               │
-└─────────────────────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────┐
-│         Generated Output                │
-│     HTML + JavaScript Strings            │
-└─────────────────────────────────────────┘
-```
+### 安裝
 
-### 模塊說明
-
-#### vdom (核心)
-
-- 虛擬 DOM 節點定義
-- HTML 元素構建函數
-- 渲染引擎
-- 組件系統基礎
-
-#### control (控制流)
-
-- 條件渲染 (If/Then/Else)
-- 循環渲染 (For/Repeat)
-- 邏輯控制
-
-#### jsdsl (JavaScript DSL)
-
-- JavaScript 代碼生成
-- DOM 操作
-- 事件處理
-- Fetch API 封裝
-- 異步處理 (Try/Catch)
-
-#### components (UI 組件)
-
-- 表單組件
-- 輸入組件
-- 交互組件
-
----
-
-## 核心概念
-
-### VNode (虛擬節點)
-
-VNode 是 go-vdom 的核心數據結構，代表一個 HTML 元素。
-
-```go
-type VNode struct {
-    Tag      string    // HTML 標籤名
-    Props    Props     // 元素屬性
-    Children []VNode   // 子元素
-    Text     string    // 文本內容
-}
-```
-
-#### 創建 VNode
-
-```go
-// 方式 1: 純文本節點
-text := VNode{Text: "Hello"}
-
-// 方式 2: 使用 HTML 函數
-div := Div("Hello")
-
-// 方式 3: 帶屬性
-div := Div(Props{"class": "container"}, "Hello")
-
-// 方式 4: 嵌套子元素
-div := Div(
-    Props{"class": "card"},
-    H1("標題"),
-    P("內容"),
-)
-```
-
-### Props (屬性)
-
-Props 是一個映射，用於設置元素屬性，支援多種類型。
-
-```go
-type Props map[string]interface{}
-```
-
-#### 常用屬性
-
-```go
-Props{
-    // 基本屬性
-    "id":    "myElement",
-    "class": "btn btn-primary",
-    "style": "color: red;",
-
-    // 數據屬性
-    "data-id":    "123",
-    "data-value": "test",
-
-    // 布爾屬性
-    "disabled": true,     // 使用布林值而非字串
-    "required": true,
-    "checked":  false,
-
-    // 數字屬性
-    "tabindex": 0,
-    "maxlength": 100,
-
-    // 事件屬性（接受 JSAction）
-    "onClick":  jsAction,
-    "onChange": jsAction,
-    "onSubmit": jsAction,
-}
-```
-
-**注意**：Props 和 PropsDef 使用相同的類型 `map[string]interface{}`，類型處理規則也完全一致。
-
-#### 特殊處理
-
-某些屬性會被特殊處理：
-
-```go
-// 事件屬性（on* 開頭）
-"onClick": js.Fn(nil, js.Alert("'Hi'")),
-// 渲染為: onclick="(function() { alert('Hi'); })()"
-
-// JSAction 類型
-"onClick": JSAction{Code: "alert('Hi')"},
-// 渲染為: onclick="alert('Hi')"
-```
-
-### PropsDef (組件屬性定義)
-
-PropsDef 定義組件的默認 props，支援多種 Go 原生類型。
-
-```go
-type PropsDef map[string]interface{}
-
-// 使用示例
-PropsDef{
-    "title":   "默認標題",                      // 字串
-    "color":   "blue",                          // 字串
-    "visible": true,                            // 布林值
-    "count":   42,                              // 整數
-    "price":   99.99,                           // 浮點數
-    "items":   []string{"a", "b", "c"},        // 切片
-    "config":  map[string]string{"key": "value"}, // map
-}
-```
-
-#### 類型處理說明
-
-PropsDef 中的值會根據以下規則處理：
-
-1. **字串類型**：直接使用，支援模板插值 `{{key}}`
-2. **布林類型**：保持為 `bool`，在模板插值時轉換為 `"true"` 或 `"false"`
-3. **數字類型**：保持為原始類型（`int`, `float64` 等）
-4. **複雜類型**：切片、map 等保持原始類型
-
-**重要提示**：
-
-- 如果屬性在組件模板中使用了 `{{key}}` 語法，插值後會變成字串
-- 如果屬性沒有出現在模板中，會保持 PropsDef 中定義的原始類型
-- 建議布林值使用 `true`/`false` 而非字串 `"true"`/`"false"`
-
-```go
-// 正確示例
-PropsDef{
-    "disabled": false,    // ✓ 使用布林值
-    "count":    10,       // ✓ 使用數字
-}
-
-// 避免使用
-PropsDef{
-    "disabled": "false",  // ✗ 不建議使用字串表示布林值
-    "count":    "10",     // ✗ 不建議使用字串表示數字
-}
+```bash
+go get github.com/TimLai666/go-vdom@v1.1.0
 ```
 
 ---
 
-## VDOM 模塊
+## 快速開始
 
-### Document 函數
-
-創建完整的 HTML 文檔結構。
+### Hello World
 
 ```go
-func Document(
-    title string,
-    links []LinkInfo,
-    scripts []ScriptInfo,
-    metas []Props,
-    body ...VNode,
-) VNode
-```
+package main
 
-#### 參數說明
-
-- `title`: 頁面標題（<title> 標籤）
-- `links`: 外部資源連結（CSS、圖標等）
-- `scripts`: JavaScript 腳本
-- `metas`: Meta 標籤
-- `body`: 頁面主體內容
-
-#### 使用示例
-
-```go
-doc := Document(
-    "我的網站",
-    []LinkInfo{
-        {
-            Rel:  "stylesheet",
-            Href: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
-            Type: "text/css",
-        },
-        {
-            Rel:  "icon",
-            Href: "/favicon.ico",
-            Type: "image/x-icon",
-        },
-    },
-    []ScriptInfo{
-        {
-            Src:   "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
-            Async: true,
-        },
-    },
-    []Props{
-        {"name": "description", "content": "網站描述"},
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
-        {"charset": "UTF-8"},
-    },
-    // Body 內容
-    Div(
-        Props{"class": "container"},
-        H1("歡迎"),
-        P("這是主要內容"),
-    ),
-)
-```
-
-### HTML 元素函數
-
-所有標準 HTML 元素都有對應的函數。
-
-#### 結構元素
-
-```go
-// 容器
-Div(children ...any) VNode
-Span(children ...any) VNode
-Section(children ...any) VNode
-Article(children ...any) VNode
-Aside(children ...any) VNode
-
-// 語義化標籤
-Header(children ...any) VNode
-Footer(children ...any) VNode
-Main(children ...any) VNode
-Nav(children ...any) VNode
-```
-
-#### 文本元素
-
-```go
-// 標題
-H1(children ...any) VNode
-H2(children ...any) VNode
-H3(children ...any) VNode
-H4(children ...any) VNode
-H5(children ...any) VNode
-H6(children ...any) VNode
-
-// 文本
-P(children ...any) VNode
-Span(children ...any) VNode
-Strong(children ...any) VNode
-Em(children ...any) VNode
-Code(children ...any) VNode
-Pre(children ...any) VNode
-```
-
-#### 列表元素
-
-```go
-Ul(children ...any) VNode  // 無序列表
-Ol(children ...any) VNode  // 有序列表
-Li(children ...any) VNode  // 列表項
-Dl(children ...any) VNode  // 定義列表
-Dt(children ...any) VNode  // 定義術語
-Dd(children ...any) VNode  // 定義描述
-```
-
-#### 表單元素
-
-```go
-Form(children ...any) VNode
-Input(children ...any) VNode
-Textarea(children ...any) VNode
-Select(children ...any) VNode
-Option(children ...any) VNode
-Button(children ...any) VNode
-Label(children ...any) VNode
-Fieldset(children ...any) VNode
-Legend(children ...any) VNode
-```
-
-#### 多媒體元素
-
-```go
-Img(children ...any) VNode
-Video(children ...any) VNode
-Audio(children ...any) VNode
-Source(children ...any) VNode
-```
-
-#### 表格元素
-
-```go
-Table(children ...any) VNode
-Thead(children ...any) VNode
-Tbody(children ...any) VNode
-Tfoot(children ...any) VNode
-Tr(children ...any) VNode
-Th(children ...any) VNode
-Td(children ...any) VNode
-```
-
-#### 其他元素
-
-```go
-A(children ...any) VNode       // 連結
-Br(children ...any) VNode      // 換行
-Hr(children ...any) VNode      // 分隔線
-Script(children ...any) VNode  // 腳本
-Style(children ...any) VNode   // 樣式
-```
-
-### 元素函數參數規則
-
-元素函數接受可變參數 `children ...any`，支持以下類型：
-
-```go
-// 1. Props（必須是第一個參數）
-Div(Props{"class": "container"}, ...)
-
-// 2. 字符串（作為文本節點）
-P("這是文本")
-
-// 3. VNode（子元素）
-Div(H1("標題"), P("段落"))
-
-// 4. []VNode（多個子元素）
-Div([]VNode{H1("標題"), P("段落")})
-
-// 5. 混合使用
-Div(
-    Props{"class": "card"},
-    H1("標題"),
-    P("段落"),
-    Button(Props{"class": "btn"}, "按鈕"),
-)
-```
-
-### Component 函數
-
-定義可重用的組件。
-
-```go
-func Component(
-    template VNode,
-    jsAction *JSAction,
-    propsDef PropsDef,  // map[string]interface{} 支援多種類型
-) func(Props, ...VNode) VNode
-```
-
-#### 參數說明
-
-- `template`: 組件模板（使用 `{{propName}}` 作為占位符）
-- `jsAction`: 可選的 JavaScript 代碼（通常用於組件初始化）
-- `propsDef`: Props 默認值定義
-
-#### 模板占位符
-
-```go
-// {{propName}} - 替換為 prop 值
-H1("{{title}}")
-
-// {{children}} - 特殊占位符，替換為子元素
-Div("{{children}}")
-```
-
-#### 完整示例
-
-```go
-// 1. 定義組件
-Card := Component(
-    Div(
-        Props{"class": "card {{className}}", "style": "{{style}}"},
-        Div(
-            Props{"class": "card-header"},
-            H3("{{title}}"),
-        ),
-        Div(
-            Props{"class": "card-body"},
-            P("{{description}}"),
-            Div("{{children}}"),
-        ),
-        Div(
-            Props{"class": "card-footer"},
-            Small("{{footer}}"),
-        ),
-    ),
-    nil, // 無 JSAction
-    PropsDef{
-        "title":       "無標題",
-        "description": "",
-        "footer":      "",
-        "className":   "",
-        "style":       "",
-    },
+import (
+    "fmt"
+    "net/http"
+    . "github.com/TimLai666/go-vdom/dom"
 )
 
-// 2. 使用組件
-cardInstance := Card(
-    Props{
-        "title":       "我的卡片",
-        "description": "這是一個卡片組件",
-        "footer":      "2025",
-        "className":   "shadow",
-    },
-    // children
-    Button(Props{"class": "btn btn-primary"}, "操作"),
-    Button(Props{"class": "btn btn-secondary"}, "取消"),
-)
-```
-
-### Render 函數
-
-將 VNode 渲染為 HTML 字符串。
-
-```go
-func Render(vnode VNode) string
-```
-
-```go
-html := Render(Div(
-    Props{"class": "container"},
-    H1("Hello"),
-))
-// 輸出: <div class="container"><h1>Hello</h1></div>
-```
-
----
-
-## Control 模塊
-
-Control 模塊提供控制流結構，用於條件渲染和循環渲染。
-
-### If/Then/Else
-
-條件渲染。
-
-```go
-func If(condition bool, thenBlock VNode, elseBlock ...VNode) VNode
-func Then(content ...VNode) VNode
-func Else(content ...VNode) VNode
-```
-
-#### 基本用法
-
-```go
-isLoggedIn := true
-
-content := control.If(isLoggedIn,
-    control.Then(
-        Div("歡迎回來！"),
-    ),
-    control.Else(
-        Div("請登入"),
-    ),
-)
-```
-
-#### 多條件嵌套
-
-```go
-userRole := "admin"
-
-content := control.If(userRole == "admin",
-    control.Then(
-        Div("管理員面板"),
-    ),
-    control.Else(
-        control.If(userRole == "user",
-            control.Then(
-                Div("用戶面板"),
+func main() {
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        page := Html(Props{},
+            Head(Props{},
+                Title(Props{}, Text("Hello World")),
             ),
-            control.Else(
-                Div("訪客面板"),
+            Body(Props{},
+                H1(Props{}, Text("Hello, go-vdom!")),
+                P(Props{}, Text("這是我的第一個頁面")),
             ),
-        ),
-    ),
-)
-```
-
-#### 只有 Then
-
-```go
-showAlert := true
-
-content := control.If(showAlert,
-    control.Then(
-        Div(Props{"class": "alert alert-warning"}, "警告訊息"),
-    ),
-)
-```
-
-### Repeat
-
-重複渲染相同的元素。
-
-```go
-func Repeat(count int, fn func(int) VNode) VNode
-```
-
-#### 使用示例
-
-```go
-// 生成 5 個項目
-items := control.Repeat(5, func(i int) VNode {
-    return Div(
-        Props{"class": "item"},
-        fmt.Sprintf("項目 #%d", i+1),
-    )
-})
-
-// 生成表格行
-rows := Table(
-    Tbody(
-        control.Repeat(10, func(i int) VNode {
-            return Tr(
-                Td(fmt.Sprintf("行 %d", i+1)),
-                Td(fmt.Sprintf("數據 %d", i+1)),
-            )
-        }),
-    ),
-)
-```
-
-### For
-
-遍歷切片並渲染。
-
-```go
-func For[T any](items []T, fn func(T, int) VNode) VNode
-```
-
-#### 基本用法
-
-```go
-fruits := []string{"蘋果", "香蕉", "橘子"}
-
-list := Ul(
-    control.For(fruits, func(fruit string, i int) VNode {
-        return Li(fmt.Sprintf("%d. %s", i+1, fruit))
-    }),
-)
-```
-
-#### 結構體切片
-
-```go
-type User struct {
-    Name  string
-    Email string
-    Age   int
-}
-
-users := []User{
-    {Name: "Alice", Email: "alice@example.com", Age: 25},
-    {Name: "Bob", Email: "bob@example.com", Age: 30},
-}
-
-userList := Div(
-    control.For(users, func(user User, i int) VNode {
-        return Div(
-            Props{"class": "user-card"},
-            H3(user.Name),
-            P(user.Email),
-            Span(fmt.Sprintf("年齡: %d", user.Age)),
         )
-    }),
-)
+
+        html := Render(page)
+        w.Header().Set("Content-Type", "text/html; charset=utf-8")
+        fmt.Fprint(w, html)
+    })
+
+    http.ListenAndServe(":8080", nil)
+}
 ```
 
-#### 複雜數據結構
+### 帶交互的示例
 
 ```go
-type Product struct {
-    ID    int
-    Name  string
-    Price float64
-    Tags  []string
-}
+package main
 
-products := []Product{
-    {ID: 1, Name: "筆記本", Price: 29.99, Tags: []string{"文具", "辦公"}},
-    {ID: 2, Name: "鋼筆", Price: 15.50, Tags: []string{"文具", "書寫"}},
-}
+import (
+    "fmt"
+    "net/http"
+    . "github.com/TimLai666/go-vdom/dom"
+    js "github.com/TimLai666/go-vdom/jsdsl"
+)
 
-productGrid := Div(
-    Props{"class": "row"},
-    control.For(products, func(product Product, i int) VNode {
-        return Div(
-            Props{"class": "col-md-4"},
-            Div(
-                Props{"class": "card"},
-                Div(
-                    Props{"class": "card-body"},
-                    H5(product.Name),
-                    P(fmt.Sprintf("$%.2f", product.Price)),
-                    Div(
-                        control.For(product.Tags, func(tag string, j int) VNode {
-                            return Span(
-                                Props{"class": "badge bg-secondary me-1"},
-                                tag,
-                            )
-                        }),
-                    ),
+func main() {
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        page := Html(Props{},
+            Head(Props{},
+                Title(Props{}, Text("互動示例")),
+            ),
+            Body(Props{},
+                H1(Props{}, Text("計數器")),
+                Div(Props{},
+                    Button(Props{
+                        "id": "counter-btn",
+                        "onClick": js.Fn(nil,
+                            js.Const("span", "document.getElementById('count')"),
+                            js.Const("current", "parseInt(span.innerText)"),
+                            js.SetText("span", "(current + 1).toString()"),
+                        ),
+                    }, Text("點擊 +1")),
+                    Text(" 計數: "),
+                    Span(Props{"id": "count"}, Text("0")),
                 ),
             ),
         )
-    }),
+
+        html := Render(page)
+        w.Header().Set("Content-Type", "text/html; charset=utf-8")
+        fmt.Fprint(w, html)
+    })
+
+    http.ListenAndServe(":8080", nil)
+}
+```
+
+---
+
+## 核心功能
+
+### VNode（虛擬節點）
+
+VNode 是 go-vdom 的核心數據結構，代表一個 HTML 元素或文本節點。
+
+```go
+type VNode struct {
+    Tag      string         // HTML 標籤名（空字符串表示文本節點）
+    Props    Props          // 屬性映射
+    Children []VNode        // 子節點列表
+    Content  string         // 文本內容
+}
+```
+
+### Props（屬性系統）
+
+Props 支持多種類型的值，會自動轉換為 HTML 屬性。
+
+#### 支持的類型
+
+```go
+Props{
+    // 字符串 - 直接使用
+    "class": "container",
+    "id":    "main",
+
+    // 布爾值 - true 渲染，false 省略
+    "disabled": true,      // 渲染為 disabled="true"
+    "hidden":   false,     // 不渲染此屬性
+    "required": true,      // 渲染為 required="true"
+
+    // 整數 - 自動轉換為字符串
+    "width":    800,
+    "height":   600,
+    "tabindex": 0,
+
+    // 浮點數 - 自動轉換為字符串
+    "opacity": 0.8,
+    "price":   19.99,
+
+    // JSAction - 事件處理（特殊處理）
+    "onClick": js.Fn(nil, js.Alert("'Hello'")),
+}
+```
+
+#### Props 工具函數
+
+```go
+// 合併多個 Props（後面的覆蓋前面的）
+merged := MergeProps(props1, props2, props3)
+
+// 克隆 Props（深拷貝）
+cloned := CloneProps(original)
+```
+
+### HTML 元素
+
+所有標準 HTML 元素都有對應的構造函數：
+
+```go
+// 基本結構
+Html(props Props, children ...VNode) VNode
+Head(props Props, children ...VNode) VNode
+Body(props Props, children ...VNode) VNode
+
+// 標題
+H1, H2, H3, H4, H5, H6(props Props, children ...VNode) VNode
+
+// 文本
+P(props Props, children ...VNode) VNode
+Span(props Props, children ...VNode) VNode
+Text(content string) VNode
+
+// 容器
+Div(props Props, children ...VNode) VNode
+Section(props Props, children ...VNode) VNode
+Article(props Props, children ...VNode) VNode
+
+// 列表
+Ul(props Props, children ...VNode) VNode
+Ol(props Props, children ...VNode) VNode
+Li(props Props, children ...VNode) VNode
+
+// 表單
+Form(props Props, children ...VNode) VNode
+Input(props Props) VNode
+Button(props Props, children ...VNode) VNode
+Select(props Props, children ...VNode) VNode
+Option(props Props, children ...VNode) VNode
+Textarea(props Props, children ...VNode) VNode
+Label(props Props, children ...VNode) VNode
+
+// 表格
+Table(props Props, children ...VNode) VNode
+Thead(props Props, children ...VNode) VNode
+Tbody(props Props, children ...VNode) VNode
+Tr(props Props, children ...VNode) VNode
+Th(props Props, children ...VNode) VNode
+Td(props Props, children ...VNode) VNode
+
+// 媒體
+Img(props Props) VNode
+A(props Props, children ...VNode) VNode
+Script(props Props, children ...VNode) VNode
+Style(props Props, children ...VNode) VNode
+Link(props Props) VNode
+
+// 其他
+Code(props Props, children ...VNode) VNode
+Pre(props Props, children ...VNode) VNode
+Strong(props Props, children ...VNode) VNode
+Em(props Props, children ...VNode) VNode
+```
+
+### 渲染
+
+```go
+// 渲染 VNode 為 HTML 字符串
+html := Render(vnode)
+
+// 創建完整的 HTML 文檔（包含 doctype）
+doc := Document(
+    "頁面標題",
+    []LinkInfo{
+        {Rel: "stylesheet", Href: "/style.css"},
+    },
+    []string{"/script.js"}, // 外部腳本
+    []VNode{Script(Props{}, Text("console.log('內聯腳本')"))}, // 內聯腳本
+    Body(Props{},
+        H1(Props{}, Text("內容")),
+    ),
+)
+html := Render(doc)
+```
+
+---
+
+## 組件系統
+
+### 創建組件
+
+組件是一個返回 VNode 的函數。
+
+#### 簡單組件
+
+```go
+// 無狀態組件
+func Card(title, content string) VNode {
+    return Div(Props{"class": "card"},
+        Div(Props{"class": "card-header"},
+            H3(Props{}, Text(title)),
+        ),
+        Div(Props{"class": "card-body"},
+            P(Props{}, Text(content)),
+        ),
+    )
+}
+
+// 使用
+card := Card("標題", "內容")
+```
+
+#### 可配置組件
+
+```go
+// 接受 Props 和 children
+func Alert(props Props, children ...VNode) VNode {
+    severity := "info"
+    if s, ok := props["severity"].(string); ok {
+        severity = s
+    }
+
+    return Div(Props{
+        "class": "alert alert-" + severity,
+        "role":  "alert",
+    }, children...)
+}
+
+// 使用
+alert := Alert(Props{"severity": "success"},
+    Text("操作成功！"),
+)
+```
+
+#### 使用 Component 函數
+
+go-vdom 提供了 `Component` 函數來創建可重用的組件，支持預設屬性和模板插值。
+
+```go
+// 定義組件模板和預設屬性
+var MyButton = Component(
+    Button(Props{
+        "class": "btn btn-{{variant}}",
+        "type":  "{{type}}",
+        "disabled": "{{disabled}}",
+    }, Text("{{label}}")),
+    nil, // 可選的 JavaScript 回調
+    PropsDef{ // 預設屬性
+        "variant":  "primary",
+        "type":     "button",
+        "disabled": false,
+        "label":    "按鈕",
+    },
+)
+
+// 使用組件
+btn1 := MyButton(Props{"label": "提交", "variant": "success"})
+btn2 := MyButton(Props{"label": "取消", "variant": "danger"})
+```
+
+### 模板插值
+
+組件模板支持 `{{key}}` 語法進行屬性插值：
+
+```go
+// 模板中的 {{name}} 會被替換為 props["name"] 的值
+Div(Props{"id": "user-{{id}}"},
+    H1(Props{}, Text("{{name}}")),
+    P(Props{}, Text("Email: {{email}}")),
+)
+
+// 使用時
+component(Props{
+    "id":    "123",
+    "name":  "張三",
+    "email": "zhang@example.com",
+})
+```
+
+### 內建 UI 組件
+
+go-vdom 提供了一套完整的 UI 組件庫：
+
+#### 按鈕組件 (Btn)
+
+```go
+import . "github.com/TimLai666/go-vdom/components"
+
+Btn(Props{
+    "id":       "submit-btn",
+    "variant":  "filled",    // filled, outlined, text
+    "color":    "#3b82f6",   // 自定義顏色
+    "size":     "md",        // sm, md, lg
+    "rounded":  "md",        // none, sm, md, lg, full
+    "disabled": false,
+    "fullWidth": false,
+}, Text("提交"))
+```
+
+#### 輸入框組件 (TextField)
+
+```go
+TextField(Props{
+    "id":          "email",
+    "label":       "電子郵件",
+    "type":        "email",
+    "placeholder": "your@email.com",
+    "icon":        "📧",
+    "iconPosition": "left",  // left, right
+    "variant":     "outlined", // outlined, filled, underlined
+    "size":        "md",      // sm, md, lg
+    "helpText":    "我們不會分享您的郵件",
+    "errorText":   "",
+    "required":    true,
+    "disabled":    false,
+})
+```
+
+#### 下拉選單 (Dropdown)
+
+```go
+Dropdown(Props{
+    "id":           "country",
+    "label":        "國家",
+    "options":      "台灣,日本,美國,英國", // 逗號分隔
+    "defaultValue": "台灣",
+    "placeholder":  "請選擇",
+    "required":     true,
+})
+```
+
+#### 開關組件 (Switch)
+
+```go
+Switch(Props{
+    "id":      "notifications",
+    "label":   "啟用通知",
+    "checked": true,
+    "onColor": "#10b981",  // 開啟時的顏色
+    "offColor": "#d1d5db", // 關閉時的顏色
+    "size":    "md",       // sm, md, lg
+})
+```
+
+#### 單選框 (Radio)
+
+```go
+Radio(Props{
+    "id":      "option1",
+    "name":    "choice",
+    "label":   "選項 1",
+    "checked": true,
+    "color":   "#3b82f6",
+})
+```
+
+#### 複選框 (Checkbox)
+
+```go
+Checkbox(Props{
+    "id":      "agree",
+    "label":   "我同意條款",
+    "checked": false,
+    "color":   "#3b82f6",
+})
+```
+
+#### 警告框 (Alert)
+
+```go
+Alert(Props{
+    "id":       "success-msg",
+    "severity": "success", // success, info, warning, error
+    "title":    "成功",
+    "closable": true,
+}, Text("操作已成功完成！"))
+```
+
+#### 卡片 (Card)
+
+```go
+Card(Props{
+    "title":    "卡片標題",
+    "subtitle": "副標題",
+    "elevated": true,
+},
+    P(Props{}, Text("卡片內容")),
+)
+```
+
+#### 模態框 (Modal)
+
+```go
+Modal(Props{
+    "id":         "confirm-modal",
+    "title":      "確認刪除",
+    "size":       "md", // sm, md, lg
+    "closeButton": true,
+},
+    P(Props{}, Text("確定要刪除嗎？")),
 )
 ```
 
 ---
 
-## JavaScript DSL 模塊
+## JavaScript DSL
 
-JavaScript DSL 模塊提供了類型安全的 JavaScript 代碼生成功能。
+### 基本函數
 
-### JSAction
-
-JSAction 是 JavaScript 代碼的載體。
+#### Fn - 普通函數
 
 ```go
-type JSAction struct {
-    Code string
-}
+js.Fn(params []string, actions ...JSAction) JSAction
 ```
 
-### 基本操作
-
-#### Log (控制台日誌)
+創建普通 JavaScript 函數。
 
 ```go
-func Log(msg string) JSAction
+// 無參數
+js.Fn(nil,
+    js.Log("'Hello'"),
+    js.Alert("'World'"),
+)
+
+// 有參數
+js.Fn([]string{"event", "data"},
+    js.Log("event"),
+    js.Const("value", "data.value"),
+)
 ```
 
+#### AsyncFn - 異步函數
+
 ```go
-js.Log("'Hello, World!'")
-// 生成: console.log('Hello, World!')
-
-js.Log("myVariable")
-// 生成: console.log(myVariable)
-
-js.Log("'User:', user")
-// 生成: console.log('User:', user)
+js.AsyncFn(params []string, actions ...JSAction) JSAction
 ```
 
-#### Alert (警告框)
+創建異步函數，支持 `await` 語法。
 
 ```go
-func Alert(jsExpr string) JSAction
-```
+// ✅ 正確 - 使用 AsyncFn
+Button(Props{
+    "onClick": js.AsyncFn(nil,
+        js.Const("response", "await fetch('/api/data')"),
+        js.Const("data", "await response.json()"),
+        js.Log("data"),
+    ),
+}, Text("載入數據"))
 
-```go
-js.Alert("'歡迎！'")
-// 生成: alert('歡迎！')
-
-js.Alert("user.name")
-// 生成: alert(user.name)
-```
-
-#### Redirect (頁面重定向)
-
-```go
-func Redirect(url string) JSAction
-```
-
-```go
-js.Redirect("/home")
-// 生成: location.href = '/home'
-```
-
-### 變數定義
-
-#### Let (可變變數)
-
-```go
-func Let(varName string, value string) JSAction
-```
-
-```go
-js.Let("counter", "0")
-// 生成: let counter = 0
-
-js.Let("name", "'Alice'")
-// 生成: let name = 'Alice'
-
-js.Let("data", "{ id: 1, name: 'Test' }")
-// 生成: let data = { id: 1, name: 'Test' }
-```
-
-#### Const (常量)
-
-```go
-func Const(varName string, value string) JSAction
-```
-
-```go
-js.Const("API_URL", "'https://api.example.com'")
-// 生成: const API_URL = 'https://api.example.com'
-
-js.Const("user", "await fetchUser()")
-// 生成: const user = await fetchUser()
+// ❌ 錯誤 - 使用 Fn 會報錯
+Button(Props{
+    "onClick": js.Fn(nil,
+        js.Const("response", "await fetch('/api/data')"), // 錯誤！
+    ),
+}, Text("載入數據"))
 ```
 
 ### DOM 操作
 
-#### El (選擇單個元素)
+#### 選擇器
 
 ```go
-func El(selector string) Elem
+// 通過選擇器獲取元素
+js.El("#id")           // document.querySelector('#id')
+js.ElAll(".class")     // document.querySelectorAll('.class')
+
+// 通過 ID 獲取元素
+js.GetById("myId")     // document.getElementById('myId')
 ```
 
+#### 元素操作
+
 ```go
-button := js.El("#myButton")
-form := js.El("form.login")
-title := js.El("h1:first-child")
+// 設置文本
+js.SetText("element", "'新文本'")
+
+// 設置 HTML
+js.SetHTML("element", "'<b>HTML</b>'")
+
+// 設置屬性
+js.SetAttr("element", "disabled", "true")
+
+// 添加/移除類
+js.AddClass("element", "active")
+js.RemoveClass("element", "hidden")
+js.ToggleClass("element", "selected")
+
+// 設置樣式
+js.SetStyle("element", "color", "'red'")
+
+// 鏈式調用
+js.El("#btn").SetText("'點擊'").AddClass("active")
 ```
 
-#### Els (選擇多個元素)
+### 變量聲明
 
 ```go
-func Els(selector string) ElemList
+// const 聲明
+js.Const("name", "'value'")
+js.Const("num", "42")
+
+// let 聲明
+js.Let("counter", "0")
+
+// var 聲明
+js.Var("global", "true")
 ```
 
+### 控制流
+
 ```go
-buttons := js.Els(".btn")
-items := js.Els("li.item")
+// if 語句
+js.If("x > 0",
+    js.Log("'正數'"),
+)
+
+// if-else 語句
+js.IfElse("x > 0",
+    js.Log("'正數'"),
+    js.Log("'非正數'"),
+)
+
+// switch 語句
+js.Switch("value",
+    []js.Case{
+        {Value: "'a'", Actions: []JSAction{js.Log("'A'")}},
+        {Value: "'b'", Actions: []JSAction{js.Log("'B'")}},
+    },
+    []JSAction{js.Log("'默認'")}, // default case
+)
+
+// for 循環
+js.For("let i = 0", "i < 10", "i++",
+    js.Log("i"),
+)
+
+// while 循環
+js.While("condition",
+    js.Log("'循環中'"),
+)
 ```
 
-#### Elem 方法
+### 錯誤處理
 
 ```go
-type Elem struct {
-    Selector string
-    VarName  string
+// try-catch
+js.TryCatch(
+    js.AsyncFn(nil,
+        js.Const("response", "await fetch('/api')"),
+        js.Const("data", "await response.json()"),
+    ),
+    js.Ptr(js.Fn(nil,
+        js.Log("'Error:', e.message"),
+        js.Alert("'請求失敗'"),
+    )),
+    nil, // finally (可選)
+)
+
+// try-catch-finally
+js.TryCatch(
+    js.Fn(nil, js.Log("'嘗試'")),
+    js.Ptr(js.Fn(nil, js.Log("'錯誤'"))),
+    js.Ptr(js.Fn(nil, js.Log("'總是執行'"))),
+)
+```
+
+### Fetch API
+
+```go
+// GET 請求
+js.AsyncFn(nil,
+    js.Const("response", "await fetch('/api/users')"),
+    js.Const("data", "await response.json()"),
+    js.Log("data"),
+)
+
+// POST 請求
+js.AsyncFn(nil,
+    js.Const("response", `await fetch('/api/users', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: 'John'})
+    })`),
+    js.IfElse("response.ok",
+        js.Log("'成功'"),
+        js.Log("'失敗'"),
+    ),
+)
+```
+
+### 事件處理
+
+```go
+// 添加事件監聽器
+js.AddEventListener("document", "DOMContentLoaded", js.Fn(nil,
+    js.Log("'頁面已載入'"),
+))
+
+// 移除事件監聽器
+js.RemoveEventListener("element", "click", "handler")
+
+// 觸發事件
+js.DispatchEvent("element", "new CustomEvent('myEvent', {detail: {}})")
+```
+
+### 實用函數
+
+```go
+// 日誌
+js.Log("'消息'", "變量")
+js.Warn("'警告'")
+js.Error("'錯誤'")
+
+// 定時器
+js.SetTimeout(js.Fn(nil, js.Log("'延遲'")), "1000")
+js.SetInterval(js.Fn(nil, js.Log("'重複'")), "1000")
+
+// 其他
+js.Alert("'提示'")
+js.Confirm("'確認?'")
+js.Prompt("'輸入:'")
+js.ConsoleDir("object")
+```
+
+---
+
+## 模板表達式
+
+組件模板支持強大的表達式系統，在服務器端評估條件邏輯。
+
+### 基本語法
+
+```go
+// 條件表達式（三元運算符）
+${'{{prop}}' === 'value' ? 'result1' : 'result2'}
+
+// 嵌套三元運算符
+${'{{size}}' === 'sm' ? '0.875rem' :
+  '{{size}}' === 'md' ? '1rem' :
+  '{{size}}' === 'lg' ? '1.125rem' : '1rem'}
+
+// 比較運算符
+${'{{count}}' > '0' ? 'block' : 'none'}
+${'{{name}}' !== '' ? 'visible' : 'hidden'}
+```
+
+### 字符串檢查
+
+```go
+// 檢查是否為空（需要手動 trim）
+${'{{text}}'.trim() ? 'block' : 'none'}
+
+// 不等於空字符串
+${'{{value}}' !== '' ? 'show' : 'hide'}
+```
+
+### 實際應用示例
+
+```go
+// 按鈕樣式根據變體變化
+Button(Props{
+    "style": `
+        background: ${'{{variant}}' === 'filled' ? '{{color}}' : 'transparent'};
+        color: ${'{{variant}}' === 'filled' ? 'white' : '{{color}}'};
+        border: ${'{{variant}}' === 'outlined' ? '1px solid {{color}}' : 'none'};
+    `,
+})
+
+// 根據尺寸調整字體
+Div(Props{
+    "style": `
+        font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1.125rem' : '1rem'};
+        padding: ${'{{size}}' === 'sm' ? '0.5rem' : '{{size}}' === 'lg' ? '0.75rem' : '0.625rem'};
+    `,
+})
+
+// 條件顯示
+Div(Props{
+    "style": `
+        display: ${'{{visible}}' === 'true' ? 'block' : 'none'};
+    `,
+})
+```
+
+### 注意事項
+
+1. **引號很重要**: 表達式中的字符串必須用引號包圍
+
+   ```go
+   // ✅ 正確
+   ${'{{value}}' === 'test' ? 'a' : 'b'}
+
+   // ❌ 錯誤
+   ${{{value}} === test ? a : b}
+   ```
+
+2. **不支持邏輯運算符**: 使用嵌套三元運算符代替
+
+   ```go
+   // ❌ 不支持
+   ${'{{a}}' && '{{b}}' ? 'yes' : 'no'}
+
+   // ✅ 使用嵌套三元
+   ${'{{a}}' ? '{{b}}' ? 'yes' : 'no' : 'no'}
+   ```
+
+3. **服務器端評估**: 表達式在渲染時（服務器端）評估，不是在客戶端
+
+---
+
+## 控制流
+
+### 條件渲染
+
+使用 `control` 包進行條件渲染。
+
+```go
+import ctrl "github.com/TimLai666/go-vdom/control"
+
+// If-Then
+ctrl.If(user != nil,
+    ctrl.Then(
+        P(Props{}, Text("歡迎, " + user.Name)),
+    ),
+)
+
+// If-Then-Else
+ctrl.If(user != nil,
+    ctrl.Then(
+        P(Props{}, Text("歡迎, " + user.Name)),
+    ),
+    ctrl.Else(
+        P(Props{}, Text("請先登入")),
+    ),
+)
+
+// 多條件
+ctrl.If(score >= 90,
+    ctrl.Then(H3(Props{}, Text("優秀"))),
+    ctrl.ElseIf(score >= 80,
+        ctrl.Then(H3(Props{}, Text("良好"))),
+        ctrl.Else(H3(Props{}, Text("需要努力"))),
+    ),
+)
+```
+
+### 列表渲染
+
+```go
+import ctrl "github.com/TimLai666/go-vdom/control"
+
+// For - 遍歷切片
+users := []User{{Name: "Alice"}, {Name: "Bob"}}
+
+Ul(Props{},
+    ctrl.For(users, func(user User, index int) VNode {
+        return Li(Props{}, Text(user.Name))
+    }),
+)
+
+// Repeat - 重複 n 次
+Div(Props{},
+    ctrl.Repeat(5, func(i int) VNode {
+        return P(Props{}, Text(fmt.Sprintf("第 %d 項", i+1)))
+    }),
+)
+
+// Map - 映射函數
+items := []string{"a", "b", "c"}
+mapped := ctrl.Map(items, func(item string, i int) VNode {
+    return Span(Props{}, Text(item))
+})
+```
+
+---
+
+## 模板序列化
+
+### 保存為 Go Template
+
+```go
+import . "github.com/TimLai666/go-vdom/dom"
+
+// 創建帶模板變數的 VNode
+vnode := Div(Props{"id": "user-{{.ID}}"},
+    H3(Props{}, Text("{{.Name}}")),
+    P(Props{}, Text("Email: {{.Email}}")),
+)
+
+// 保存為 Go Template 格式
+template := SaveTemplate("user-card", vnode)
+// 寫入文件
+os.WriteFile("user-card.tmpl", []byte(template), 0644)
+```
+
+生成的模板：
+
+```html
+{{/* Template: user-card */}} {{define "user-card"}}
+<div id="user-{{.ID}}">
+  <h3>{{.Name}}</h3>
+  <p>Email: {{.Email}}</p>
+</div>
+{{end}}
+```
+
+### JSON 序列化
+
+```go
+// 轉為 JSON
+jsonStr, err := ToJSON(vnode)
+
+// 從 JSON 載入
+restored, err := FromJSON(jsonStr)
+
+// 渲染
+html := Render(restored)
+```
+
+### 提取模板變數
+
+```go
+vnode := Div(Props{"id": "user-{{.ID}}"},
+    H1(Props{}, Text("{{.Name}}")),
+    P(Props{}, Text("{{.Email}}")),
+)
+
+// 提取所有模板變數
+vars := ExtractTemplateVars(vnode)
+// 返回: [".ID", ".Name", ".Email"]
+```
+
+### VNode 克隆
+
+```go
+// 創建原始 VNode
+original := Button(Props{"class": "btn"}, Text("按鈕"))
+
+// 克隆並修改
+cloned := CloneVNode(original)
+cloned.Props["class"] = "btn btn-primary"
+
+// 原始 VNode 不受影響
+```
+
+---
+
+## API 參考
+
+### VNode 構造函數
+
+所有 HTML 元素的完整列表請參考[核心功能 - HTML 元素](#html-元素)。
+
+### Props 工具函數
+
+```go
+// 合併 Props
+MergeProps(props ...Props) Props
+
+// 克隆 Props
+CloneProps(p Props) Props
+
+// 轉換 Props 值類型
+ConvertPropsToAny(p map[string]interface{}) Props
+```
+
+### 渲染函數
+
+```go
+// 渲染 VNode 為 HTML
+Render(node VNode) string
+
+// 創建完整 HTML 文檔
+Document(title string, links []LinkInfo, scripts []string,
+         inlineScripts []VNode, body VNode) VNode
+```
+
+### Component 函數
+
+```go
+Component(template VNode, onDOMReadyCallback *JSAction,
+          defaultProps ...PropsDef) func(props Props, children ...VNode) VNode
+```
+
+### 控制流函數
+
+```go
+// 條件渲染
+ctrl.If(condition bool, branches ...VNode) []VNode
+ctrl.Then(nodes ...VNode) VNode
+ctrl.Else(nodes ...VNode) VNode
+ctrl.ElseIf(condition bool, branches ...VNode) VNode
+
+// 列表渲染
+ctrl.For[T any](items []T, fn func(T, int) VNode) []VNode
+ctrl.Repeat(count int, fn func(int) VNode) []VNode
+ctrl.Map[T any](items []T, fn func(T, int) VNode) []VNode
+```
+
+### JavaScript DSL 完整 API
+
+請參考 [JavaScript DSL](#javascript-dsl) 章節。
+
+---
+
+## 最佳實踐
+
+### 組件設計
+
+#### 1. 保持組件簡單
+
+```go
+// ✅ 好：單一職責
+func UserAvatar(url string, size int) VNode {
+    return Img(Props{
+        "src":    url,
+        "width":  size,
+        "height": size,
+        "class":  "avatar",
+    })
+}
+
+// ❌ 壞：做太多事情
+func UserProfile(user User) VNode {
+    // 包含頭像、個人信息、帖子列表等...
 }
 ```
 
-##### SetText (設置文本)
+#### 2. 使用 Props 使組件可配置
 
 ```go
-js.El("#title").SetText("'新標題'")
-// 生成: document.querySelector('#title').innerText = '新標題'
+// ✅ 好：通過 Props 配置
+func Card(props Props, children ...VNode) VNode {
+    elevated := false
+    if e, ok := props["elevated"].(bool); ok {
+        elevated = e
+    }
+
+    shadow := "none"
+    if elevated {
+        shadow = "0 4px 6px rgba(0,0,0,0.1)"
+    }
+
+    return Div(Props{
+        "class": "card",
+        "style": "box-shadow: " + shadow,
+    }, children...)
+}
 ```
 
-##### SetHTML (設置 HTML)
+#### 3. 提取可重用的樣式
 
 ```go
-js.El("#content").SetHTML("'<strong>粗體</strong>'")
-// 生成: document.querySelector('#content').innerHTML = '<strong>粗體</strong>'
-```
+// 定義樣式常量
+var (
+    PrimaryColor   = "#3b82f6"
+    SuccessColor   = "#10b981"
+    ErrorColor     = "#ef4444"
 
-##### AddClass (添加 class)
-
-```go
-js.El("#box").AddClass("active")
-// 生成: document.querySelector('#box').classList.add('active')
-```
-
-##### RemoveClass (移除 class)
-
-```go
-js.El("#box").RemoveClass("hidden")
-// 生成: document.querySelector('#box').classList.remove('hidden')
-```
-
-##### OnClick (點擊事件)
-
-```go
-js.El("#button").OnClick(
-    js.Alert("'點擊了！'"),
+    ButtonBase = Props{
+        "class": "btn",
+        "style": "padding: 0.5rem 1rem; border-radius: 0.375rem;",
+    }
 )
-// 生成: document.querySelector('#button').addEventListener('click', function() {
-//   alert('點擊了！');
-// });
+
+// 使用
+btn := Button(MergeProps(ButtonBase, Props{
+    "style": "background: " + PrimaryColor,
+}), Text("按鈕"))
 ```
 
-##### InnerText / InnerHTML (訪問屬性)
+### 性能優化
+
+#### 1. 避免不必要的重新渲染
 
 ```go
-text := js.El("#input").InnerText()
-// 返回字符串: "document.querySelector('#input').innerText"
-
-html := js.El("#content").InnerHTML()
-// 返回字符串: "document.querySelector('#content').innerHTML"
-```
-
-### 函數定義
-
-#### Fn (定義函數)
-
-```go
-func Fn(params []string, actions ...JSAction) JSAction
-```
-
-```go
-// 無參數函數
-myFunc := js.Fn(nil,
-    js.Log("'執行中'"),
-    js.Alert("'完成'"),
+// ✅ 好：緩存不變的部分
+var cachedHeader = Header(Props{},
+    H1(Props{}, Text("網站標題")),
+    Nav(Props{}, /* ... */),
 )
-// 生成: () => {
-//   console.log('執行中');
-//   alert('完成');
-// }
 
-// 有參數函數
-greet := js.Fn([]string{"name"},
-    js.Log("'Hello, ' + name"),
-)
-// 生成: (name) => {
-//   console.log('Hello, ' + name);
-// }
-
-// 多參數函數
-add := js.Fn([]string{"a", "b"},
-    JSAction{Code: "return a + b"},
-)
-// 生成: (a, b) => {
-//   return a + b;
-// }
-```
-
-#### Call (調用函數)
-
-```go
-func Call(fnExpr any, args ...any) JSAction
-```
-
-```go
-js.Call("myFunction", "'arg1'", "arg2")
-// 生成: myFunction('arg1', arg2)
-
-js.Call("fetch", "'/api/data'")
-// 生成: fetch('/api/data')
-```
-
-#### CallMethod (調用對象方法)
-
-```go
-func CallMethod(objExpr string, methodName string, args ...any) JSAction
-```
-
-```go
-js.CallMethod("evt", "preventDefault")
-// 生成: evt.preventDefault()
-
-js.CallMethod("arr", "push", "1", "2", "3")
-// 生成: arr.push(1, 2, 3)
-```
-
-### DomReady (DOM 就緒)
-
-```go
-func DomReady(actions ...JSAction) JSAction
-```
-
-```go
-script := Script(Props{"type": "text/javascript"},
-    js.DomReady(
-        js.El("#button").OnClick(
-            js.Alert("'點擊'"),
+func Page(content VNode) VNode {
+    return Html(Props{},
+        Head(Props{}, /* ... */),
+        Body(Props{},
+            cachedHeader,  // 重用緩存的 header
+            content,
         ),
-        js.Log("'DOM 已就緒'"),
-    ),
-)
-// 生成: document.addEventListener("DOMContentLoaded", () => {
-//   document.querySelector('#button').addEventListener('click', function() {
-//     alert('點擊');
-//   });
-//   console.log('DOM 已就緒');
-// });
-```
-
-### TryCatch (異步錯誤處理)
-
-```go
-func TryCatch(baseAction JSAction, catchFn *JSAction, finallyFn *JSAction) JSAction
-```
-
-#### 基本用法
-
-```go
-js.TryCatch(
-    js.Fn(nil,
-        js.Const("data", "await fetch('/api/data')"),
-        js.Log("'成功:', data"),
-    ),
-    js.Ptr(js.Fn(nil,
-        js.Log("'錯誤:', e"),
-        js.Alert("'操作失敗'"),
-    )),
-    nil,
-)
-// 生成: (async () => { try {
-//   const data = await fetch('/api/data');
-//   console.log('成功:', data);
-// } catch (e) {
-//   console.log('錯誤:', e);
-//   alert('操作失敗');
-// } })()
-```
-
-#### 帶 finally
-
-```go
-js.TryCatch(
-    js.Fn(nil,
-        js.Log("'開始處理'"),
-        js.Const("result", "await process()"),
-    ),
-    js.Ptr(js.Fn(nil,
-        js.Log("'錯誤:', e"),
-    )),
-    js.Ptr(js.Fn(nil,
-        js.Log("'清理資源'"),
-    )),
-)
-```
-
-### 高級功能
-
-#### CreateEl (創建元素)
-
-```go
-func CreateEl(tagName string, varName ...string) (Elem, JSAction)
-```
-
-```go
-div, createAction := js.CreateEl("div", "myDiv")
-// createAction: const myDiv = document.createElement('div');
-
-// 使用創建的元素
-actions := []JSAction{
-    createAction,
-    div.SetText("'內容'"),
-    div.AddClass("box"),
+    )
 }
 ```
 
-#### AppendChild (添加子元素)
+#### 2. 使用條件渲染避免生成不必要的 HTML
 
 ```go
-parent.AppendChild(child)
+// ✅ 好：使用控制流
+ctrl.If(user != nil,
+    ctrl.Then(UserDashboard(user)),
+)
+
+// ❌ 壞：總是生成 HTML 再用 CSS 隱藏
+Div(Props{
+    "style": func() string {
+        if user == nil {
+            return "display: none"
+        }
+        return ""
+    }(),
+}, UserDashboard(user))
 ```
 
-```go
-container, createContainer := js.CreateEl("div", "container")
-item, createItem := js.CreateEl("span", "item")
+#### 3. 大列表使用虛擬滾動或分頁
 
-actions := []JSAction{
-    createContainer,
-    createItem,
-    item.SetText("'文本'"),
-    container.AppendChild(item),
-    js.El("#root").AppendChild(container),
+```go
+// ✅ 好：分頁
+func ItemList(items []Item, page, pageSize int) VNode {
+    start := page * pageSize
+    end := start + pageSize
+    if end > len(items) {
+        end = len(items)
+    }
+
+    return Ul(Props{},
+        ctrl.For(items[start:end], func(item Item, i int) VNode {
+            return Li(Props{}, Text(item.Name))
+        }),
+    )
+}
+
+// ❌ 壞：一次渲染所有項目
+func ItemList(items []Item) VNode {
+    return Ul(Props{},
+        ctrl.For(items, func(item Item, i int) VNode {
+            return Li(Props{}, Text(item.Name))
+        }),
+    )
 }
 ```
 
-#### SetTimeout / SetInterval
+### 錯誤處理
 
-```go
-func SetTimeout(action JSAction, delayMs int) JSAction
-func SetInterval(action JSAction, intervalMs int) JSAction
-```
-
-```go
-// 延遲執行
-js.SetTimeout(
-    js.Alert("'3 秒後顯示'"),
-    3000,
-)
-
-// 定時執行
-js.SetInterval(
-    js.Log("'每秒執行'"),
-    1000,
-)
-```
-
-### Fetch API 示例
-
-雖然 jsdsl 模塊有 FetchRequest 等函數，但推薦使用 DSL 方式構建 Fetch 請求：
-
-#### GET 請求
+#### 1. 使用 TryCatch 處理異步錯誤
 
 ```go
 Button(Props{
-    "onClick": js.Fn(nil,
-        js.Log("'開始獲取'"),
-        js.TryCatch(
-            js.Fn(nil,
-                js.Const("response", "await fetch('/api/data')"),
-                JSAction{Code: "if (!response.ok) throw new Error('HTTP ' + response.status)"},
-                js.Const("data", "await response.json()"),
-                js.Log("'數據:', data"),
-            ),
-            js.Ptr(js.Fn(nil,
-                js.Log("'錯誤:', e"),
-                js.Alert("'獲取失敗: ' + e.message"),
-            )),
-            nil,
+    "onClick": js.TryCatch(
+        js.AsyncFn(nil,
+            js.Const("response", "await fetch('/api/data')"),
+            js.Const("data", "await response.json()"),
+            js.Log("data"),
         ),
+        js.Ptr(js.Fn(nil,
+            js.Log("'Error:', e.message"),
+            js.Alert("'請求失敗，請稍後再試'"),
+        )),
+        nil,
     ),
-}, "獲取數據")
+}, Text("載入數據"))
 ```
 
-#### POST 請求
+#### 2. 驗證用戶輸入
 
 ```go
 Form(Props{
-    "onSubmit": js.Fn([]string{"evt"},
-        js.CallMethod("evt", "preventDefault"),
-        js.TryCatch(
-            js.Fn(nil,
-                js.Const("formData", "{ name: document.getElementById('name').value }"),
-                js.Const("response", "await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })"),
-                JSAction{Code: "if (!response.ok) throw new Error('提交失敗')"},
-                js.Const("result", "await response.json()"),
-                js.Alert("'提交成功'"),
-            ),
-            js.Ptr(js.Fn(nil,
-                js.Alert("'提交失敗: ' + e.message"),
-            )),
-            nil,
+    "onSubmit": js.Fn([]string{"e"},
+        js.Call("e.preventDefault", nil),
+        js.Const("email", "document.getElementById('email').value"),
+        js.If("!email.includes('@')",
+            js.Alert("'請輸入有效的郵件地址'"),
+            js.Call("return", nil),
         ),
+        // 提交表單...
     ),
-},
-    Input(Props{"id": "name", "type": "text"}),
-    Button(Props{"type": "submit"}, "提交"),
-)
+}, /* ... */)
 ```
 
----
+### 代碼組織
 
-## Components 模塊
+#### 1. 按功能組織文件
 
-Components 模塊提供了常用的表單組件。
-
-### TextField (文字輸入框)
-
-```go
-func TextField(props Props) VNode
+```
+/components
+  /auth
+    login.go
+    register.go
+  /layout
+    header.go
+    footer.go
+  /user
+    profile.go
+    settings.go
 ```
 
-#### 支持的 Props
-
-- `id`: 輸入框 ID（必填）
-- `name`: 表單名稱（默認同 id）
-- `label`: 標籤文本
-- `placeholder`: 占位符
-- `type`: 輸入類型（默認 "text"）
-- `value`: 默認值
-- `required`: 是否必填（"true" / "false"）
-- `disabled`: 是否禁用（"true" / "false"）
-- `helpText`: 幫助文本
-- `class`: 額外的 CSS 類
-
-#### 示例
+#### 2. 使用包級別變數存儲組件
 
 ```go
-comp.TextField(Props{
-    "id":          "email",
-    "label":       "電子郵件",
-    "type":        "email",
-    "placeholder": "請輸入電子郵件",
-    "required":    "true",
-    "helpText":    "我們不會分享您的郵件地址",
-})
-```
+package components
 
-### Dropdown (下拉選單)
-
-```go
-func Dropdown(props Props) VNode
-```
-
-#### 支持的 Props
-
-- `id`: 選單 ID（必填）
-- `name`: 表單名稱（默認同 id）
-- `label`: 標籤文本
-- `options`: 選項，逗號分隔（例如："選項1,選項2,選項3"）
-- `value`: 默認選中值
-- `required`: 是否必填
-- `disabled`: 是否禁用
-- `helpText`: 幫助文本
-
-#### 示例
-
-```go
-comp.Dropdown(Props{
-    "id":       "country",
-    "label":    "選擇國家",
-    "options":  "台灣,中國,日本,美國",
-    "value":    "台灣",
-    "required": "true",
-    "helpText": "請選擇您的所在國家",
-})
-```
-
-### RadioGroup (單選按鈕組)
-
-```go
-func RadioGroup(props Props) VNode
-```
-
-#### 支持的 Props
-
-- `id`: 組 ID（必填）
-- `name`: 表單名稱（必填）
-- `label`: 組標籤
-- `options`: 選項，逗號分隔
-- `defaultValue`: 默認選中值
-- `direction`: 佈局方向（"horizontal" / "vertical"，默認 "vertical"）
-- `required`: 是否必填
-- `disabled`: 是否禁用
-- `helpText`: 幫助文本
-
-#### 示例
-
-```go
-comp.RadioGroup(Props{
-    "id":           "gender",
-    "name":         "gender",
-    "label":        "性別",
-    "options":      "男性,女性,其他",
-    "defaultValue": "男性",
-    "direction":    "horizontal",
-    "required":     "true",
-})
-```
-
-### Checkbox (勾選框)
-
-```go
-func Checkbox(props Props) VNode
-```
-
-#### 支持的 Props
-
-- `id`: 勾選框 ID（必填）
-- `name`: 表單名稱
-- `label`: 標籤文本
-- `value`: 勾選框值
-- `checked`: 是否預選（"true" / "false"）
-- `required`: 是否必填
-- `disabled`: 是否禁用
-- `helpText`: 幫助文本
-
-#### 示例
-
-```go
-comp.Checkbox(Props{
-    "id":       "terms",
-    "name":     "terms",
-    "label":    "我同意服務條款和隱私政策",
-    "required": "true",
-    "checked":  "false",
-    "helpText": "您必須同意條款才能繼續",
-})
-```
-
-### CheckboxGroup (勾選框組)
-
-```go
-func CheckboxGroup(props Props) VNode
-```
-
-#### 支持的 Props
-
-- `id`: 組 ID（必填）
-- `name`: 表單名稱
-- `label`: 組標籤
-- `options`: 選項，逗號分隔
-- `values`: 預選值，逗號分隔
-- `required`: 是否必填
-- `disabled`: 是否禁用
-- `helpText`: 幫助文本
-
-#### 示例
-
-```go
-comp.CheckboxGroup(Props{
-    "id":      "hobbies",
-    "name":    "hobbies",
-    "label":   "選擇愛好",
-    "options": "閱讀,運動,音樂,繪畫,旅行",
-    "values":  "閱讀,音樂",
-    "helpText": "可多選",
-})
-```
-
-### Switch (開關)
-
-```go
-func Switch(props Props) VNode
-```
-
-#### 支持的 Props
-
-- `id`: 開關 ID（必填）
-- `name`: 表單名稱
-- `label`: 標籤文本
-- `checked`: 是否開啟（"true" / "false"）
-- `disabled`: 是否禁用
-- `labelPosition`: 標籤位置（"left" / "right"，默認 "left"）
-- `helpText`: 幫助文本
-
-#### 示例
-
-```go
-comp.Switch(Props{
-    "id":            "notifications",
-    "name":          "notifications",
-    "label":         "啟用電子郵件通知",
-    "checked":       "true",
-    "labelPosition": "right",
-    "helpText":      "開啟以接收重要通知",
-})
-```
-
----
-
-## 進階用法
-
-### 自定義組件庫
-
-創建您自己的組件庫：
-
-```go
-package mycomponents
-
-import (
-    . "github.com/TimLai666/go-vdom/vdom"
-    js "github.com/TimLai666/go-vdom/jsdsl"
+// 導出組件供其他包使用
+var (
+    Header  = headerComponent
+    Footer  = footerComponent
+    Sidebar = sidebarComponent
 )
 
-// Alert 組件
-var Alert = Component(
-    Div(
-        Props{
-            "class": "alert alert-{{type}} {{className}}",
-            "role":  "alert",
-        },
-        Strong("{{title}}"),
-        Span(" {{message}}"),
-        Button(
-            Props{
-                "type":  "button",
-                "class": "btn-close",
-                "data-bs-dismiss": "alert",
-            },
-        ),
-    ),
-    nil,
-    PropsDef{
-        "type":      "info",  // info, success, warning, danger
-        "title":     "",
-        "message":   "",
-        "className": "",
-    },
-)
-
-// Modal 組件
-var Modal = Component(
-    Div(
-        Props{
-            "class": "modal fade",
-            "id":    "{{id}}",
-            "tabindex": "-1",
-        },
-        Div(
-            Props{"class": "modal-dialog"},
-            Div(
-                Props{"class": "modal-content"},
-                Div(
-                    Props{"class": "modal-header"},
-                    H5(Props{"class": "modal-title"}, "{{title}}"),
-                    Button(
-                        Props{
-                            "type":  "button",
-                            "class": "btn-close",
-                            "data-bs-dismiss": "modal",
-                        },
-                    ),
-                ),
-                Div(
-                    Props{"class": "modal-body"},
-                    "{{children}}",
-                ),
-                Div(
-                    Props{"class": "modal-footer"},
-                    Button(
-                        Props{
-                            "type":  "button",
-                            "class": "btn btn-secondary",
-                            "data-bs-dismiss": "modal",
-                        },
-                        "關閉",
-                    ),
-                    Button(
-                        Props{
-                            "type":  "button",
-                            "class": "btn btn-primary",
-                        },
-                        "確定",
-                    ),
-                ),
-            ),
-        ),
-    ),
-    nil,
-    PropsDef{
-        "id":    "myModal",
-        "title": "Modal",
-    },
-)
+func headerComponent(props Props) VNode {
+    // 實現...
+}
 ```
 
-### 高階組件模式
+#### 3. 使用工廠函數創建相似組件
 
 ```go
-// WithLoading - 添加載入狀態的高階組件
-func WithLoading(component func(Props, ...VNode) VNode) func(Props, ...VNode) VNode {
+func makeButton(variant string) func(Props, ...VNode) VNode {
     return func(props Props, children ...VNode) VNode {
-        loading := props["loading"] == "true"
-
-        if loading {
-            return Div(
-                Props{"class": "loading-wrapper"},
-                Div(
-                    Props{"class": "spinner-border", "role": "status"},
-                    Span(Props{"class": "visually-hidden"}, "載入中..."),
-                ),
-            )
-        }
-
-        return component(props, children...)
+        mergedProps := MergeProps(Props{
+            "class": "btn btn-" + variant,
+        }, props)
+        return Button(mergedProps, children...)
     }
 }
 
-// 使用
-EnhancedCard := WithLoading(Card)
-
-instance := EnhancedCard(
-    Props{
-        "title":   "我的卡片",
-        "loading": "false",
-    },
-    P("內容"),
+var (
+    PrimaryButton   = makeButton("primary")
+    SecondaryButton = makeButton("secondary")
+    DangerButton    = makeButton("danger")
 )
-```
-
-### 組合組件
-
-```go
-// UserProfile 組合多個組件
-func UserProfile(user User) VNode {
-    return Div(
-        Props{"class": "user-profile"},
-
-        // 頭像卡片
-        Card(Props{
-            "title": "個人信息",
-        },
-            Img(Props{
-                "src":   user.Avatar,
-                "class": "avatar",
-                "alt":   user.Name,
-            }),
-            H4(user.Name),
-            P(user.Email),
-        ),
-
-        // 編輯表單
-        Card(Props{
-            "title": "編輯資料",
-        },
-            Form(
-                comp.TextField(Props{
-                    "id":    "name",
-                    "label": "姓名",
-                    "value": user.Name,
-                }),
-                comp.TextField(Props{
-                    "id":    "email",
-                    "label": "電子郵件",
-                    "type":  "email",
-                    "value": user.Email,
-                }),
-                comp.Dropdown(Props{
-                    "id":      "country",
-                    "label":   "國家",
-                    "options": "台灣,中國,日本",
-                    "value":   user.Country,
-                }),
-                Button(
-                    Props{"type": "submit", "class": "btn btn-primary"},
-                    "保存",
-                ),
-            ),
-        ),
-    )
-}
-```
-
-### 條件樣式
-
-```go
-func StatusBadge(status string) VNode {
-    var badgeClass string
-    var text string
-
-    switch status {
-    case "active":
-        badgeClass = "bg-success"
-        text = "活躍"
-    case "pending":
-        badgeClass = "bg-warning"
-        text = "待處理"
-    case "inactive":
-        badgeClass = "bg-secondary"
-        text = "未活躍"
-    default:
-        badgeClass = "bg-info"
-        text = "未知"
-    }
-
-    return Span(
-        Props{"class": fmt.Sprintf("badge %s", badgeClass)},
-        text,
-    )
-}
-```
-
-### 動態 Props
-
-```go
-func buildProps(base Props, conditional map[string]bool) Props {
-    result := Props{}
-
-    // 複製基礎 props
-    for k, v := range base {
-        result[k] = v
-    }
-
-    // 根據條件添加
-    for k, v := range conditional {
-        if v {
-            result[k] = "true"
-        }
-    }
-
-    return result
-}
-
-// 使用
-props := buildProps(
-    Props{"class": "btn", "type": "button"},
-    map[string]bool{
-        "disabled": isDisabled,
-        "required": isRequired,
-    },
-)
-
-button := Button(props, "提交")
 ```
 
 ---
 
-## 性能優化
+## 常見問題
 
-### 1. 組件複用
+### Q: await 語法錯誤怎麼辦？
+
+**A:** 使用 `AsyncFn` 而不是 `Fn`。
 
 ```go
-// ✅ 好的做法 - 定義一次，多次使用
-var UserCard = Component(...)
+// ✅ 正確
+js.AsyncFn(nil, js.Const("data", "await fetch('/api')"))
 
-for _, user := range users {
-    cards = append(cards, UserCard(Props{...}))
-}
-
-// ❌ 不好的做法 - 每次都定義
-for _, user := range users {
-    card := Component(...)  // 重複定義
-    cards = append(cards, card(Props{...}))
-}
+// ❌ 錯誤
+js.Fn(nil, js.Const("data", "await fetch('/api')"))
 ```
 
-### 2. Props 預分配
+### Q: 如何處理表單提交？
+
+**A:** 使用 `onSubmit` 事件和 `e.preventDefault()`。
 
 ```go
-// ✅ 好的做法
-props := make(Props, 10)  // 預分配容量
-props["id"] = "myId"
-props["class"] = "container"
-// ...
-
-// ❌ 不好的做法
-props := Props{}  // 可能需要多次重新分配
-props["id"] = "myId"
-props["class"] = "container"
-// ...
-```
-
-### 3. 字符串構建
-
-```go
-// ✅ 好的做法 - 使用 strings.Builder
-var sb strings.Builder
-for _, item := range items {
-    sb.WriteString(Render(Li(item)))
-}
-html := sb.String()
-
-// ❌ 不好的做法 - 字符串拼接
-var html string
-for _, item := range items {
-    html += Render(Li(item))  // 每次都分配新字符串
-}
-```
-
-### 4. 避免深度嵌套
-
-```go
-// ✅ 好的做法 - 分解組件
-Header := Component(...)
-Content := Component(...)
-Footer := Component(...)
-
-page := Div(
-    Header(Props{}),
-    Content(Props{}),
-    Footer(Props{}),
-)
-
-// ❌ 不好的做法 - 深度嵌套
-page := Div(
-    Div(
-        Div(
-            Div(
-                Div(
-                    Div("內容"),
-                ),
-            ),
+Form(Props{
+    "onSubmit": js.AsyncFn([]string{"e"},
+        js.Call("e.preventDefault", nil),
+        js.Const("formData", "new FormData(e.target)"),
+        js.Const("response", "await fetch('/api/submit', {method: 'POST', body: formData})"),
+        js.IfElse("response.ok",
+            js.Alert("'提交成功'"),
+            js.Alert("'提交失敗'"),
         ),
     ),
-)
+}, /* 表單內容 */)
 ```
 
-### 5. 批量渲染
+### Q: Props 支持哪些類型？
 
-```go
-// ✅ 好的做法 - 一次渲染
-items := control.For(data, func(item Data, i int) VNode {
-    return Li(item.Name)
-})
-html := Render(Ul(items))
+**A:** 支持字符串、布爾值、整數、浮點數和 JSAction。詳見 [Props 屬性系統](#props屬性系統)。
 
-// ❌ 不好的做法 - 多次渲染
-var htmlParts []string
-for _, item := range data {
-    htmlParts = append(htmlParts, Render(Li(item.Name)))
-}
-html := strings.Join(htmlParts, "")
-```
+### Q: 如何優化性能？
+
+**A:**
+
+1. 緩存不變的組件
+2. 使用條件渲染
+3. 大列表使用分頁
+4. 避免在循環中創建函數
+
+### Q: 可以用於單頁應用（SPA）嗎？
+
+**A:** 不推薦。go-vdom 是為服務器端渲染設計的。對於 SPA，建議使用 React、Vue 等客戶端框架。
 
 ---
 
-## 故障排除
+## 相關資源
 
-### 常見問題
-
-#### 1. Props 未生效
-
-```go
-// ❌ 錯誤：Props 不是第一個參數
-Div("文本", Props{"class": "container"})
-
-// ✅ 正確：Props 必須是第一個參數
-Div(Props{"class": "container"}, "文本")
-```
-
-#### 2. 組件 Props 未替換
-
-```go
-// ❌ 錯誤：忘記定義 PropsDef
-MyComponent := Component(
-    Div("{{title}}"),
-    nil,
-    PropsDef{},  // 空的 PropsDef
-)
-
-// ✅ 正確：定義所有使用的 props
-MyComponent := Component(
-    Div("{{title}}"),
-    nil,
-    PropsDef{"title": "默認標題"},
-)
-```
-
-#### 3. JavaScript 事件不觸發
-
-```go
-// ❌ 錯誤：忘記調用 Fn
-Button(Props{
-    "onClick": js.Alert("'Hi'"),  // 直接使用 JSAction
-}, "按鈕")
-
-// ✅ 正確：包裝在 Fn 中
-Button(Props{
-    "onClick": js.Fn(nil, js.Alert("'Hi'")),
-}, "按鈕")
-```
-
-#### 4. TryCatch 錯誤
-
-```go
-// ❌ 錯誤：沒有使用 Ptr
-js.TryCatch(
-    js.Fn(...),
-    js.Fn(...),  // 應該是 *JSAction
-    nil,
-)
-
-// ✅ 正確：使用 Ptr
-js.TryCatch(
-    js.Fn(...),
-    js.Ptr(js.Fn(...)),
-    nil,
-)
-```
-
-#### 5. 字符串轉義問題
-
-```go
-// ❌ 錯誤：JavaScript 字符串沒有引號
-js.Log("Hello")  // 生成: console.log(Hello) - 錯誤！
-
-// ✅ 正確：添加引號
-js.Log("'Hello'")  // 生成: console.log('Hello')
-```
-
-### 調試技巧
-
-#### 1. 檢查生成的 HTML
-
-```go
-vnode := Div(Props{"class": "test"}, "內容")
-html := Render(vnode)
-fmt.Println(html)  // 輸出生成的 HTML
-```
-
-#### 2. 檢查 JavaScript 代碼
-
-```go
-action := js.Fn(nil,
-    js.Log("'Test'"),
-    js.Alert("'Hi'"),
-)
-fmt.Println(action.Code)  // 輸出生成的 JavaScript
-```
-
-#### 3. 分步構建
-
-```go
-// 分步構建，便於調試
-header := H1("標題")
-content := P("內容")
-footer := Footer("頁腳")
-
-page := Div(
-    Props{"class": "page"},
-    header,
-    content,
-    footer,
-)
-
-// 檢查每個部分
-fmt.Println(Render(header))
-fmt.Println(Render(content))
-fmt.Println(Render(footer))
-fmt.Println(Render(page))
-```
-
-#### 4. 使用瀏覽器開發工具
-
-生成 HTML 後，在瀏覽器中：
-
-- 查看元素（Elements/Inspector）
-- 查看控制台（Console）
-- 查看網絡請求（Network）
-- 使用 Source Maps（如果有）
+- **[GitHub 倉庫](https://github.com/TimLai666/go-vdom)** - 源代碼和 Issues
+- **[示例程序](../examples/)** - 可運行的完整示例
+- **[CHANGELOG](../CHANGELOG.md)** - 版本更新歷史
+- **[快速參考](QUICK_REFERENCE.md)** - 語法速查表
 
 ---
 
-## 總結
-
-go-vdom 提供了一套完整的工具鏈，讓你能夠在 Go 中以類型安全的方式構建動態網頁。通過合理使用組件化、控制流和 JavaScript DSL，你可以創建出維護性高、性能優的 Web 應用。
-
-### 關鍵要點
-
-1. **使用 DSL** - 盡量使用 DSL 而非原始字符串
-2. **組件化** - 將重複的 UI 邏輯封裝成組件
-3. **類型安全** - 利用 Go 的類型系統避免運行時錯誤
-4. **錯誤處理** - 在 JavaScript 代碼中使用 TryCatch
-5. **性能優化** - 注意組件複用和批量渲染
-
-### 下一步
-
-- 查看 `main.go` 中的完整示例
-- 探索 `components` 包中的組件實現
-- 嘗試創建自己的組件庫
-- 與現有的 Go web 框架集成
-
----
-
-**文檔版本**: 1.0.0
-**最後更新**: 2025-01-24
+**版本**: v1.1.0
 **作者**: TimLai666
+**許可**: MIT License
