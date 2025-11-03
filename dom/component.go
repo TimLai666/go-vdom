@@ -2,7 +2,9 @@
 package dom
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync/atomic"
@@ -81,10 +83,11 @@ func interpolate(template VNode, p Props, children []VNode) VNode {
 			// 檢查是否為純模板引用（如 "{{key}}"）
 			trimmed := strings.TrimSpace(t)
 			if strings.HasPrefix(trimmed, "{{") && strings.HasSuffix(trimmed, "}}") && strings.Count(trimmed, "{{") == 1 {
-				// 純模板引用：直接取值，保持原始類型
+				// 純模板引用：取值並序列化為字符串（因為 HTML 屬性都是字符串）
 				key := strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(trimmed, "{{"), "}}"))
 				if val, ok := p[key]; ok {
-					newProps[k] = val // 保持原始類型
+					// 所有類型都序列化為字符串，以保持與 HTML 屬性的一致性
+					newProps[k] = serializeComplexType(val)
 				} else {
 					newProps[k] = "" // 找不到則為空字串
 				}
@@ -99,9 +102,9 @@ func interpolate(template VNode, p Props, children []VNode) VNode {
 			// 保留原始類型的數字和布林值
 			newProps[k] = v
 		default:
-			// 其他類型（如 slice, map 等）保留原值，不做轉換
-			// 如果將來需要對這些類型進行插值處理，可以在這裡擴展
-			newProps[k] = v
+			// 其他複雜類型（如 slice, map, struct 等）需要序列化為 JSON
+			// 以便在客戶端 JavaScript 中使用
+			newProps[k] = serializeComplexType(v)
 		}
 	}
 
@@ -151,7 +154,8 @@ func interpolateString(s string, p Props) string {
 				}
 				return "false"
 			default:
-				return fmt.Sprint(val)
+				// 對於複雜類型，嘗試序列化為 JSON 字符串
+				return serializeComplexType(val)
 			}
 		}
 		return ""
@@ -289,4 +293,50 @@ func unquote(s string) string {
 		return s[1 : len(s)-1]
 	}
 	return s
+}
+
+// serializeComplexType 將複雜類型（slice、map、struct 等）序列化為 JSON 字符串
+// 如果無法序列化，則返回 fmt.Sprint 的結果
+func serializeComplexType(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+
+	// 檢查是否為複雜類型（需要 JSON 序列化）
+	rv := reflect.ValueOf(v)
+	kind := rv.Kind()
+
+	// 簡單類型直接返回字符串表示
+	switch kind {
+	case reflect.String:
+		return rv.String()
+	case reflect.Bool:
+		if rv.Bool() {
+			return "true"
+		}
+		return "false"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fmt.Sprintf("%d", rv.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fmt.Sprintf("%d", rv.Uint())
+	case reflect.Float32, reflect.Float64:
+		return fmt.Sprintf("%g", rv.Float())
+	case reflect.Slice, reflect.Array, reflect.Map, reflect.Struct:
+		// 複雜類型：序列化為 JSON
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			// 序列化失敗，返回默認字符串表示
+			return fmt.Sprint(v)
+		}
+		return string(jsonBytes)
+	case reflect.Ptr:
+		// 指針類型：遞歸處理指向的值
+		if rv.IsNil() {
+			return ""
+		}
+		return serializeComplexType(rv.Elem().Interface())
+	default:
+		// 其他類型使用默認字符串表示
+		return fmt.Sprint(v)
+	}
 }

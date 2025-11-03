@@ -166,23 +166,87 @@ Props{
     "class": "container",
     "id":    "main",
 
-    // 布爾值 - true 渲染，false 省略
+    // 布爾值 - true 渲染為 "true"，false 渲染為 "false"
     "disabled": true,      // 渲染為 disabled="true"
-    "hidden":   false,     // 不渲染此屬性
+    "hidden":   false,     // 渲染為 hidden="false"
     "required": true,      // 渲染為 required="true"
 
     // 整數 - 自動轉換為字符串
-    "width":    800,
-    "height":   600,
-    "tabindex": 0,
+    "width":    800,       // 渲染為 width="800"
+    "height":   600,       // 渲染為 height="600"
+    "tabindex": 0,         // 渲染為 tabindex="0"
 
     // 浮點數 - 自動轉換為字符串
-    "opacity": 0.8,
-    "price":   19.99,
+    "opacity": 0.8,        // 渲染為 opacity="0.8"
+    "price":   19.99,      // 渲染為 price="19.99"
+
+    // 陣列 - 自動序列化為 JSON 字符串
+    "data-items": []string{"apple", "banana", "orange"},
+    // 渲染為 data-items='["apple","banana","orange"]'
+
+    "data-numbers": []int{1, 2, 3, 4, 5},
+    // 渲染為 data-numbers='[1,2,3,4,5]'
+
+    // Map - 自動序列化為 JSON 字符串
+    "data-config": map[string]interface{}{
+        "theme":    "dark",
+        "fontSize": 14,
+        "enabled":  true,
+    },
+    // 渲染為 data-config='{"enabled":true,"fontSize":14,"theme":"dark"}'
+
+    // 結構體 - 自動序列化為 JSON 字符串
+    "data-user": struct {
+        Name  string
+        Email string
+    }{"John Doe", "john@example.com"},
+    // 渲染為 data-user='{"Name":"John Doe","Email":"john@example.com"}'
 
     // JSAction - 事件處理（特殊處理）
     "onClick": js.Fn(nil, js.Alert("'Hello'")),
 }
+```
+
+**複雜類型的 JSON 序列化**
+
+當你傳遞陣列、map、或結構體等複雜類型作為 props 時，`Component` 函數會自動將它們序列化為 JSON 字符串。這使得你可以輕鬆地將 Go 的數據結構傳遞到 HTML 屬性中，並在客戶端 JavaScript 中使用。
+
+```go
+// 示例：傳遞複雜數據到組件
+template := dom.VNode{
+    Tag: "div",
+    Props: dom.Props{
+        "data-items":  "{{items}}",
+        "data-config": "{{config}}",
+    },
+}
+
+componentFn := dom.Component(template, nil)
+
+// 使用複雜類型的 props
+result := componentFn(dom.Props{
+    "items": []string{"Apple", "Banana", "Orange"},
+    "config": map[string]interface{}{
+        "theme": "dark",
+        "language": "zh-TW",
+    },
+})
+
+// result 的 Props 會包含：
+// "data-items": '["Apple","Banana","Orange"]'
+// "data-config": '{"language":"zh-TW","theme":"dark"}'
+```
+
+在客戶端 JavaScript 中使用這些數據：
+
+```javascript
+// 從 data 屬性讀取並解析 JSON
+const element = document.querySelector("[data-items]");
+const items = JSON.parse(element.dataset.items);
+console.log(items); // ["Apple", "Banana", "Orange"]
+
+const config = JSON.parse(element.dataset.config);
+console.log(config.theme); // "dark"
 ```
 
 #### Props 工具函數

@@ -353,17 +353,39 @@ Button(Props{
 
 ### Props 類型系統
 
-Props 現在支持任意類型，會自動轉換：
+Props 現在支持任意類型，會自動轉換為 HTML 屬性：
 
 ```go
 Props{
     "class": "btn",           // string
-    "disabled": true,         // bool
-    "count": 42,              // int
-    "price": 19.99,           // float64
+    "disabled": true,         // bool → "true"
+    "count": 42,              // int → "42"
+    "price": 19.99,           // float64 → "19.99"
     "onClick": js.Fn(...),    // JSAction
+
+    // 複雜類型自動序列化為 JSON
+    "data-items": []string{"apple", "banana", "orange"},
+    // → '["apple","banana","orange"]'
+
+    "data-config": map[string]interface{}{
+        "theme": "dark",
+        "fontSize": 14,
+    },
+    // → '{"fontSize":14,"theme":"dark"}'
+
+    "data-user": User{Name: "John", Email: "john@example.com"},
+    // → '{"Name":"John","Email":"john@example.com"}'
 }
 ```
+
+**複雜類型支持：**
+
+- ✅ 陣列（Array/Slice）
+- ✅ Map
+- ✅ 結構體（Struct）
+- ✅ 嵌套的複雜結構
+
+這些複雜類型會自動序列化為 JSON 字符串，可在客戶端 JavaScript 中使用 `JSON.parse()` 解析。
 
 ### 模板序列化
 
@@ -392,6 +414,7 @@ go run examples/01_basic_usage.go          # http://localhost:8080
 go run examples/02_components.go           # http://localhost:8081
 go run examples/03_javascript_dsl.go       # http://localhost:8082
 go run examples/04_template_serialization.go  # http://localhost:8083
+go run examples/complex_props_demo.go      # http://localhost:8084 - 複雜 Props 示例
 ```
 
 ## 最佳實踐
