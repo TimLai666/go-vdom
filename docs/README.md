@@ -32,7 +32,7 @@
 
 - 完整的 JavaScript DSL API 列表
 - `Fn()` 和 `AsyncFn()` 使用指南
-- `TryCatch()` 錯誤處理
+- `Try()` 錯誤處理（流暢 API）
 - DOM 操作函數
 - Fetch API 集成
 - 實用工具函數
@@ -72,7 +72,7 @@
 
 - [JavaScript DSL 基礎](API_REFERENCE.md#核心函數) - Fn, AsyncFn, Call 等
 - [事件處理](API_REFERENCE.md#事件處理) - onClick, onSubmit 等
-- [異步操作](API_REFERENCE.md#異步操作) - async/await, TryCatch
+- [異步操作](API_REFERENCE.md#異步操作) - async/await, Try-Catch-Finally
 - [Fetch API](API_REFERENCE.md#fetch-api-輔助函數) - HTTP 請求
 
 ### 控制流
@@ -85,7 +85,7 @@
 
 - [模板表達式系統](DOCUMENTATION.md#模板表達式) - 服務器端條件表達式
 - [模板序列化](DOCUMENTATION.md#模板序列化) - JSON, Go template
-- [錯誤處理](API_REFERENCE.md#錯誤處理) - TryCatch 詳解
+- [錯誤處理](API_REFERENCE.md#錯誤處理) - Try-Catch-Finally 詳解
 - [性能優化](DOCUMENTATION.md#性能優化) - 優化技巧
 
 ---
@@ -172,25 +172,23 @@ Button(Props{
 
 詳見：[完整文檔 - 模板表達式](DOCUMENTATION.md#模板表達式)
 
-### TryCatch - 錯誤處理
+### Try-Catch-Finally - 錯誤處理
 
 完整的異步錯誤處理：
 
 ```go
-js.TryCatch(
-    js.AsyncFn(nil,
+js.AsyncFn(nil,
+    js.Try(
         // 異步操作
         js.Const("data", "await fetchData()"),
-    ),
-    js.Ptr(js.Fn(nil,
+    ).Catch("error",
         // 錯誤處理
-        js.Log("'Error:', e.message"),
-    )),
-    nil,
+        js.Log("'Error:', error.message"),
+    ).End(),
 )
 ```
 
-詳見：[API 參考 - TryCatch](API_REFERENCE.md#trycatch)
+詳見：[API 參考 - Try-Catch-Finally](API_REFERENCE.md#try-catch-finally流暢-api)
 
 ### 內建 UI 組件庫
 
@@ -227,18 +225,18 @@ Switch(Props{"label": "啟用通知", "checked": true})
 
 ## 💡 常見問題速查
 
-| 問題                   | 參考文檔                                                    |
-| ---------------------- | ----------------------------------------------------------- |
-| 如何開始使用 go-vdom？ | [快速入門](QUICK_START.md)                                  |
-| await 語法錯誤         | [API 參考 - AsyncFn](API_REFERENCE.md#asyncfn)              |
-| 如何創建組件？         | [完整文檔 - 組件系統](DOCUMENTATION.md#組件系統)            |
-| 如何處理表單？         | [API 參考 - 事件處理](API_REFERENCE.md#事件處理)            |
-| 如何發送 API 請求？    | [API 參考 - Fetch API](API_REFERENCE.md#fetch-api)          |
-| 如何條件渲染？         | [完整文檔 - 控制流](DOCUMENTATION.md#控制流)                |
-| Props 支持哪些類型？   | [完整文檔 - Props 屬性系統](DOCUMENTATION.md#props屬性系統) |
-| 如何優化性能？         | [完整文檔 - 性能優化](DOCUMENTATION.md#性能優化)            |
-| 如何處理錯誤？         | [API 參考 - TryCatch](API_REFERENCE.md#trycatch)            |
-| 如何使用模板表達式？   | [完整文檔 - 模板表達式](DOCUMENTATION.md#模板表達式)        |
+| 問題                   | 參考文檔                                                                   |
+| ---------------------- | -------------------------------------------------------------------------- |
+| 如何開始使用 go-vdom？ | [快速入門](QUICK_START.md)                                                 |
+| await 語法錯誤         | [API 參考 - AsyncFn](API_REFERENCE.md#asyncfn)                             |
+| 如何創建組件？         | [完整文檔 - 組件系統](DOCUMENTATION.md#組件系統)                           |
+| 如何處理表單？         | [API 參考 - 事件處理](API_REFERENCE.md#事件處理)                           |
+| 如何發送 API 請求？    | [API 參考 - Fetch API](API_REFERENCE.md#fetch-api)                         |
+| 如何條件渲染？         | [完整文檔 - 控制流](DOCUMENTATION.md#控制流)                               |
+| Props 支持哪些類型？   | [完整文檔 - Props 屬性系統](DOCUMENTATION.md#props屬性系統)                |
+| 如何優化性能？         | [完整文檔 - 性能優化](DOCUMENTATION.md#性能優化)                           |
+| 如何處理錯誤？         | [API 參考 - Try-Catch-Finally](API_REFERENCE.md#try-catch-finally流暢-api) |
+| 如何使用模板表達式？   | [完整文檔 - 模板表達式](DOCUMENTATION.md#模板表達式)                       |
 
 ---
 

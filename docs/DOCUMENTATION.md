@@ -699,24 +699,35 @@ js.While("condition",
 ### 錯誤處理
 
 ```go
-// try-catch
-js.TryCatch(
-    js.AsyncFn(nil,
+// try-catch（在 AsyncFn 中使用）
+js.AsyncFn(nil,
+    js.Try(
         js.Const("response", "await fetch('/api')"),
         js.Const("data", "await response.json()"),
-    ),
-    js.Ptr(js.Fn(nil,
-        js.Log("'Error:', e.message"),
+    ).Catch("error",
+        js.Log("'Error:', error.message"),
         js.Alert("'請求失敗'"),
-    )),
-    nil, // finally (可選)
+    ).End(),
 )
 
 // try-catch-finally
-js.TryCatch(
-    js.Fn(nil, js.Log("'嘗試'")),
-    js.Ptr(js.Fn(nil, js.Log("'錯誤'"))),
-    js.Ptr(js.Fn(nil, js.Log("'總是執行'"))),
+js.AsyncFn(nil,
+    js.Try(
+        js.Const("data", "await fetch('/api')"),
+    ).Catch("error",
+        js.Log("'錯誤:', error.message"),
+    ).Finally(
+        js.Log("'總是執行'"),
+    ),
+)
+
+// 在 AsyncDo 中使用
+js.AsyncDo(
+    js.Try(
+        js.Const("data", "await fetch('/api')"),
+    ).Catch("error",
+        js.Log("'錯誤:', error.message"),
+    ).End(),
 )
 ```
 
@@ -1196,23 +1207,21 @@ func ItemList(items []Item) VNode {
 
 ### 錯誤處理
 
-#### 1. 使用 TryCatch 處理異步錯誤
+#### 1. 使用 Try-Catch 處理異步錯誤
 
 ```go
 Button(Props{
-    "onClick": js.TryCatch(
-        js.AsyncFn(nil,
+    "onClick": js.AsyncDo(
+        js.Try(
             js.Const("response", "await fetch('/api/data')"),
             js.Const("data", "await response.json()"),
             js.Log("data"),
-        ),
-        js.Ptr(js.Fn(nil,
-            js.Log("'Error:', e.message"),
+        ).Catch("error",
+            js.Log("'Error:', error.message"),
             js.Alert("'請求失敗，請稍後再試'"),
-        )),
-        nil,
+        ).End(),
     ),
-}, Text("載入數據"))
+}, "Load Data")
 ```
 
 #### 2. 驗證用戶輸入

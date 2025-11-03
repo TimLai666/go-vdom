@@ -261,9 +261,10 @@ js.ForEachElement("document.querySelectorAll('.item')", func(el js.Elem) JSActio
 ```
 
 **前端 vs 後端：**
-- **後端 ForEach**: `ForEach(items, func(item) VNode {...})`  
+
+- **後端 ForEach**: `ForEach(items, func(item) VNode {...})`
   → 在伺服器生成 HTML，SEO 友好
-- **前端 js.ForEach**: `js.ForEachJS("array", "item", ...actions)`  
+- **前端 js.ForEach**: `js.ForEachJS("array", "item", ...actions)`
   → 在瀏覽器執行，適合動態數據
 
 ### 函數定義
@@ -283,15 +284,13 @@ js.Fn([]string{"name"},
 ### Try/Catch
 
 ```go
-js.TryCatch(
-    js.Fn(nil,
+js.AsyncFn(nil,
+    js.Try(
         js.Const("data", "await fetch('/api')"),
         js.Log("data"),
-    ),
-    js.Ptr(js.Fn(nil,
-        js.Log("'錯誤:', e"),
-    )),
-    nil,
+    ).Catch("error",
+        js.Log("'錯誤:', error"),
+    ).End(),
 )
 ```
 
@@ -309,18 +308,14 @@ Script(Props{"type": "text/javascript"},
 
 ```go
 Button(Props{
-    "onClick": js.Fn(nil,
-        js.TryCatch(
-            js.Fn(nil,
-                js.Const("response", "await fetch('/api/data')"),
-                js.Const("data", "await response.json()"),
-                js.Log("data"),
-            ),
-            js.Ptr(js.Fn(nil,
-                js.Alert("'錯誤: ' + e.message"),
-            )),
-            nil,
-        ),
+    "onClick": js.AsyncDo(
+        js.Try(
+            js.Const("response", "await fetch('/api/data')"),
+            js.Const("data", "await response.json()"),
+            js.Log("data"),
+        ).Catch("error",
+            js.Alert("'錯誤: ' + error.message"),
+        ).End(),
     ),
 }, "獲取數據")
 ```
@@ -329,20 +324,16 @@ Button(Props{
 
 ```go
 Form(Props{
-    "onSubmit": js.Fn([]string{"evt"},
+    "onSubmit": js.AsyncDo([]string{"evt"},
         js.CallMethod("evt", "preventDefault"),
-        js.TryCatch(
-            js.Fn(nil,
-                js.Const("data", "{ name: 'test' }"),
-                js.Const("response", "await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })"),
-                js.Const("result", "await response.json()"),
-                js.Log("result"),
-            ),
-            js.Ptr(js.Fn(nil,
-                js.Alert("'提交失敗'"),
-            )),
-            nil,
-        ),
+        js.Try(
+            js.Const("data", "{ name: 'test' }"),
+            js.Const("response", "await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })"),
+            js.Const("result", "await response.json()"),
+            js.Log("result"),
+        ).Catch("error",
+            js.Alert("'提交失敗: ' + error.message"),
+        ).End(),
     ),
 }, /* form fields */)
 ```
@@ -446,7 +437,7 @@ import (
 func main() {
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Content-Type", "text/html; charset=utf-8")
-        
+
         doc := Document(
             "我的網站",
             nil, nil, nil,
@@ -456,10 +447,10 @@ func main() {
                 P("這是內容"),
             ),
         )
-        
+
         fmt.Fprint(w, Render(doc))
     })
-    
+
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
@@ -473,7 +464,7 @@ import (
     "fmt"
     "log"
     "net/http"
-    
+
     comp "github.com/TimLai666/go-vdom/components"
     control "github.com/TimLai666/go-vdom/control"
     js "github.com/TimLai666/go-vdom/jsdsl"
@@ -490,12 +481,12 @@ func main() {
         nil,
         PropsDef{"title": "", "content": ""},
     )
-    
+
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Content-Type", "text/html; charset=utf-8")
-        
+
         items := []string{"A", "B", "C"}
-        
+
         doc := Document(
             "完整示例",
             []LinkInfo{{
@@ -506,27 +497,27 @@ func main() {
             Div(
                 Props{"class": "container"},
                 H1("完整示例"),
-                
+
                 Card(Props{
                     "title": "我的卡片",
                     "content": "內容",
                 }),
-                
+
                 control.If(true,
                     control.Then(P("顯示此段落")),
                 ),
-                
+
                 Ul(
                     control.ForEach(items, func(item string, i int) VNode {
                         return Li(item)
                     }),
                 ),
-                
+
                 comp.TextField(Props{
                     "id": "name",
                     "label": "姓名",
                 }),
-                
+
                 Button(Props{
                     "onClick": js.Fn(nil,
                         js.Alert("'Hello!'"),
@@ -534,10 +525,10 @@ func main() {
                 }, "點擊我"),
             ),
         )
-        
+
         fmt.Fprint(w, Render(doc))
     })
-    
+
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
@@ -548,7 +539,7 @@ func main() {
 
 - Props 必須是第一個參數
 - JavaScript 字符串需要加引號：`js.Log("'text'")`
-- TryCatch 的 catch 和 finally 參數需要使用 `js.Ptr()`
+- Try 的錯誤對象統一命名為 `error`
 - 組件模板使用 `{{propName}}` 占位符
 - `{{children}}` 是特殊占位符，用於子元素
 - **列表渲染**：

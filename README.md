@@ -202,7 +202,7 @@ go-vdom/
 ├── control/             # 控制流結構
 │   └── control.go       # If/Then/Else/Repeat/For
 ├── jsdsl/               # JavaScript DSL 生成器
-│   ├── jsdsl.go         # 核心 DSL 函數（Fn, AsyncFn, TryCatch 等）
+│   ├── jsdsl.go         # 核心 DSL 函數（Fn, AsyncFn, Try 等）
 │   └── builder.go       # JSAction 建構器
 ├── dom/                 # 核心 DOM 實現
 │   ├── types.go         # VNode、Props 類型定義
@@ -302,7 +302,7 @@ js.AsyncFn(nil,
     js.Try(
         js.Const("response", "await fetch('/api/data')"),
         js.Const("data", "await response.json()"),
-    ).Catch(
+    ).Catch("error",
         js.Log("'錯誤: ' + error.message"),
     ).Finally(
         js.Log("'清理完成'"),
@@ -313,7 +313,7 @@ js.AsyncFn(nil,
 js.AsyncDo(
     js.Try(
         js.Const("data", "await fetch('/api')"),
-    ).Catch(
+    ).Catch("error",
         js.Log("'錯誤: ' + error.message"),
     ).End(),
 )
@@ -343,7 +343,7 @@ js.AsyncDo(
 js.AsyncFn(nil,
     js.Try(
         js.Const("data", "await fetch('/api')"),
-    ).Catch(
+    ).Catch("error",
         js.Log("'錯誤: ' + error.message"),
     ).End(),
 )
@@ -352,7 +352,7 @@ js.AsyncFn(nil,
 js.AsyncFn(nil,
     js.Try(
         js.Const("data", "await fetch('/api')"),
-    ).Catch(
+    ).Catch("error",
         js.Log("'錯誤: ' + error.message"),
     ).Finally(
         js.Log("'清理完成'"),
@@ -529,13 +529,15 @@ make run-example EXAMPLE=forms_demo        # 運行特定範例
    js.Fn(nil, js.Const("data", "await fetch('/api')"))
    ```
 
-2. **始終使用 TryCatch 包裝異步操作**
+2. **始終使用 Try 包裝異步操作**
 
    ```go
-   js.TryCatch(
-       js.AsyncFn(nil, /* 異步操作 */),
-       js.Ptr(js.Fn(nil, /* 錯誤處理 */)),
-       nil,
+   js.AsyncFn(nil,
+       js.Try(
+           /* 異步操作 */
+       ).Catch("error",
+           /* 錯誤處理 */
+       ).End(),
    )
    ```
 
@@ -560,7 +562,7 @@ make run-example EXAMPLE=forms_demo        # 運行特定範例
 - ✅ 組件系統（卡片、表單等）
 - ✅ 控制流（If/Repeat/For）
 - ✅ 異步 API 調用（GET/POST）
-- ✅ 錯誤處理（TryCatch）
+- ✅ 錯誤處理（Try-Catch-Finally）
 - ✅ UI 組件庫（TextField, Dropdown, Checkbox 等）
 - ✅ Bootstrap 集成
 

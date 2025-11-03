@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	js "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	js "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 func main() {

@@ -527,10 +527,10 @@ func buildFetch(url string, responseType ResponseType, then interface{}, catch i
 
 // tryBuilder 用於構建 try-catch-finally 語句的流暢 API
 type tryBuilder struct {
-	tryActions       []JSAction
-	catchErrorName   string
-	catchActions     []JSAction
-	finallyActions   []JSAction
+	tryActions     []JSAction
+	catchErrorName string
+	catchActions   []JSAction
+	finallyActions []JSAction
 }
 
 // Try 創建一個 try-catch-finally 語句的構建器（不包裝在自執行函數中）
@@ -798,93 +798,8 @@ func AsyncDo(params []string, actions ...JSAction) JSAction {
 	return JSAction{Code: sb.String()}
 }
 
-// TryCatch 生成一個自動執行的 async 函數，含 try/catch/finally 邏輯
-// 參數：
-//   - tryActions: try 區塊中執行的動作列表
-//   - catchActions: catch 區塊中執行的動作列表（可選，錯誤對象為 e）
-//   - finallyActions: finally 區塊中執行的動作列表（可選）
-//
-// 要求：catchActions 與 finallyActions 不能同時為空
-//
-// 生成的代碼形如：(async () => { try { ...statements } catch (e) { ...statements } finally { ...statements } })()
-// 會立即執行該函數表達式，支持 await 語法。
-//
-// 用法：
-//
-//	js.TryCatch(
-//	    []JSAction{
-//	        js.Const("response", "await fetch('/api')"),
-//	        js.Const("data", "await response.json()"),
-//	    },
-//	    []JSAction{
-//	        js.Log("'錯誤:', e.message"),
-//	    },
-//	    nil,
-//	)
-//
-// 推薦使用新的流暢 API: js.Try(...).Catch(...) 或 js.Try(...).Catch(...).Finally(...)
-func TryCatch(tryActions []JSAction, catchActions []JSAction, finallyActions []JSAction) JSAction {
-	// 驗證輸入
-	if len(tryActions) == 0 {
-		return JSAction{Code: ""}
-	}
-	if len(catchActions) == 0 && len(finallyActions) == 0 {
-		panic("TryCatch requires at least catchActions or finallyActions")
-	}
-
-	var sb strings.Builder
-
-	// 生成自調用的 async 函數包裝
-	sb.WriteString("(async () => {\n")
-
-	// try 區塊
-	sb.WriteString("  try {\n")
-	for _, action := range tryActions {
-		line := strings.TrimSpace(action.Code)
-		if line != "" {
-			if !strings.HasSuffix(line, ";") {
-				line += ";"
-			}
-			sb.WriteString("    " + line + "\n")
-		}
-	}
-	sb.WriteString("  }")
-
-	// catch 區塊
-	if len(catchActions) > 0 {
-		sb.WriteString(" catch (e) {\n")
-		for _, action := range catchActions {
-			line := strings.TrimSpace(action.Code)
-			if line != "" {
-				if !strings.HasSuffix(line, ";") {
-					line += ";"
-				}
-				sb.WriteString("    " + line + "\n")
-			}
-		}
-		sb.WriteString("  }")
-	}
-
-	// finally 區塊
-	if len(finallyActions) > 0 {
-		sb.WriteString(" finally {\n")
-		for _, action := range finallyActions {
-			line := strings.TrimSpace(action.Code)
-			if line != "" {
-				if !strings.HasSuffix(line, ";") {
-					line += ";"
-				}
-				sb.WriteString("    " + line + "\n")
-			}
-		}
-		sb.WriteString("  }")
-	}
-
-	// 立即執行該函數
-	sb.WriteString("\n})()")
-
-	return JSAction{Code: sb.String()}
-}
+// Deprecated: TryCatch 已被移除。請使用新的流暢 API: js.Try(...).Catch(...) 或 js.Try(...).Catch(...).Finally(...)
+// 此佔位註釋表明舊 API 已被有意移除。
 
 // StoreResult 將 fetch 的結果存儲到指定的變數中，並可以執行額外的動作
 // 用法：WithThen(StoreResult("resultVar", ...其他動作))

@@ -8,8 +8,8 @@ import (
 	"log"
 	"net/http"
 
-	js "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	js "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 func main() {
@@ -271,7 +271,7 @@ func main() {
 					),
 				),
 
-				// 6. TryCatch 錯誤處理
+				// 6. Try-Catch 錯誤處理
 				Div(
 					Props{"class": "card mb-4"},
 					Div(
@@ -293,7 +293,7 @@ func main() {
 									JSAction{Code: "if (randomNum < 0.5) throw new Error('隨機錯誤發生 (運氣不好)')"},
 									js.El("#asyncResult").SetHTML("'<div class=\"alert alert-success\">操作成功完成！</div>'"),
 									js.Log("'異步操作完成'"),
-								).Catch(
+								).Catch("error",
 									js.Log("'捕獲錯誤:', error"),
 									js.El("#asyncResult").SetHTML("'<div class=\"alert alert-danger\">錯誤: ' + error.message + '</div>'"),
 								).End(),

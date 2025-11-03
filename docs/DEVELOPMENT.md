@@ -175,22 +175,26 @@ make help              # Show all available commands
 The pre-commit hook ensures code quality before commits:
 
 **What it checks:**
+
 - Code formatting (`go fmt`)
 - Static analysis (`go vet`)
 - Template linting
 
 **Bypass (not recommended):**
+
 ```bash
 git commit --no-verify
 ```
 
 **Manual installation:**
+
 ```bash
 cp .githooks/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
 **Configure git to use .githooks directory:**
+
 ```bash
 git config core.hooksPath .githooks
 ```
@@ -289,6 +293,7 @@ testdata/                # Test fixtures
 #### Issue 1: Quoted Variable in Expression
 
 **Problem:**
+
 ```go
 Template: `
     <div data-value="${'{{myValue}}'}">
@@ -299,6 +304,7 @@ Template: `
 The variable is treated as a string literal, not interpolated.
 
 **Fix:**
+
 ```go
 Template: `
     <div data-value="${{{myValue}}}">
@@ -308,6 +314,7 @@ Template: `
 #### Issue 2: String Boolean Comparison
 
 **Problem:**
+
 ```go
 Template: `
     <div data-active="${'{{isActive}}' === 'true' ? 'yes' : 'no'}">
@@ -318,6 +325,7 @@ Template: `
 Compares strings, not booleans. Won't work correctly.
 
 **Fix:**
+
 ```go
 Template: `
     <div data-active="${{{isActive}} === true ? 'yes' : 'no'}">
@@ -325,6 +333,7 @@ Template: `
 ```
 
 And pass boolean in Go:
+
 ```go
 Props{"isActive": true}  // not "true"
 ```
@@ -332,6 +341,7 @@ Props{"isActive": true}  // not "true"
 #### Issue 3: String Concatenation in Expression
 
 **Problem:**
+
 ```go
 Template: `
     <div style="${'1px solid ' + {{color}}}">
@@ -343,6 +353,7 @@ The expression evaluator may not handle this correctly.
 
 **Fix:**
 Handle in Go code:
+
 ```go
 // In component function
 borderStyle := fmt.Sprintf("1px solid %s", color)
@@ -356,6 +367,7 @@ Template: `
 ### Best Practices for Templates
 
 1. **Use correct prop types**
+
    ```go
    // ✅ Good
    Props{
@@ -373,6 +385,7 @@ Template: `
    ```
 
 2. **Boolean comparisons**
+
    ```go
    // ✅ Good
    ${{{flag}} === true}
@@ -382,6 +395,7 @@ Template: `
    ```
 
 3. **String operations**
+
    ```go
    // ✅ Good - in Go
    value := strings.TrimSpace(input)
@@ -392,6 +406,7 @@ Template: `
    ```
 
 4. **Complex calculations**
+
    ```go
    // ✅ Good - in Go
    result := calculate(a, b, c)
@@ -461,6 +476,7 @@ make check
 ```
 
 This runs:
+
 1. `go fmt`
 2. `go vet`
 3. Template linter
@@ -540,7 +556,7 @@ Button(Props{
             js.Const("response", "await fetch('/api/data')"),
             js.Const("data", "await response.json()"),
             js.Log("data"),
-        ).Catch(
+        ).Catch("error",
             js.Log("'Error: ' + error.message"),
         ).End(),
     ),
@@ -589,11 +605,13 @@ Props{
 **Symptom:** `{{variable}}` appears literally in output
 
 **Causes:**
+
 1. Variable not in props
 2. Wrong prop name
 3. Template not being processed
 
 **Solution:**
+
 ```go
 // Ensure prop is passed
 comp := MyComponent(Props{
@@ -611,6 +629,7 @@ Template: `<div>{{variable}}</div>`
 **Common causes:**
 
 1. **Missing quotes in strings**
+
    ```go
    // ❌ Wrong
    js.Log("Hello")
@@ -620,6 +639,7 @@ Template: `<div>{{variable}}</div>`
    ```
 
 2. **Using await without AsyncFn/AsyncDo**
+
    ```go
    // ❌ Wrong
    js.Do(js.Const("data", "await fetch('/api')"))
@@ -629,6 +649,7 @@ Template: `<div>{{variable}}</div>`
    ```
 
 3. **Missing event parameter**
+
    ```go
    // ❌ Wrong - using event without declaring
    js.Do(js.Call("event.preventDefault"))
@@ -644,6 +665,7 @@ Template: `<div>{{variable}}</div>`
 **Cause:** Each example file has its own `main()` function
 
 **Solution:**
+
 ```bash
 # Don't build all examples at once
 go build ./examples  # ❌ Wrong
@@ -660,6 +682,7 @@ make build-examples  # ✅ Correct
 **Symptom:** Linter reports issues
 
 **Solution:**
+
 1. Read the error message carefully
 2. Use `-fix` flag for suggestions: `./template-linter -fix ../../`
 3. Refer to [TEMPLATE_EXPRESSION_FIX_GUIDE.md](../TEMPLATE_EXPRESSION_FIX_GUIDE.md)
@@ -682,6 +705,7 @@ Follow [Semantic Versioning](https://semver.org/):
    - Update version in documentation
 
 2. **Run all checks**
+
    ```bash
    make check
    make test-coverage
@@ -693,6 +717,7 @@ Follow [Semantic Versioning](https://semver.org/):
    - Update README if needed
 
 4. **Create git tag**
+
    ```bash
    git tag -a v1.2.0 -m "Release v1.2.0"
    git push origin v1.2.0
@@ -712,6 +737,7 @@ Follow [Semantic Versioning](https://semver.org/):
 ### Workflow
 
 1. **Create feature branch**
+
    ```bash
    git checkout -b feature/my-feature
    ```
@@ -722,15 +748,18 @@ Follow [Semantic Versioning](https://semver.org/):
    - Update documentation
 
 3. **Run checks**
+
    ```bash
    make check
    ```
 
 4. **Commit**
+
    ```bash
    git add .
    git commit -m "Add my feature"
    ```
+
    (Pre-commit hook runs automatically)
 
 5. **Push and create PR**

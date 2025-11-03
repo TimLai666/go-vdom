@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	js "github.com/TimLai666/go-vdom/jsdsl"
 	. "github.com/TimLai666/go-vdom/dom"
+	js "github.com/TimLai666/go-vdom/jsdsl"
 )
 
 func main() {
@@ -279,7 +279,7 @@ js.ForEachWithIndexJS("numbers", "num", "idx",
 											JSAction{Code: "ul.appendChild(li)"},
 										),
 										JSAction{Code: "container.appendChild(ul)"},
-									).Catch(
+									).Catch("error",
 										// Catch 區塊（錯誤對象為 error）
 										JSAction{Code: "container.innerHTML = '<div class=\"alert alert-danger\">載入失敗: ' + error.message + '</div>'"},
 									).End(),

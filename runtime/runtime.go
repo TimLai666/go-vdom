@@ -53,69 +53,19 @@ func ClientRuntime() string {
     });
   }
 
-  // 綁定所有帶有 data-gvd-server-handler 屬性的元素（未來擴展用）
-  function bindServerHandlers() {
-    var elements = document.querySelectorAll('[data-gvd-server-handler]');
-
-    elements.forEach(function(el) {
-      var handlerAttr = el.getAttribute('data-gvd-server-handler');
-      if (!handlerAttr) return;
-
-      var parts = handlerAttr.split('|');
-      if (parts.length !== 2) return;
-
-      var handlerID = parts[0];
-      var eventType = parts[1];
-
-      // 伺服器端 handler 需要通過 AJAX 發送請求
-      el.addEventListener(eventType, function(evt) {
-        evt.preventDefault();
-
-        // 發送到伺服器端處理
-        fetch('/api/handler', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            handlerID: handlerID,
-            eventType: eventType,
-            elementID: el.id || null,
-          }),
-        })
-        .then(function(response) {
-          if (!response.ok) {
-            throw new Error('Server handler failed: ' + response.status);
-          }
-          return response.json();
-        })
-        .then(function(data) {
-          console.log('Server handler response:', data);
-          // 可以在這裡處理伺服器返回的數據
-        })
-        .catch(function(error) {
-          console.error('Server handler error:', error);
-        });
-      });
-    });
-  }
-
   // 在 DOM 準備就緒時綁定所有 handler
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       bindHandlers();
-      bindServerHandlers();
     });
   } else {
     // DOM 已經加載完成，立即綁定
     bindHandlers();
-    bindServerHandlers();
   }
 
   // 提供一個公開的方法來重新綁定 handler（用於動態內容）
   window.__gvd.rebind = function() {
     bindHandlers();
-    bindServerHandlers();
   };
 })();
 `
