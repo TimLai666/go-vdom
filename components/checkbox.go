@@ -114,7 +114,7 @@ var Checkbox = Component(
 		Div(
 			Props{
 				"style": `
-					display: {{helpDisplay}};
+					display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: #64748b;
@@ -207,7 +207,6 @@ var Checkbox = Component(
 		"checkboxSize": "1.25rem",
 		"fontSize":     "0.9375rem",
 		"borderRadius": "0.25rem",
-		"helpDisplay":  "none",
 		"colorRgb":     "59, 130, 246",
 	},
 )
@@ -248,7 +247,7 @@ var CheckboxGroup = Component(
 		Div(
 			Props{
 				"style": `
-					display: {{labelDisplay}};
+					display: ${'{{label}}'.trim() ? 'block' : 'none'};
 					margin-bottom: 0.75rem;
 					font-weight: 500;
 					font-size: 0.9375rem;
@@ -263,7 +262,7 @@ var CheckboxGroup = Component(
 				"data-name": "{{name}}",
 				"style": `
 					display: flex;
-					flex-direction: {{flexDirection}};
+					flex-direction: ${'{{direction}}' === 'horizontal' ? 'row' : 'column'};
 					gap: 0.75rem;
 				`,
 			},
@@ -271,7 +270,7 @@ var CheckboxGroup = Component(
 		Div(
 			Props{
 				"style": `
-					display: {{helpDisplay}};
+					display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: #64748b;
@@ -390,20 +389,17 @@ var CheckboxGroup = Component(
 		});
 	`})),
 	PropsDef{
-		"id":            "",
-		"name":          "",
-		"label":         "",
-		"options":       "",
-		"values":        "",
-		"required":      false,
-		"disabled":      false,
-		"direction":     "vertical",
-		"size":          "md",
-		"helpText":      "",
-		"color":         "#3b82f6",
-		"flexDirection": "column",
-		"labelDisplay":  "none",
-		"helpDisplay":   "none",
-		"colorRgb":      "59, 130, 246",
+		"id":        "",
+		"name":      "",
+		"label":     "",
+		"options":   "",
+		"values":    "",
+		"required":  false,
+		"disabled":  false,
+		"direction": "vertical",
+		"size":      "md",
+		"helpText":  "",
+		"color":     "#3b82f6",
+		"colorRgb":  "59, 130, 246",
 	},
 )

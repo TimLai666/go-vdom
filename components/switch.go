@@ -29,6 +29,7 @@ import (
 //	  "name": "notifications",
 //	  "label": "啟用通知",
 //	  "checked": "true",
+//	  "onColor": "#10b981",
 //	})
 var Switch = Component(
 	Div(
@@ -42,7 +43,7 @@ var Switch = Component(
 				"style": `
 					display: flex;
 					align-items: center;
-					flex-direction: {{flexDirection}};
+					flex-direction: ${'{{labelPosition}}' === 'left' ? 'row' : 'row'};
 					gap: 0.75rem;
 				`,
 			},
@@ -50,12 +51,12 @@ var Switch = Component(
 				Props{
 					"for": "{{id}}",
 					"style": `
-						display: inline-flex;
+						display: ${'{{label}}'.trim() ? 'inline-flex' : 'none'};
 						align-items: center;
 						cursor: pointer;
 						user-select: none;
-						order: {{labelOrder}};
-						font-size: {{fontSize}};
+						order: ${'{{labelPosition}}' === 'left' ? '0' : '1'};
+						font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
 						color: #374151;
 					`,
 				},
@@ -93,16 +94,19 @@ var Switch = Component(
 				),
 				Span(
 					Props{
-						"class": "switch-track",
+						"class":          "switch-track",
+						"data-on-color":  "{{onColor}}",
+						"data-off-color": "{{offColor}}",
 						"style": `
 							display: inline-block;
-							width: {{trackWidth}};
-							height: {{trackHeight}};
+							width: ${'{{size}}' === 'sm' ? '2.25rem' : '{{size}}' === 'lg' ? '3.25rem' : '2.75rem'};
+							height: ${'{{size}}' === 'sm' ? '1.25rem' : '{{size}}' === 'lg' ? '1.75rem' : '1.5rem'};
 							background-color: {{offColor}};
-							border-radius: calc({{trackHeight}} / 2);
+							border-radius: 9999px;
 							transition: all 0.2s ease;
 							position: relative;
-							cursor: pointer;
+							cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : 'pointer'};
+							opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
 						`,
 					},
 					Span(
@@ -110,8 +114,8 @@ var Switch = Component(
 							"class": "switch-thumb",
 							"style": `
 								display: block;
-								width: calc({{trackHeight}} - 4px);
-								height: calc({{trackHeight}} - 4px);
+								width: calc(${'{{size}}' === 'sm' ? '1.25rem' : '{{size}}' === 'lg' ? '1.75rem' : '1.5rem'} - 4px);
+								height: calc(${'{{size}}' === 'sm' ? '1.25rem' : '{{size}}' === 'lg' ? '1.75rem' : '1.5rem'} - 4px);
 								background-color: white;
 								border-radius: 50%;
 								transition: all 0.2s ease;
@@ -128,7 +132,7 @@ var Switch = Component(
 		Div(
 			Props{
 				"style": `
-					display: {{helpDisplay}};
+					display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
 					color: #64748b;
@@ -145,11 +149,11 @@ var Switch = Component(
 		const thumb = track.querySelector('.switch-thumb');
 		if (!track || !thumb) return;
 
-		const onColor = '{{onColor}}';
-		const offColor = '{{offColor}}';
-		const trackWidth = '{{trackWidth}}';
-		const trackHeight = '{{trackHeight}}';
-		const colorRgb = '{{colorRgb}}';
+		const onColor = track.getAttribute('data-on-color') || '{{onColor}}';
+		const offColor = track.getAttribute('data-off-color') || '{{offColor}}';
+		const size = '{{size}}';
+		const trackWidth = size === 'sm' ? '2.25rem' : size === 'lg' ? '3.25rem' : '2.75rem';
+		const trackHeight = size === 'sm' ? '1.25rem' : size === 'lg' ? '1.75rem' : '1.5rem';
 
 		function updateState() {
 			const checked = input.checked;
@@ -166,15 +170,15 @@ var Switch = Component(
 			if (disabled) {
 				track.style.opacity = '0.6';
 				track.style.cursor = 'not-allowed';
-				thumb.style.opacity = '0.6';
 			} else {
 				track.style.opacity = '1';
 				track.style.cursor = 'pointer';
-				thumb.style.opacity = '1';
 			}
 		}
 
 		// 初始化
+		input.checked = '{{checked}}' === 'true';
+		input.disabled = '{{disabled}}' === 'true';
 		updateState();
 
 		// 點擊 track 切換狀態
@@ -199,7 +203,7 @@ var Switch = Component(
 		// Focus 效果
 		input.addEventListener('focus', function() {
 			if (!this.disabled) {
-				track.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
+				track.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
 			}
 		});
 
@@ -212,19 +216,12 @@ var Switch = Component(
 		"name":          "",
 		"label":         "",
 		"checked":       false,
-		"required":      false,
 		"disabled":      false,
+		"required":      false,
 		"size":          "md",
 		"labelPosition": "right",
+		"helpText":      "",
 		"onColor":       "#3b82f6",
 		"offColor":      "#d1d5db",
-		"helpText":      "",
-		"trackWidth":    "2.75rem",
-		"trackHeight":   "1.5rem",
-		"fontSize":      "0.9375rem",
-		"flexDirection": "row",
-		"labelOrder":    "1",
-		"helpDisplay":   "none",
-		"colorRgb":      "59, 130, 246",
 	},
 )

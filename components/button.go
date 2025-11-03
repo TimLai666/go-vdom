@@ -13,10 +13,10 @@ import (
 //   - variant: 按鈕變種，可選 "filled"(填充)、"outlined"(邊框)、"text"(純文字)，預設 "filled"
 //   - color: 主色調，預設現代藍 "#3b82f6"
 //   - size: 尺寸，可選 "sm"(小)、"md"(中)、"lg"(大)，預設 "md"
-//   - fullWidth: 是否填滿父容器寬度，預設 "false"
+//   - fullWidth: 是否填滿父容器寬度，預設 false
 //   - rounded: 圓角程度，可選 "none"、"sm"、"md"、"lg"、"full"，預設 "md"
-//   - disabled: 是否禁用，預設 "false"
-//   - id: 按鈕ID，必填，用於JavaScript事件綁定
+//   - disabled: 是否禁用，預設 false
+//   - id: 按鈕ID，用於JavaScript事件綁定
 //   - name: 按鈕名稱，預設空
 //   - type: 按鈕類型，預設 "button"
 //   - weight: 字重，預設 "500"
@@ -25,13 +25,14 @@ import (
 //
 // 用法:
 //
-//	Btn(Props{"id": "submit-btn", "color": "#8b5cf6", "size": "lg"}, "點擊我")
-//	Btn(Props{"id": "confirm-btn", "variant": "outlined", "icon": "&#10003;"}, "確認")
+//	Btn(Props{"id": "submit-btn", "color": "#8b5cf6", "size": "lg"}, Text("點擊我"))
+//	Btn(Props{"id": "confirm-btn", "variant": "outlined", "icon": "&#10003;"}, Text("確認"))
 var Btn = Component(
 	Div(
 		Props{},
 		Button(
-			Props{"id": "btn-{{id}}",
+			Props{
+				"id":       "btn-{{id}}",
 				"name":     "{{name}}",
 				"type":     "{{type}}",
 				"disabled": "{{disabled}}",
@@ -41,162 +42,188 @@ var Btn = Component(
 					justify-content: center;
 					gap: 0.5rem;
 					font-family: inherit;
-					font-size: {{fontSize}};
+					font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1.125rem' : '0.95rem'};
 					font-weight: {{weight}};
 					line-height: 1.5;
 					text-decoration: none;
-					vertical-align: middle;					cursor: {{cursor}};
+					vertical-align: middle;
+					cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : 'pointer'};
 					user-select: none;
-					padding: {{paddingY}} {{paddingX}};
-					border-radius: {{buttonRadius}};
+					padding: ${'{{size}}' === 'sm' ? '0.375rem 1rem' : '{{size}}' === 'lg' ? '0.625rem 1.5rem' : '0.5rem 1.25rem'};
+					border-radius: ${'{{rounded}}' === 'none' ? '0' : '{{rounded}}' === 'sm' ? '0.25rem' : '{{rounded}}' === 'lg' ? '0.75rem' : '{{rounded}}' === 'full' ? '9999px' : '0.5rem'};
 					transition: all 180ms ease-out;
 					position: relative;
 					overflow: hidden;
-					width: {{width}};
-					height: {{height}};
+					width: ${'{{fullWidth}}' === 'true' ? '100%' : 'auto'};
+					height: auto;
 					letter-spacing: 0.01em;
-					box-shadow: {{boxShadow}};
-					background: {{background}};
-					color: {{textColor}};
-					border: {{border}};
+					box-shadow: ${'{{variant}}' === 'outlined' ? 'none' : '{{variant}}' === 'text' ? 'none' : '0 1px 3px rgba(0,0,0,0.1)'};
+					background: ${'{{variant}}' === 'outlined' ? 'transparent' : '{{variant}}' === 'text' ? 'transparent' : '{{color}}'};
+					color: ${'{{variant}}' === 'outlined' ? '{{color}}' : '{{variant}}' === 'text' ? '{{color}}' : '#ffffff'};
+					border: ${'{{variant}}' === 'outlined' ? '1px solid {{color}}' : '1px solid transparent'};
 					text-align: center;
-					opacity: {{opacity}};
+					opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
 					text-transform: {{textTransform}};
 				`,
 			},
 			Span(
 				Props{
 					"style": `
-						display: {{iconLeftDisplay}};
+						display: ${'{{icon}}'.trim() !== '' && '{{iconPosition}}' !== 'right' ? 'inline' : 'none'};
 						margin-right: 0.35rem;
 						margin-left: -0.15rem;
 					`,
 				},
-				"{{iconLeft}}",
+				"{{icon}}",
 			),
 			"{{children}}",
 			Span(
 				Props{
 					"style": `
-						display: {{iconRightDisplay}};
+						display: ${'{{icon}}'.trim() !== '' && '{{iconPosition}}' === 'right' ? 'inline' : 'none'};
 						margin-left: 0.35rem;
 						margin-right: -0.15rem;
 					`,
 				},
-				"{{iconRight}}",
+				"{{icon}}",
 			),
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
-					const btn = document.getElementById('btn-{{id}}');
-					if (!btn) return;
-					// 確保禁用狀態正確設置
-					btn.disabled = btn.getAttribute('disabled') === 'true';
+		const btn = document.getElementById('btn-{{id}}');
+		if (!btn) return;
 
-					// 添加點擊波紋效果
-					btn.addEventListener('click', function(e) {
-						if (!this.disabled) {
-							const rect = this.getBoundingClientRect();
-							const ripple = document.createElement('div');
-							const size = Math.max(rect.width, rect.height);
-							const x = e.clientX - rect.left - size/2;
-							const y = e.clientY - rect.top - size/2;
-							ripple.style.cssText =
-								'position: absolute;' +
-								'left: ' + x + 'px;' +
-								'top: ' + y + 'px;' +
-								'width: ' + size + 'px;' +
-								'height: ' + size + 'px;' +
-								'background: currentColor;' +
-								'border-radius: 50%;' +
-								'opacity: 0.3;' +
-								'transform: scale(0);' +
-								'animation: ripple 0.6s linear;' +
-								'pointer-events: none;';
+		// 確保禁用狀態正確設置
+		btn.disabled = btn.getAttribute('disabled') === 'true';
 
-							this.appendChild(ripple);
+		// 添加點擊波紋效果
+		btn.addEventListener('click', function(e) {
+			if (!this.disabled) {
+				const rect = this.getBoundingClientRect();
+				const ripple = document.createElement('div');
+				const size = Math.max(rect.width, rect.height);
+				const x = e.clientX - rect.left - size/2;
+				const y = e.clientY - rect.top - size/2;
+				ripple.style.cssText =
+					'position: absolute;' +
+					'left: ' + x + 'px;' +
+					'top: ' + y + 'px;' +
+					'width: ' + size + 'px;' +
+					'height: ' + size + 'px;' +
+					'background: currentColor;' +
+					'border-radius: 50%;' +
+					'opacity: 0.3;' +
+					'transform: scale(0);' +
+					'animation: ripple 0.6s linear;' +
+					'pointer-events: none;';
 
-							setTimeout(function(){ ripple.remove(); }, 600);
-							// 發出自定義點擊事件
-							this.dispatchEvent(new CustomEvent('btn:click', {
-								detail: { id: '{{id}}' }
-							}));
-						}
-					});
+				this.appendChild(ripple);
 
-					// 添加懸停效果
-					btn.addEventListener('mouseenter', function() {
-						if (!this.disabled) {
-							this.style.transform = 'translateY(-1px)';
-							this.style.background = '{{hoverBackground}}';
-							this.style.borderColor = '{{hoverBorderColor}}';
-							this.style.color = '{{hoverTextColor}}';
-							this.style.boxShadow = '{{hoverBoxShadow}}';
-							this.dispatchEvent(new CustomEvent('btn:hover'));
-						}
-					});
+				setTimeout(function(){ ripple.remove(); }, 600);
 
-					btn.addEventListener('mouseleave', function() {
-						if (!this.disabled) {
-							this.style.transform = 'translateY(0)';
-							this.style.borderColor = '{{border}}'.split(' ')[2];
-							this.style.color = '{{textColor}}';
-							this.style.boxShadow = '{{boxShadow}}';
-						}
-					});
+				// 發出自定義點擊事件
+				this.dispatchEvent(new CustomEvent('btn:click', {
+					detail: { id: '{{id}}' }
+				}));
+			}
+		});
 
-					// 添加 focus 效果
-					btn.addEventListener('focus', function() {
-						if (!this.disabled) {
-							this.style.outline = 'none';
-							this.style.boxShadow = '0 0 0 3px {{focusRingColor}}';
-						}
-					});
+		// 添加懸停效果 - 根據 variant 調整
+		const variant = '{{variant}}';
+		const color = '{{color}}';
+		const isDisabled = '{{disabled}}' === 'true';
 
-					btn.addEventListener('blur', function() {
-						if (!this.disabled) {
-							this.style.boxShadow = '{{boxShadow}}';
-						}
-					});
-				} catch (err) {
-					console.error('Btn init error for id={{id}}', err);
-				}`})),
-	PropsDef{ // 主要參數
-		"id":            "1",       // 按鈕ID，必須提供
-		"variant":       "filled",  // 按鈕樣式：filled, outlined, text
-		"color":         "#3b82f6", // 主色調
-		"size":          "md",      // 尺寸：sm, md, lg
-		"fullWidth":     false,     // 是否填滿父容器寬度
-		"rounded":       "md",      // 圓角：none, sm, md, lg, full
-		"disabled":      false,     // 是否禁用
-		"name":          "",        // 按鈕名稱
-		"type":          "button",  // 按鈕類型
-		"weight":        "500",     // 字重
-		"icon":          "",        // 圖標HTML字符
-		"iconPosition":  "left",    // 圖標位置：left, right
-		"textTransform": "none",    // 文字轉換：none, uppercase
+		if (!isDisabled) {
+			btn.addEventListener('mouseenter', function() {
+				this.style.transform = 'translateY(-1px)';
 
-		// 計算屬性 (不應由用戶直接設置)
-		"fontSize":         "0.95rem",
-		"paddingX":         "1.25rem",
-		"paddingY":         "0.5rem",
-		"buttonRadius":     "0.5rem",
-		"width":            "auto",
-		"height":           "auto",
-		"background":       "#3b82f6",
-		"textColor":        "#ffffff",
-		"border":           "1px solid transparent",
-		"boxShadow":        "0 1px 3px rgba(0,0,0,0.1)",
-		"opacity":          "1",
-		"hoverBackground":  "#2563eb",
-		"hoverTextColor":   "#ffffff",
-		"hoverBorderColor": "transparent",
-		"hoverBoxShadow":   "0 4px 6px rgba(0,0,0,0.12)",
-		"focusRingColor":   "rgba(59,130,246,0.25)",
-		"cursor":           "pointer",
-		"iconLeft":         "",
-		"iconRight":        "",
-		"iconLeftDisplay":  "none",
-		"iconRightDisplay": "none",
+				if (variant === 'filled') {
+					// filled 變體：背景變深
+					this.style.background = darkenColor(color);
+					this.style.boxShadow = '0 4px 6px rgba(0,0,0,0.12)';
+				} else if (variant === 'outlined') {
+					// outlined 變體：添加淺色背景
+					this.style.background = color + '10';
+					this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
+				} else {
+					// text 變體：只添加淺色背景
+					this.style.background = color + '10';
+				}
+
+				this.dispatchEvent(new CustomEvent('btn:hover'));
+			});
+
+			btn.addEventListener('mouseleave', function() {
+				this.style.transform = 'translateY(0)';
+
+				if (variant === 'filled') {
+					this.style.background = color;
+					this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+				} else if (variant === 'outlined') {
+					this.style.background = 'transparent';
+					this.style.boxShadow = 'none';
+				} else {
+					this.style.background = 'transparent';
+				}
+			});
+
+			// 添加 focus 效果
+			btn.addEventListener('focus', function() {
+				this.style.outline = 'none';
+				this.style.boxShadow = '0 0 0 3px ' + color + '40';
+			});
+
+			btn.addEventListener('blur', function() {
+				if (variant === 'filled') {
+					this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+				} else {
+					this.style.boxShadow = 'none';
+				}
+			});
+		}
+
+		// 輔助函數：使顏色變深
+		function darkenColor(hex) {
+			// 簡單的顏色變深邏輯
+			const rgb = hexToRgb(hex);
+			if (!rgb) return hex;
+
+			const factor = 0.85;
+			const r = Math.floor(rgb.r * factor);
+			const g = Math.floor(rgb.g * factor);
+			const b = Math.floor(rgb.b * factor);
+
+			return rgbToHex(r, g, b);
+		}
+
+		function hexToRgb(hex) {
+			const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+			return result ? {
+				r: parseInt(result[1], 16),
+				g: parseInt(result[2], 16),
+				b: parseInt(result[3], 16)
+			} : null;
+		}
+
+		function rgbToHex(r, g, b) {
+			return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+		}
+	} catch (err) {
+		console.error('Btn init error for id={{id}}', err);
+	}`})),
+	PropsDef{
+		"id":            "",
+		"variant":       "filled",
+		"color":         "#3b82f6",
+		"size":          "md",
+		"fullWidth":     false,
+		"rounded":       "md",
+		"disabled":      false,
+		"name":          "",
+		"type":          "button",
+		"weight":        "500",
+		"icon":          "",
+		"iconPosition":  "left",
+		"textTransform": "none",
 	},
 )

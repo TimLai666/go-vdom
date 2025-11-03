@@ -49,12 +49,12 @@ var Modal = Component(
 				left: 0;
 				width: 100%;
 				height: 100%;
-				display: {{display}};
+				display: ${'{{open}}' === 'true' ? 'block' : 'none'};
 				z-index: {{zIndex}};
 				overflow-x: hidden;
-				overflow-y: {{overlayOverflow}};
-				animation: {{overlayAnimation}} 0.3s ease;
-				pointer-events: {{pointerEvents}};
+				overflow-y: auto;
+				animation: modalOverlayFadeIn 0.3s ease;
+				pointer-events: ${'{{open}}' === 'true' ? 'auto' : 'none'};
 
 				@keyframes modalOverlayFadeIn {
 					0% { opacity: 0; }
@@ -84,16 +84,16 @@ var Modal = Component(
 			Props{
 				"style": `
 					position: relative;
-					width: {{modalWidth}};
-					max-width: {{maxWidth}};
-					margin: {{margin}};
+					width: ${'{{size}}' === 'xs' ? '300px' : '{{size}}' === 'sm' ? '400px' : '{{size}}' === 'md' ? '500px' : '{{size}}' === 'lg' ? '700px' : '{{size}}' === 'xl' ? '900px' : '100%'};
+					max-width: calc(100% - 2rem);
+					margin: ${'{{centered}}' === 'true' ? '3.75rem auto' : '1rem auto'};
 					background: #ffffff;
-					border-radius: {{borderRadius}};
-					box-shadow: {{boxShadow}};
+					border-radius: ${'{{radius}}' === 'none' ? '0' : '{{radius}}' === 'sm' ? '0.25rem' : '{{radius}}' === 'lg' ? '0.75rem' : '0.5rem'};
+					box-shadow: ${'{{elevation}}' === '0' ? 'none' : '{{elevation}}' === '1' ? '0 1px 3px rgba(0,0,0,0.1)' : '{{elevation}}' === '2' ? '0 4px 6px rgba(0,0,0,0.1)' : '{{elevation}}' === '3' ? '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)' : '{{elevation}}' === '4' ? '0 20px 30px -10px rgba(0,0,0,0.15)' : '0 25px 40px -15px rgba(0,0,0,0.2)'};
 					display: flex;
 					flex-direction: column;
-					max-height: {{maxHeight}};
-					animation: {{contentAnimation}} 0.3s ease;
+					max-height: calc(100vh - 7.5rem);
+					animation: ${'{{animation}}' === 'slide' ? 'modalSlideIn' : '{{animation}}' === 'zoom' ? 'modalZoomIn' : 'modalFadeIn'} 0.3s ease;
 
 					@keyframes modalFadeIn {
 						0% { opacity: 0; transform: translate(0, -20px); }
@@ -114,10 +114,9 @@ var Modal = Component(
 			Div(
 				Props{
 					"style": `
-						display: {{headerDisplay}};
+						display: ${'{{hideHeader}}' === 'true' || '{{title}}'.trim() === '' ? 'none' : 'flex'};
 						padding: 1rem 1.5rem;
 						border-bottom: 1px solid #f1f5f9;
-						display: flex;
 						align-items: center;
 						justify-content: space-between;
 					`,
@@ -136,7 +135,7 @@ var Modal = Component(
 				Button(
 					Props{
 						"style": `
-							display: {{closeButtonDisplay}};
+							display: ${'{{closeButton}}' === 'false' ? 'none' : 'block'};
 							background: transparent;
 							border: none;
 							font-size: 1.5rem;
@@ -157,7 +156,7 @@ var Modal = Component(
 				Props{
 					"style": `
 						padding: 1.5rem;
-						overflow-y: {{contentOverflow}};
+						overflow-y: ${'{{scrollable}}' === 'true' ? 'auto' : 'visible'};
 					`,
 				},
 				"{{children}}",
@@ -165,10 +164,9 @@ var Modal = Component(
 			Div(
 				Props{
 					"style": `
-						display: {{footerDisplay}};
+						display: ${'{{hideFooter}}' === 'true' || '{{footer}}'.trim() === '' ? 'none' : 'flex'};
 						padding: 1rem 1.5rem;
 						border-top: 1px solid #f1f5f9;
-						display: flex;
 						align-items: center;
 						justify-content: flex-end;
 						gap: 0.75rem;
@@ -249,7 +247,6 @@ if ('{{open}}' === 'true') {
 	`})),
 	nil,
 	PropsDef{
-		// 主要參數
 		"title":               "",                // 對話框標題
 		"open":                false,             // 是否顯示
 		"size":                "md",              // 尺寸: xs, sm, md, lg, xl, full
@@ -266,22 +263,5 @@ if ('{{open}}' === 'true') {
 		"hideHeader":          false,             // 是否隱藏頭部
 		"hideFooter":          false,             // 是否隱藏底部
 		"zIndex":              "1050",            // 層級
-
-		// 計算屬性
-		"display":            "none",
-		"pointerEvents":      "none",
-		"modalWidth":         "500px",
-		"maxWidth":           "calc(100% - 2rem)",
-		"margin":             "3.75rem auto",
-		"maxHeight":          "calc(100vh - 7.5rem)",
-		"borderRadius":       "0.5rem",
-		"boxShadow":          "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-		"headerDisplay":      "flex",
-		"footerDisplay":      "none",
-		"closeButtonDisplay": "block",
-		"contentOverflow":    "auto",
-		"overlayOverflow":    "auto",
-		"contentAnimation":   "modalFadeIn",
-		"overlayAnimation":   "modalOverlayFadeIn",
 	},
 )

@@ -44,21 +44,21 @@ var Card = Component(
 				width: 100%;
 				max-width: {{maxWidth}};
 				box-sizing: border-box;
-				box-shadow: 0 {{shadowY}}px {{shadowBlur}}px rgba(0,0,0,{{shadowOpacity}});
+				box-shadow: ${'{{elevation}}' === '0' ? 'none' : '{{elevation}}' === '1' ? '0 1px 3px rgba(0,0,0,0.05)' : '{{elevation}}' === '2' ? '0 4px 16px rgba(0,0,0,0.08)' : '{{elevation}}' === '3' ? '0 8px 24px rgba(0,0,0,0.10)' : '{{elevation}}' === '4' ? '0 12px 32px rgba(0,0,0,0.12)' : '0 16px 40px rgba(0,0,0,0.14)'};
 				transition: all 0.2s ease;
 				overflow: hidden;
 				display: flex;
 				flex-direction: column;
 				gap: {{contentGap}};
 				border-top: 3px solid {{accentColor}};
-				cursor: {{cursor}};
+				cursor: ${'{{hoverable}}' === 'false' ? 'default' : 'pointer'};
 			`,
 		},
 		Div(
 			Props{
 				"class": "card-header",
 				"style": `
-					display: {{titleDisplay}};
+					display: ${'{{title}}'.trim() ? 'block' : 'none'};
 					margin: 0 0 0.5rem 0;
 					padding-bottom: 0.75rem;
 					border-bottom: 1px solid rgba(0,0,0,0.06);
@@ -111,7 +111,16 @@ var Card = Component(
 
 				card.addEventListener('mouseleave', () => {
 					card.style.transform = 'translateY(0)';
-					card.style.boxShadow = '0 {{shadowY}}px {{shadowBlur}}px rgba(0,0,0,{{shadowOpacity}})';
+					const elevation = parseInt(card.dataset.elevation) || 2;
+					const shadows = {
+						'0': 'none',
+						'1': '0 1px 3px rgba(0,0,0,0.05)',
+						'2': '0 4px 16px rgba(0,0,0,0.08)',
+						'3': '0 8px 24px rgba(0,0,0,0.10)',
+						'4': '0 12px 32px rgba(0,0,0,0.12)',
+						'5': '0 16px 40px rgba(0,0,0,0.14)'
+					};
+					card.style.boxShadow = shadows[elevation] || shadows['2'];
 				});
 
 				card.addEventListener('click', () => {
@@ -138,11 +147,10 @@ var Card = Component(
 		}
 	`})),
 	PropsDef{
-		// 主要屬性
 		"title":        "",        // 卡片標題
 		"titleWeight":  "500",     // 標題字重
 		"titleColor":   "#1a2b4a", // 標題顏色
-		"elevation":    "2",       // 陰影高度
+		"elevation":    "2",       // 陰影高度 0-5
 		"accentColor":  "#3b82f6", // 強調色
 		"maxWidth":     "480px",   // 最大寬度
 		"padding":      "1.75rem", // 內邊距
@@ -150,12 +158,5 @@ var Card = Component(
 		"background":   "#ffffff", // 背景色
 		"contentGap":   "1.25rem", // 內容間距
 		"hoverable":    true,      // 是否啟用懸停效果
-
-		// 計算屬性
-		"titleDisplay":  "block",   // 標題顯示方式
-		"shadowY":       "4",       // 陰影Y偏移
-		"shadowBlur":    "16",      // 陰影模糊半徑
-		"shadowOpacity": "0.08",    // 陰影不透明度
-		"cursor":        "pointer", // 滑鼠游標樣式
 	},
 )

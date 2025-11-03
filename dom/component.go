@@ -48,28 +48,6 @@ func Component(template VNode, onDOMReadyCallback *JSAction, defaultProps ...Pro
 			mergedProps["id"] = genComponentID()
 		}
 
-		// 計算派生屬性（避免在模板中使用 JS-style 的 ${...} 表達式）
-		// labelDisplay: 預設用於群組 label（block / none）
-		if lbl, ok := mergedProps["label"]; ok && strings.TrimSpace(fmt.Sprint(lbl)) != "" {
-			mergedProps["labelDisplay"] = "block"
-		} else {
-			mergedProps["labelDisplay"] = "none"
-		}
-
-		// helpDisplay: 當 helpText 有內容時為 block
-		if ht, ok := mergedProps["helpText"]; ok && strings.TrimSpace(fmt.Sprint(ht)) != "" {
-			mergedProps["helpDisplay"] = "block"
-		} else {
-			mergedProps["helpDisplay"] = "none"
-		}
-
-		// flexDirection: direction => row / column
-		if dir, ok := mergedProps["direction"]; ok && strings.TrimSpace(fmt.Sprint(dir)) == "horizontal" {
-			mergedProps["flexDirection"] = "row"
-		} else {
-			mergedProps["flexDirection"] = "column"
-		}
-
 		// 使用模板與合併後的 props 產生 VNode (先進行模板插值)
 		node := interpolate(template, mergedProps, children)
 
@@ -127,7 +105,6 @@ func interpolate(template VNode, p Props, children []VNode) VNode {
 		}
 	}
 
-
 	newChildren := []VNode{}
 	for _, c := range template.Children {
 		if c.Tag == "" {
@@ -180,34 +157,136 @@ func interpolateString(s string, p Props) string {
 		return ""
 	})
 
-	// 處理形如 ${'somevalue'.trim() ? 'A' : 'B'} 的情況
-	trimTernaryRe := regexp.MustCompile(`\$\{\s*'([^']*)'\.trim\(\)\s*\?\s*'([^']*)'\s*:\s*'([^']*)'\s*\}`)
-	res = trimTernaryRe.ReplaceAllStringFunc(res, func(m string) string {
-		sub := trimTernaryRe.FindStringSubmatch(m)
-		if len(sub) >= 4 {
-			val := strings.TrimSpace(sub[1])
-			if val != "" {
-				return sub[2]
-			}
-			return sub[3]
-		}
-		return m
-	})
-
-	// 處理形如 ${'X' === 'Y' ? 'A' : 'B'} 或 ${'X' == 'Y' ? 'A' : 'B'}
-	eqTernaryRe := regexp.MustCompile(`\$\{\s*'([^']*)'\s*(?:===|==)\s*'([^']*)'\s*\?\s*'([^']*)'\s*:\s*'([^']*)'\s*\}`)
-	res = eqTernaryRe.ReplaceAllStringFunc(res, func(m string) string {
-		sub := eqTernaryRe.FindStringSubmatch(m)
-		if len(sub) >= 5 {
-			left := sub[1]
-			right := sub[2]
-			if left == right {
-				return sub[3]
-			}
-			return sub[4]
-		}
-		return m
-	})
+	// 處理 ${...} 表達式，支持嵌套三元運算符
+	// 使用遞歸方式處理嵌套
+	dollarBraceRe := regexp.MustCompile(`\$\{([^}]+)\}`)
+	for dollarBraceRe.MatchString(res) {
+		res = dollarBraceRe.ReplaceAllStringFunc(res, func(m string) string {
+			// 提取 ${} 內的表達式
+			expr := m[2 : len(m)-1] // 去掉 ${ 和 }
+			return evaluateExpression(strings.TrimSpace(expr))
+		})
+	}
 
 	return res
+}
+
+// evaluateExpression 評估簡單的條件表達式
+// 支持格式：
+// - 'value'.trim() ? 'A' : 'B'
+// - 'X' === 'Y' ? 'A' : 'B'
+// - 'X' !== 'Y' ? 'A' : 'B'
+// - 嵌套三元: 'X' === 'Y' ? 'A' : 'Z' === 'W' ? 'B' : 'C'
+func evaluateExpression(expr string) string {
+	expr = strings.TrimSpace(expr)
+
+	// 查找最外層的 ? 和 :
+	questionIdx := -1
+	colonIdx := -1
+	depth := 0
+	inQuotes := false
+
+	for i := 0; i < len(expr); i++ {
+		if expr[i] == '\'' {
+			inQuotes = !inQuotes
+		}
+		if inQuotes {
+			continue
+		}
+
+		if expr[i] == '?' {
+			if questionIdx == -1 {
+				questionIdx = i
+			}
+			depth++
+		} else if expr[i] == ':' && depth > 0 {
+			depth--
+			if depth == 0 && colonIdx == -1 {
+				colonIdx = i
+			}
+		}
+	}
+
+	// 如果不是三元表達式，直接返回去除引號的值
+	if questionIdx == -1 || colonIdx == -1 {
+		if strings.HasPrefix(expr, "'") && strings.HasSuffix(expr, "'") {
+			return expr[1 : len(expr)-1]
+		}
+		return expr
+	}
+
+	// 分解三元表達式: condition ? trueValue : falseValue
+	condition := strings.TrimSpace(expr[:questionIdx])
+	trueValue := strings.TrimSpace(expr[questionIdx+1 : colonIdx])
+	falseValue := strings.TrimSpace(expr[colonIdx+1:])
+
+	// 評估條件
+	if evaluateCondition(condition) {
+		return evaluateExpression(trueValue)
+	}
+	return evaluateExpression(falseValue)
+}
+
+// evaluateCondition 評估條件表達式
+func evaluateCondition(condition string) bool {
+	condition = strings.TrimSpace(condition)
+
+	// 檢查 .trim() 語法: 'value'.trim()
+	trimRe := regexp.MustCompile(`^'([^']*)'\.trim\(\)$`)
+	if match := trimRe.FindStringSubmatch(condition); match != nil {
+		return strings.TrimSpace(match[1]) != ""
+	}
+
+	// 檢查 === 或 == 比較
+	if idx := indexOfOperator(condition, "==="); idx != -1 {
+		left := strings.TrimSpace(condition[:idx])
+		right := strings.TrimSpace(condition[idx+3:])
+		return unquote(left) == unquote(right)
+	}
+
+	if idx := indexOfOperator(condition, "=="); idx != -1 {
+		left := strings.TrimSpace(condition[:idx])
+		right := strings.TrimSpace(condition[idx+2:])
+		return unquote(left) == unquote(right)
+	}
+
+	// 檢查 !== 或 != 比較
+	if idx := indexOfOperator(condition, "!=="); idx != -1 {
+		left := strings.TrimSpace(condition[:idx])
+		right := strings.TrimSpace(condition[idx+3:])
+		return unquote(left) != unquote(right)
+	}
+
+	if idx := indexOfOperator(condition, "!="); idx != -1 {
+		left := strings.TrimSpace(condition[:idx])
+		right := strings.TrimSpace(condition[idx+2:])
+		return unquote(left) != unquote(right)
+	}
+
+	// 默認：非空字符串為 true
+	unquoted := unquote(condition)
+	return unquoted != "" && unquoted != "false"
+}
+
+// indexOfOperator 找到運算符的位置（不在引號內）
+func indexOfOperator(s, op string) int {
+	inQuotes := false
+	for i := 0; i <= len(s)-len(op); i++ {
+		if s[i] == '\'' {
+			inQuotes = !inQuotes
+		}
+		if !inQuotes && s[i:i+len(op)] == op {
+			return i
+		}
+	}
+	return -1
+}
+
+// unquote 移除字符串兩端的引號
+func unquote(s string) string {
+	s = strings.TrimSpace(s)
+	if strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'") && len(s) >= 2 {
+		return s[1 : len(s)-1]
+	}
+	return s
 }

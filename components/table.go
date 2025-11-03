@@ -58,7 +58,7 @@ var TableComponent = Component(
 				Props{
 					"class": "table-footer",
 					"style": `
-						display: {{tfootDisplay}};
+						display: ${'{{footer}}'.trim() ? 'table-footer-group' : 'none'};
 						background-color: {{headerBgColor}};
 						color: #1e293b;
 						vertical-align: bottom;
@@ -181,7 +181,7 @@ var TableComponent = Component(
 		"radius":         "md",      // 圓角大小
 		"shadow":         "sm",      // 陰影強度
 
-		// 計算屬性
+		// 計算屬性 (這些是固定值，保留用於一致性)
 		"overflowX":         "auto",
 		"tableWidth":        "100%",
 		"tableBorder":       "none",
@@ -191,6 +191,5 @@ var TableComponent = Component(
 		"evenRowBgColor":    "#fbfdff",
 		"tableBorderRadius": "0.5rem",
 		"tableBoxShadow":    "0 1px 2px rgba(0,0,0,0.04)",
-		"tfootDisplay":      "none",
 	},
 )

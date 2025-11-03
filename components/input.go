@@ -1,6 +1,8 @@
 package components
 
 import (
+	"strings"
+
 	. "github.com/TimLai666/go-vdom/dom"
 	jsdsl "github.com/TimLai666/go-vdom/jsdsl"
 )
@@ -42,28 +44,59 @@ import (
 //	  "type": "email",
 //	  "placeholder": "請輸入您的電子郵件",
 //	  "required": "true",
+//	  "icon": "📧",
 //	})
-var TextField = Component(
+func TextField(props Props, children ...VNode) VNode {
+	// Compute derived properties
+	hasIcon := false
+	if icon, ok := props["icon"]; ok {
+		if iconStr, ok := icon.(string); ok && strings.TrimSpace(iconStr) != "" {
+			hasIcon = true
+		}
+	}
+	props["hasIcon"] = hasIcon
+
+	hasError := false
+	if errorText, ok := props["errorText"]; ok {
+		if errorStr, ok := errorText.(string); ok && strings.TrimSpace(errorStr) != "" {
+			hasError = true
+		}
+	}
+	props["hasError"] = hasError
+
+	hasHelp := false
+	if helpText, ok := props["helpText"]; ok {
+		if helpStr, ok := helpText.(string); ok && strings.TrimSpace(helpStr) != "" {
+			hasHelp = true
+		}
+	}
+	props["hasHelp"] = hasHelp
+
+	return textFieldInternal(props, children...)
+}
+
+var textFieldInternal = Component(
 	Div(
 		Props{
 			"class": "textfield-container",
 			"style": `
 				margin-bottom: 1.25rem;
-				width: {{width}};
-				display: {{flexDisplay}};
-				align-items: {{flexAlign}};
-				gap: {{flexGap}};
+				width: ${'{{fullWidth}}' === 'true' ? '100%' : 'auto'};
+				display: ${'{{labelPosition}}' === 'left' ? 'flex' : 'block'};
+				align-items: ${'{{labelPosition}}' === 'left' ? 'center' : 'flex-start'};
+				gap: ${'{{labelPosition}}' === 'left' ? '1rem' : '0'};
 			`,
 		},
 		Label(
 			Props{
 				"for": "{{id}}", "class": "textfield-label", "style": `
-					display: {{label}};
-					margin-bottom: {{labelMargin}};
+					display: ${'{{label}}' !== '' ? 'block' : 'none'};
+					margin-bottom: ${'{{labelPosition}}' === 'top' ? '0.375rem' : '0'};
 					font-weight: 500;
-					font-size: {{labelSize}};
+					font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
 					color: #374151;
-					width: {{labelWidth}};
+					width: ${'{{labelPosition}}' === 'left' ? '120px' : 'auto'};
+					flex-shrink: 0;
 				`,
 			},
 			"{{label}}",
@@ -73,57 +106,65 @@ var TextField = Component(
 				"class": "textfield-wrapper",
 				"style": `
 					position: relative;
-					width: {{inputWrapWidth}};
+					width: ${'{{labelPosition}}' === 'left' ? 'calc(100% - 120px - 1rem)' : '100%'};
+					flex: ${'{{labelPosition}}' === 'left' ? '1' : 'none'};
 				`,
 			},
 			Div(
 				Props{
 					"class": "textfield-icon-left",
 					"style": `
-						display: {{iconLeftDisplay}};
+						display: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'left' ? 'flex' : 'none' : 'none'};
 						position: absolute;
 						top: 50%;
 						left: 12px;
 						transform: translateY(-50%);
 						color: #64748b;
 						z-index: 1;
+						align-items: center;
+						justify-content: center;
+						pointer-events: none;
 					`,
 				},
-				"{{iconLeft}}",
+				"{{icon}}",
 			),
 			Input(
 				Props{
-					"id":             "{{id}}",
-					"name":           "{{name}}",
-					"type":           "{{type}}",
-					"placeholder":    "{{placeholder}}",
-					"value":          "{{value}}",
-					"required":       "{{required}}",
-					"disabled":       "{{disabled}}",
-					"readonly":       "{{readonly}}",
-					"pattern":        "{{pattern}}",
-					"min":            "{{min}}",
-					"max":            "{{max}}",
-					"maxlength":      "{{maxlength}}",
-					"autofocus":      "{{autofocus}}",
-					"autocomplete":   "{{autocomplete}}",
-					"class":          "textfield-input",
-					"data-color":     "{{color}}",
-					"data-color-rgb": "{{colorRgb}}",
+					"id":           "{{id}}",
+					"name":         "{{name}}",
+					"type":         "{{type}}",
+					"placeholder":  "{{placeholder}}",
+					"value":        "{{value}}",
+					"required":     "{{required}}",
+					"disabled":     "{{disabled}}",
+					"readonly":     "{{readonly}}",
+					"pattern":      "{{pattern}}",
+					"min":          "{{min}}",
+					"max":          "{{max}}",
+					"maxlength":    "{{maxlength}}",
+					"autofocus":    "{{autofocus}}",
+					"autocomplete": "{{autocomplete}}",
+					"class":        "textfield-input",
+					"data-color":   "{{color}}",
 					"style": `
 						display: block;
 						width: 100%;
-						padding: {{inputPadding}};
-						font-size: {{fontSize}};
+						padding: ${'{{size}}' === 'sm' ? '0.5rem 0.75rem' : '{{size}}' === 'lg' ? '0.75rem 1rem' : '0.625rem 0.875rem'};
+						padding-left: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'left' ? '2.5rem' : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'} : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'}};
+						padding-right: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'right' ? '2.5rem' : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'} : ${'{{size}}' === 'sm' ? '0.75rem' : '{{size}}' === 'lg' ? '1rem' : '0.875rem'}};
+						font-size: ${'{{size}}' === 'sm' ? '0.875rem' : '{{size}}' === 'lg' ? '1rem' : '0.9375rem'};
 						line-height: 1.5;
 						color: #333;
-						background: {{inputBg}};
-						border: {{inputBorder}};
-						border-radius: {{inputRadius}};
-						box-shadow: {{inputShadow}};
+						background: ${'{{variant}}' === 'filled' ? '#f9fafb' : '#ffffff'};
+						border: ${'{{variant}}' === 'outlined' ? '1px solid #d1d5db' : '{{variant}}' === 'filled' ? '1px solid transparent' : 'none'};
+						border-bottom: ${'{{variant}}' === 'underlined' ? '1px solid #d1d5db' : ''};
+						border-radius: ${'{{variant}}' === 'underlined' ? '0' : '0.375rem'};
+						box-shadow: ${'{{variant}}' === 'outlined' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none'};
 						transition: all 0.2s ease;
 						outline: none;
 						box-sizing: border-box;
+						cursor: ${'{{disabled}}' === 'true' ? 'not-allowed' : '{{readonly}}' === 'true' ? 'default' : 'text'};
+						opacity: ${'{{disabled}}' === 'true' ? '0.6' : '1'};
 					`,
 				},
 			),
@@ -131,44 +172,67 @@ var TextField = Component(
 				Props{
 					"class": "textfield-icon-right",
 					"style": `
-						display: {{iconRightDisplay}};
+						display: ${'{{hasIcon}}' === 'true' ? '{{iconPosition}}' === 'right' ? 'flex' : 'none' : 'none'};
 						position: absolute;
 						top: 50%;
 						right: 12px;
 						transform: translateY(-50%);
 						color: #64748b;
 						z-index: 1;
+						align-items: center;
+						justify-content: center;
+						pointer-events: none;
 					`,
 				},
-				"{{iconRight}}",
+				"{{icon}}",
 			),
 		),
 		Div(
 			Props{"class": "textfield-help-text", "style": `
-					display: {{helpText}};
+					display: ${'{{hasError}}' === 'true' ? 'block' : '{{hasHelp}}' === 'true' ? 'block' : 'none'};
 					font-size: 0.875rem;
 					margin-top: 0.375rem;
-					color: {{helpColor}};
+					color: ${'{{hasError}}' === 'true' ? '#ef4444' : '#64748b'};
 				`,
 			},
-			"{{helpText}}",
+			"${'{{hasError}}' === 'true' ? '{{errorText}}' : '{{helpText}}'}",
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `try {
     const input = document.getElementById('{{id}}');
     if (!input) return;
 
+    const color = input.getAttribute('data-color') || '{{color}}';
+
+    // 計算RGB值用於陰影
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ?
+            parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16)
+            : '59, 130, 246';
+    }
+    const colorRgb = hexToRgb(color);
+
     const handleFocus = function() {
       if (!input.disabled && !input.readOnly) {
-        input.style.borderColor = '{{color}}';
-        input.style.boxShadow = '0 0 0 3px rgba(' + '{{colorRgb}}' + ', 0.15)';
+        input.style.borderColor = color;
+        input.style.boxShadow = '0 0 0 3px rgba(' + colorRgb + ', 0.15)';
       }
     };
 
     const handleBlur = function() {
       if (!input.disabled && !input.readOnly) {
-        input.style.borderColor = '#d1d5db';
-        input.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+        const variant = '{{variant}}';
+        if (variant === 'outlined') {
+          input.style.borderColor = '#d1d5db';
+          input.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+        } else if (variant === 'underlined') {
+          input.style.borderBottomColor = '#d1d5db';
+          input.style.boxShadow = 'none';
+        } else {
+          input.style.borderColor = 'transparent';
+          input.style.boxShadow = 'none';
+        }
       }
     };
 
@@ -215,14 +279,19 @@ var TextField = Component(
       input.style.color = '#374151';
       input.style.pointerEvents = 'auto';
     } else {
-      input.style.backgroundColor = '#ffffff';
+      const variant = '{{variant}}';
+      if (variant === 'filled') {
+        input.style.backgroundColor = '#f9fafb';
+      } else {
+        input.style.backgroundColor = '#ffffff';
+      }
       input.style.color = '#333333';
       input.style.cursor = 'text';
       input.style.pointerEvents = 'auto';
     }
-  			} catch (err) {
-  				console.error('Input init error for id={{id}}', err);
-  			}`})),
+  } catch (err) {
+    console.error('Input init error for id={{id}}', err);
+  }`})),
 	PropsDef{
 		// 主要屬性
 		"type":          "text",     // 輸入類型
@@ -244,35 +313,13 @@ var TextField = Component(
 		"variant":       "outlined", // 變體: outlined, filled, underlined
 		"fullWidth":     true,       // 是否填滿父容器寬度
 		"icon":          "",         // 圖標HTML
-		"iconPosition":  "left",     // 圖標位置
+		"iconPosition":  "left",     // 圖標位置: left, right
 		"helpText":      "",         // 幫助文字
 		"errorText":     "",         // 錯誤文字
 		"labelPosition": "top",      // 標籤位置: top, left
 		"color":         "#3b82f6",  // 主題色
-
-		// 計算屬性
-		"width":            "100%",
-		"flexDisplay":      "block",
-		"flexAlign":        "flex-start",
-		"flexGap":          "0",
-		"labelWidth":       "auto",
-		"labelMargin":      "0.375rem",
-		"labelSize":        "0.9375rem",
-		"inputWrapWidth":   "100%",
-		"inputPadding":     "0.625rem 0.875rem",
-		"fontSize":         "0.9375rem",
-		"inputRadius":      "0.375rem",
-		"inputBg":          "#ffffff",
-		"inputBorder":      "1px solid #d1d5db",
-		"inputShadow":      "0 1px 2px rgba(0, 0, 0, 0.05)",
-		"iconLeftDisplay":  "none",
-		"iconRightDisplay": "none",
-		"helpDisplay":      "none",
-		"helpColor":        "#64748b",
-		"labelText":        "",
-		"helpMessage":      "",
-		"iconLeft":         "",
-		"iconRight":        "",
-		"colorRgb":         "59, 130, 246",
+		"hasIcon":       false,      // 計算屬性: 是否有圖標
+		"hasError":      false,      // 計算屬性: 是否有錯誤
+		"hasHelp":       false,      // 計算屬性: 是否有幫助文字
 	},
 )

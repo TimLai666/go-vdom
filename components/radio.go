@@ -42,34 +42,33 @@ var RadioGroup = Component(
 		Div(
 			Props{
 				"style": `
-					display: {{labelDisplay}};
-					margin-bottom: 0.75rem;
-					font-weight: 500;
-					font-size: 0.9375rem;
-					color: #374151;
-				`,
+				display: ${'{{label}}'.trim() ? 'block' : 'none'};
+				margin-bottom: 0.75rem;
+				font-weight: 500;
+				font-size: 0.9375rem;
+				color: #374151;
+			`,
 			},
 			"{{label}}",
 		),
 		Div(
 			Props{
-				"id":        "radio-group-{{id}}",
-				"data-name": "{{name}}",
 				"style": `
-					display: flex;
-					flex-direction: {{flexDirection}};
-					gap: 0.75rem;
-				`,
+				display: flex;
+				flex-direction: ${'{{direction}}' === 'horizontal' ? 'row' : 'column'};
+				gap: 0.75rem;
+			`,
 			},
+			"{{children}}",
 		),
 		Div(
 			Props{
 				"style": `
-					display: {{helpDisplay}};
-					font-size: 0.875rem;
-					margin-top: 0.375rem;
-					color: #64748b;
-				`,
+				display: ${'{{helpText}}'.trim() ? 'block' : 'none'};
+				font-size: 0.875rem;
+				margin-top: 0.375rem;
+				color: #64748b;
+			`,
 			},
 			"{{helpText}}",
 		),
@@ -205,21 +204,18 @@ var RadioGroup = Component(
 		});
 	`})),
 	PropsDef{
-		"id":            "",
-		"name":          "",
-		"label":         "",
-		"options":       "",
-		"defaultValue":  "",
-		"required":      false,
-		"disabled":      false,
-		"direction":     "vertical",
-		"size":          "md",
-		"helpText":      "",
-		"color":         "#3b82f6",
-		"flexDirection": "column",
-		"labelDisplay":  "none",
-		"helpDisplay":   "none",
-		"colorRgb":      "59, 130, 246",
+		"id":           "",
+		"name":         "",
+		"label":        "",
+		"options":      "",
+		"defaultValue": "",
+		"required":     false,
+		"disabled":     false,
+		"direction":    "vertical",
+		"size":         "md",
+		"helpText":     "",
+		"color":        "#3b82f6",
+		"colorRgb":     "59, 130, 246",
 	},
 )
 
