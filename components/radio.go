@@ -53,13 +53,13 @@ var RadioGroup = Component(
 		),
 		Div(
 			Props{
+				"id": "radio-group-{{id}}",
 				"style": `
 				display: flex;
 				flex-direction: ${{{direction}} === 'horizontal' ? 'row' : 'column'};
 				gap: 0.75rem;
 			`,
 			},
-			"{{children}}",
 		),
 		Div(
 			Props{
@@ -74,7 +74,7 @@ var RadioGroup = Component(
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
-		const container = document.getElementById('radio-group-{{id}}');
+		const container = document.getElementById('radio-group-' + {{id}});
 		if (!container) return;
 
 		const options = {{options}}.split(',').map(s => s.trim()).filter(Boolean);
@@ -85,7 +85,7 @@ var RadioGroup = Component(
 		const colorRgb = {{colorRgb}};
 
 		options.forEach(function(option, index) {
-			const id = 'radio-{{id}}-' + index;
+			const id = 'radio-' + {{id}} + '-' + index;
 			const isChecked = option === defaultValue;
 
 			// 創建 label 容器
@@ -151,6 +151,7 @@ var RadioGroup = Component(
 			// 點擊 circle 選中此選項
 			circle.addEventListener('click', function(e) {
 				e.preventDefault();
+				e.stopPropagation();
 				if (!input.disabled) {
 					// 設置為 checked（瀏覽器會自動 uncheck 同名的其他 radio 並觸發 change）
 					input.checked = true;
@@ -320,7 +321,7 @@ var Radio = Component(
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
-		const input = document.getElementById('{{id}}');
+		const input = document.getElementById({{id}});
 		if (!input) return;
 
 		const circle = input.nextElementSibling;
@@ -354,6 +355,7 @@ var Radio = Component(
 		// 點擊 circle 選中
 		circle.addEventListener('click', function(e) {
 			e.preventDefault();
+			e.stopPropagation();
 			if (!input.disabled) {
 				// 設置為 checked（瀏覽器會自動 uncheck 同名的其他 radio）
 				input.checked = true;
@@ -388,7 +390,7 @@ var Radio = Component(
 
 			// 發送自定義事件
 			this.dispatchEvent(new CustomEvent('radio:change', {
-				detail: { id: '{{id}}', checked: this.checked, value: this.value },
+				detail: { id: {{id}}, checked: this.checked, value: this.value },
 				bubbles: true
 			}));
 		});

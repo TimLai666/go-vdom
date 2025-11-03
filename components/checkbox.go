@@ -125,7 +125,7 @@ var Checkbox = Component(
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
-		const input = document.getElementById('{{id}}');
+		const input = document.getElementById({{id}});
 		if (!input) return;
 
 		const box = input.nextElementSibling;
@@ -137,8 +137,8 @@ var Checkbox = Component(
 			const disabled = input.disabled;
 
 			if (checked) {
-				box.style.borderColor = '{{color}}';
-				box.style.background = '{{color}}';
+				box.style.borderColor = {{color}};
+				box.style.background = {{color}};
 				checkmark.style.visibility = 'visible';
 				checkmark.style.opacity = '1';
 			} else {
@@ -166,6 +166,7 @@ var Checkbox = Component(
 		// 點擊 box 時切換狀態
 		box.addEventListener('click', function(e) {
 			e.preventDefault();
+			e.stopPropagation();
 			if (!input.disabled) {
 				input.checked = !input.checked;
 				updateState();
@@ -177,7 +178,7 @@ var Checkbox = Component(
 		input.addEventListener('change', function() {
 			updateState();
 			this.dispatchEvent(new CustomEvent('checkbox:change', {
-				detail: { id: '{{id}}', checked: this.checked, value: this.value },
+				detail: { id: {{id}}, checked: this.checked, value: this.value },
 				bubbles: true
 			}));
 		});
@@ -185,7 +186,7 @@ var Checkbox = Component(
 		// Focus 效果
 		input.addEventListener('focus', function() {
 			if (!this.disabled) {
-				box.style.boxShadow = '0 0 0 3px rgba({{colorRgb}}, 0.15)';
+				box.style.boxShadow = '0 0 0 3px rgba(' + {{colorRgb}} + ', 0.15)';
 			}
 		});
 
@@ -280,7 +281,7 @@ var CheckboxGroup = Component(
 		),
 	),
 	jsdsl.Ptr(jsdsl.Fn(nil, JSAction{Code: `
-		const container = document.getElementById('checkbox-group-{{id}}');
+		const container = document.getElementById('checkbox-group-' + {{id}});
 		if (!container) return;
 
 		const options = {{options}}.split(',').map(s => s.trim()).filter(Boolean);
@@ -291,7 +292,7 @@ var CheckboxGroup = Component(
 		const colorRgb = {{colorRgb}};
 
 		options.forEach(function(option, index) {
-			const id = 'checkbox-{{id}}-' + index;
+			const id = 'checkbox-' + {{id}} + '-' + index;
 			const isChecked = values.indexOf(option) !== -1;
 
 			// 創建 label 容器
@@ -359,6 +360,7 @@ var CheckboxGroup = Component(
 			// 點擊 box 切換狀態
 			box.addEventListener('click', function(e) {
 				e.preventDefault();
+				e.stopPropagation();
 				if (!input.disabled) {
 					input.checked = !input.checked;
 					updateState();
