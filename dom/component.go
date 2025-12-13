@@ -16,19 +16,19 @@ func genComponentID() string {
 	return fmt.Sprintf("vdom-%d", v)
 }
 
-type PropsDef map[string]interface{}
+type PropsDefault map[string]any
 
 // Component 創建一個新的組件函數，支援預設 props
 //   - template: 組件模板 VNode
 //   - onDOMReadyCallback: (可選) 指向 JSAction 的指標（建議先用 jsdsl.Fn 建立一個 JSAction 變數，然後傳該變數的地址）
 //     如果提供且非 nil，會在建立 node 後注入到 node.Props["onDOMReady"]
-//   - defaultProps: 可選的預設 PropsDef
+//   - defaultProps: 可選的預設 PropsDefault
 //
 // 使用範例：
 // act := jsdsl.Fn(nil, JSAction{Code: "/* ... */"})
-// Component(template, &act, PropsDef{"id":"", ...})
-// Component(template, nil, PropsDef{"id":"", ...}) // 傳 nil 表示不注入 onDOMReadyCallback
-func Component(template VNode, onDOMReadyCallback *JSAction, defaultProps ...PropsDef) func(props Props, children ...VNode) VNode {
+// Component(template, &act, PropsDefault{"id":"", ...})
+// Component(template, nil, PropsDefault{"id":"", ...}) // 傳 nil 表示不注入 onDOMReadyCallback
+func Component(template VNode, onDOMReadyCallback *JSAction, defaultProps ...PropsDefault) func(props Props, children ...VNode) VNode {
 	return func(p Props, children ...VNode) VNode {
 		mergedProps := make(Props)
 

@@ -279,7 +279,7 @@ var textFieldInternal = Component(
   } catch (err) {
     console.error('TextField init error for id=' + {{id}}, err);
   }`})),
-	PropsDef{
+	PropsDefault{
 		// 主要屬性
 		"type":          "text",     // 輸入類型
 		"label":         "",         // 標籤文字

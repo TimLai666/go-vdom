@@ -224,7 +224,7 @@ var btnInternal = Component(
 	} catch (err) {
 		console.error('Btn init error for id={{id}}', err);
 	}`})),
-	PropsDef{
+	PropsDefault{
 		"id":            "",
 		"variant":       "filled",
 		"color":         "#3b82f6",

@@ -5,7 +5,7 @@ package dom
 // 調整：Props 現在允許儲存多種型別（例如 string、JSAction、ServerHandlerRef 等）
 // 這使得你可以在 Props 中直接傳入 JSAction（代表要在 client 端執行的 JS 片段）
 // 或其他未來擴展用的引用型別。
-type Props map[string]interface{}
+type Props map[string]any
 
 // VNode 表示虛擬DOM中的一個節點
 type VNode struct {

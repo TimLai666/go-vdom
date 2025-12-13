@@ -211,7 +211,7 @@ var Switch = Component(
 			track.style.boxShadow = 'none';
 		});
 	`})),
-	PropsDef{
+	PropsDefault{
 		"id":            "",
 		"name":          "",
 		"label":         "",

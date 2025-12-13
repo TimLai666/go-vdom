@@ -246,7 +246,7 @@ if ({{open}} === true) {
 }
 	`})),
 	nil,
-	PropsDef{
+	PropsDefault{
 		"title":               "",                // 對話框標題
 		"open":                false,             // 是否顯示
 		"size":                "md",              // 尺寸: xs, sm, md, lg, xl, full

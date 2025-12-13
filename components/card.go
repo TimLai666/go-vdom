@@ -146,7 +146,7 @@ var Card = Component(
 			console.error('Card init error', err);
 		}
 	`})),
-	PropsDef{
+	PropsDefault{
 		"title":        "",        // 卡片標題
 		"titleWeight":  "500",     // 標題字重
 		"titleColor":   "#1a2b4a", // 標題顏色

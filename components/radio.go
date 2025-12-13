@@ -204,7 +204,7 @@ var RadioGroup = Component(
 			});
 		});
 	`})),
-	PropsDef{
+	PropsDefault{
 		"id":           "",
 		"name":         "",
 		"label":        "",
@@ -406,7 +406,7 @@ var Radio = Component(
 			circle.style.boxShadow = 'none';
 		});
 	`})),
-	PropsDef{
+	PropsDefault{
 		"id":        "",
 		"name":      "",
 		"value":     "",

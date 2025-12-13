@@ -201,7 +201,7 @@ var Dropdown = Component(
 } catch (err) {
     console.error('Dropdown init error for id=' + {{id}}, err);
 }`})),
-	PropsDef{
+	PropsDefault{
 		// 主要屬性
 		"label":         "",
 		"id":            "",

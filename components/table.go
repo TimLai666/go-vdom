@@ -68,7 +68,7 @@ var TableComponent = Component(
 				"{{footer}}",
 			),
 			// helper sorting function kept as inline Script node (it becomes part of DOM output)
-			Script(`
+			Script(nil, `
 				function sortTable(table, columnIndex, ascending) {
 					const tbody = table.querySelector('tbody');
 					const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -164,7 +164,7 @@ var TableComponent = Component(
 	} catch (err) {
 		console.error('Table init error', err);
 	}`})),
-	PropsDef{
+	PropsDefault{
 		// 主要屬性
 		"stripped":       false,     // 是否顯示條紋
 		"bordered":       false,     // 是否顯示邊框

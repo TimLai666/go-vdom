@@ -134,7 +134,7 @@ if (alert) {
 	}, 50);
 }
 	`})),
-	PropsDef{
+	PropsDefault{
 		"id":          "",     // 提示框ID，將自動生成
 		"type":        "info", // info, success, warning, error
 		"title":       "",     // 提示標題

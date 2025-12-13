@@ -194,7 +194,7 @@ var Checkbox = Component(
 			box.style.boxShadow = 'none';
 		});
 	`})),
-	PropsDef{
+	PropsDefault{
 		"id":           "",
 		"name":         "",
 		"value":        "",
@@ -390,7 +390,7 @@ var CheckboxGroup = Component(
 			});
 		});
 	`})),
-	PropsDef{
+	PropsDefault{
 		"id":        "",
 		"name":      "",
 		"label":     "",

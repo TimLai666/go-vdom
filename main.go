@@ -24,8 +24,8 @@ func main() {
 	Card := Component(
 		Div(
 			Props{"class": "card"},
-			H1("{{title}}"),
-			Div("{{children}}"),
+			H1(nil, "{{title}}"),
+			Div(nil, "{{children}}"),
 		),
 		nil,
 		nil, // 預設 props
@@ -74,7 +74,7 @@ func main() {
 			// 頁面主體內容
 			Header(
 				Props{"class": "container bg-light p-4 mb-4"},
-				H1("Go VDOM 示範網站", Props{"class": "text-primary"}),
+				H1(Props{"class": "text-primary"}, "Go VDOM 示範網站"),
 				Nav(
 					Props{"class": "navbar navbar-expand"},
 					Ul(
@@ -88,8 +88,8 @@ func main() {
 
 			Main(
 				Props{"class": "container"},
-				H2("歡迎訪問", Props{"class": "mt-4"}),
-				P("這是一個使用 go-vdom 創建的網頁示例。該頁面直接從Go HTTP伺服器產生。"),
+				H2(Props{"class": "mt-4"}, "歡迎訪問"),
+				P(nil, "這是一個使用 go-vdom 創建的網頁示例。該頁面直接從Go HTTP伺服器產生。"),
 
 				Card(Props{"title": "使用組件"},
 					Div(Props{"class": "mb-3"}, "這是卡片的內容，展示了組件的使用方法"),
@@ -99,17 +99,17 @@ func main() {
 				Div(
 					Props{"class": "row mt-4"},
 					Div(Props{"class": "col-md-6"},
-						H3("左側內容"),
-						P("這是左側的一些內容，展示了多欄排版的效果。"),
-						Ul(
-							Li("項目1"),
-							Li("項目2"),
-							Li("項目3"),
+						H3(nil, "左側內容"),
+						P(nil, "這是左側的一些內容，展示了多欄排版的效果。"),
+						Ul(nil,
+							Li(nil, "項目1"),
+							Li(nil, "項目2"),
+							Li(nil, "項目3"),
 						),
 					),
 					Div(Props{"class": "col-md-6"},
-						H3("右側內容"),
-						P("這是右側的一些內容。"),
+						H3(nil, "右側內容"),
+						P(nil, "這是右側的一些內容。"),
 						A(Props{"href": "https://github.com/TimLai666/go-vdom", "class": "btn btn-primary"},
 							"查看源碼",
 						),
@@ -119,7 +119,7 @@ func main() {
 				// 測試 control 區塊
 				Div(
 					Props{"class": "mt-4"},
-					H4("If/Then/Else 測試"),
+					H4(nil, "If/Then/Else 測試"),
 					control.If(show,
 						control.Then(
 							Div(Props{"class": "alert alert-success"}, "這是 If 條件為真時顯示的內容"),
@@ -130,34 +130,33 @@ func main() {
 					),
 
 					Div(Props{"class": "mt-4"},
-						H4("Repeat 測試"),
+						H4(nil, "Repeat 測試"),
 						control.Repeat(3, func(i int) VNode {
 							return Div(Props{"class": "border p-2 mb-2"}, fmt.Sprintf("Repeat 渲染第 %d 次", i+1))
 						}),
 					),
 
 					Div(Props{"class": "mt-4"},
-						H4("ForEach 測試"),
-						Ul(control.ForEach(items, func(item string, i int) VNode {
-							return Li(fmt.Sprintf("第%d個: %s", i+1, item))
+						H4(nil, "ForEach 測試"),
+						Ul(nil, control.ForEach(items, func(item string, i int) VNode {
+							return Li(nil, fmt.Sprintf("第%d個: %s", i+1, item))
 						})),
 					),
-
 					Div(Props{"class": "mt-4"},
-						H4("For 循環測試"),
-						P("使用 control.For 生成 1-10 的數字："),
+						H4(nil, "For 循環測試"),
+						P(nil, "使用 control.For 生成 1-10 的數字："),
 						Div(Props{"class": "d-flex gap-2 mb-3"},
 							control.For(1, 11, 1, func(i int) VNode {
 								return Span(Props{"class": "badge bg-primary"}, fmt.Sprintf("%d", i))
 							}),
 						),
-						P("倒序 10-1："),
+						P(nil, "倒序 10-1："),
 						Div(Props{"class": "d-flex gap-2 mb-3"},
 							control.For(10, 0, -1, func(i int) VNode {
 								return Span(Props{"class": "badge bg-success"}, fmt.Sprintf("%d", i))
 							}),
 						),
-						P("步進 2（偶數）："),
+						P(nil, "步進 2（偶數）："),
 						Div(Props{"class": "d-flex gap-2"},
 							control.For(0, 20, 2, func(i int) VNode {
 								return Span(Props{"class": "badge bg-info"}, fmt.Sprintf("%d", i))
@@ -169,8 +168,8 @@ func main() {
 				// 添加 Fetch API 示例區塊 - GET 請求 (使用 DSL)
 				Div(
 					Props{"class": "mt-4"},
-					H4("Fetch GET API 測試"),
-					P("點擊下方按鈕從 API 獲取數據："),
+					H4(nil, "Fetch GET API 測試"),
+					P(nil, "點擊下方按鈕從 API 獲取數據："),
 					Button(Props{
 						"id":    "fetchButton",
 						"class": "btn btn-primary mb-3",
@@ -214,8 +213,8 @@ func main() {
 				// 添加 Fetch POST API 示例區塊 (使用 DSL)
 				Div(
 					Props{"class": "mt-4"},
-					H4("Fetch POST API 測試"),
-					P("填寫並提交表單以發送 POST 請求："),
+					H4(nil, "Fetch POST API 測試"),
+					P(nil, "填寫並提交表單以發送 POST 請求："),
 					Form(Props{
 						"id":     "postForm",
 						"class":  "mb-3",
@@ -276,7 +275,7 @@ func main() {
 				// 添加組件示例區塊
 				Div(
 					Props{"class": "mt-5 mb-5"},
-					H3("UI 組件庫展示", Props{"class": "mb-4"}),
+					H3(Props{"class": "mb-4"}, "UI 組件庫展示"),
 					Div(Props{"class": "row g-4"},
 						// 左側欄
 						Div(Props{"class": "col-md-6"},
